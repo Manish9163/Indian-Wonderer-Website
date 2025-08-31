@@ -1,0 +1,55 @@
+<div class="itinerary-header">
+    <h2 class="cyber-title">🗺️ Epic Itinerary Management</h2>
+    <button class="btn-neon">
+        <i class="fas fa-plus"></i> Create Epic Journey
+    </button>
+</div>
+
+<div class="row">
+    <div *ngFor="let itinerary of itineraries" class="col-lg-4 col-md-6 mb-4">
+        <div class="itinerary-card">
+            <div class="itinerary-header-card">
+                <div class="tour-info">
+                    <h3 class="tour-name">{{itinerary.tourName}}</h3>
+                    <div class="duration-badge">
+                        <i class="fas fa-calendar-days"></i>
+                        {{itinerary.days}} Epic Days
+                    </div>
+                </div>
+                <div class="itinerary-icon">
+                    <i class="fas fa-map-marked-alt"></i>
+                </div>
+            </div>
+            
+            <div class="itinerary-timeline">
+                <div *ngFor="let day of itinerary.schedule; let i = index" 
+                     class="timeline-item"
+                     [class.timeline-highlight]="i === 0">
+                    <div class="timeline-marker">
+                        <span class="day-number">{{day.day}}</span>
+                    </div>
+                    <div class="timeline-content">
+                        <h4 class="day-title">{{day.title}}</h4>
+                        <p class="day-description">{{day.description}}</p>
+                        <div class="day-time">
+                            <i class="fas fa-clock"></i>
+                            {{day.time}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="itinerary-footer">
+                <button class="btn-cyber btn-sm">
+                    <i class="fas fa-edit"></i> Modify
+                </button>
+                <button class="btn-cyber btn-sm btn-danger">
+                    <i class="fas fa-eye"></i> Preview
+                </button>
+                <button class="btn-cyber btn-sm btn-success">
+                    <i class="fas fa-download"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,159 @@
+<!-- Neural Stats Dashboard -->
+<div class="row mb-5">
+    <div class="col-md-3 mb-4">
+        <div class="stats-card" style="--accent-color: var(--neon-blue)">
+            <div class="stats-icon">
+                <i class="fas fa-rocket"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-number">{{stats.totalTours}}</div>
+                <div class="stats-label">Quantum Tours</div>
+                <div class="stats-trend">
+                    <i class="fas fa-arrow-up"></i> +15.3%
+                </div>
+            </div>
+            <div class="stats-particles"></div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="stats-card" style="--accent-color: var(--neon-green)">
+            <div class="stats-icon">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-number">{{stats.activeBookings}}</div>
+                <div class="stats-label">Active Missions</div>
+                <div class="stats-trend">
+                    <i class="fas fa-arrow-up"></i> +23.7%
+                </div>
+            </div>
+            <div class="stats-particles"></div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="stats-card" style="--accent-color: var(--neon-purple)">
+            <div class="stats-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-number">{{stats.totalCustomers}}</div>
+                <div class="stats-label">Neural Users</div>
+                <div class="stats-trend">
+                    <i class="fas fa-arrow-up"></i> +8.9%
+                </div>
+            </div>
+            <div class="stats-particles"></div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="stats-card" style="--accent-color: var(--neon-pink)">
+            <div class="stats-icon">
+                <i class="fas fa-coins"></i>
+            </div>
+            <div class="stats-content">
+                <div class="stats-number">${{stats.monthlyRevenue}}</div>
+                <div class="stats-label">Cyber Revenue</div>
+                <div class="stats-trend">
+                    <i class="fas fa-arrow-up"></i> +31.2%
+                </div>
+            </div>
+            <div class="stats-particles"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Holographic Data Grid -->
+<div class="row">
+    <div class="col-md-8">
+        <div class="card glass-intense">
+            <div class="card-header-cyber">
+                <h3 class="cyber-title">🚀 Recent Quantum Bookings</h3>
+                <div class="header-actions">
+                    <button class="btn-neon btn-sm">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-container">
+                    <table class="table-futuristic w-100">
+                        <thead>
+                        <tr>
+                            <th>Customer</th>
+                            <th>Tour</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let booking of recentBookings">
+                            <td>{{booking.customer}}</td>
+                            <td>{{booking.tour}}</td>
+                            <td>{{booking.date}}</td>
+                            <td>
+                                <span class="badge" [ngClass]="{
+                                    'bg-success': booking.status === 'confirmed',
+                                    'bg-warning': booking.status === 'pending'
+                                }">{{booking.status}}</span>
+                            </td>
+                            <td>${{booking.amount}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Popular Tours - BIGGER Section -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="card-modern popular-tours-section">
+            <div class="card-header-modern">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="cyber-title mb-0">🌟 Popular Quantum Tours</h2>
+                    <button class="btn-neon">
+                        <i class="fas fa-chart-line"></i> View All Analytics
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div *ngFor="let tour of popularTours" class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                        <div class="popular-tour-card" [style.--accent-color]="tour.color">
+                            <div class="tour-rank">#{{'0' + (popularTours.indexOf(tour) + 1).toString().slice(-2)}}</div>
+                            <div class="tour-content">
+                                <h4 class="tour-name">{{tour.name}}</h4>
+                                <div class="tour-stats">
+                                    <div class="stat-item">
+                                        <i class="fas fa-users"></i>
+                                        <span>{{tour.bookings}} Bookings</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <i class="fas fa-star"></i>
+                                        <span>{{tour.rating || '4.8'}} Rating</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <i class="fas fa-dollar-sign"></i>
+                                        <span>${{tour.revenue || (tour.bookings * 299)}}</span>
+                                    </div>
+                                </div>
+                                <div class="tour-progress">
+                                    <div class="progress-label">
+                                        <span>Popularity</span>
+                                        <span>{{tour.percentage}}%</span>
+                                    </div>
+                                    <div class="progress progress-cyber">
+                                        <div class="progress-bar" role="progressbar" [style.width.%]="tour.percentage" [attr.aria-valuenow]="tour.percentage"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tour-glow"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

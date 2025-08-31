@@ -1,0 +1,52 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4>Bookings Management</h4>
+    <div class="d-flex gap-2">
+        <select class="form-select" [(ngModel)]="bookingFilter">
+            <option value="">All Bookings</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="pending">Pending</option>
+            <option value="cancelled">Cancelled</option>
+        </select>
+    </div>
+</div>
+
+<div class="card-modern">
+    <div class="card-body p-0">
+        <table class="table table-modern">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Customer</th>
+                    <th>Tour</th>
+                    <th>Date</th>
+                    <th>Guests</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let booking of filteredBookings">
+                    <td>{{booking.id}}</td>
+                    <td>{{booking.customer}}</td>
+                    <td>{{booking.tour}}</td>
+                    <td>{{booking.date}}</td>
+                    <td>{{booking.guests}}</td>
+                    <td>${{booking.amount}}</td>
+                    <td>
+                        <span class="badge" [ngClass]="{
+                            'bg-success': booking.status === 'confirmed',
+                            'bg-warning': booking.status === 'pending',
+                            'bg-danger': booking.status === 'cancelled'
+                        }">{{booking.status}}</span>
+                    </td>
+                    <td>
+                        <button class="btn btn-action btn-success" *ngIf="booking.status === 'pending'" (click)="confirmBooking(booking.id)">
+                            <i class="fas fa-check"></i>
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
