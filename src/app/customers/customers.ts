@@ -39,7 +39,7 @@ import { FormsModule } from '@angular/forms';
 
     <!-- Search and Filter -->
     <div class="row mb-4 justify-content-center">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <input type="text" class="form-control" placeholder="Search by name or email..." [(ngModel)]="searchTerm">
         </div>
         <div class="col-md-3">
@@ -48,6 +48,11 @@ import { FormsModule } from '@angular/forms';
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
             </select>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-primary w-100" (click)="exportCustomers()">
+                <i class="fas fa-download"></i> Export
+            </button>
         </div>
     </div>
 
@@ -67,7 +72,10 @@ import { FormsModule } from '@angular/forms';
                     <div class="mt-3 d-flex justify-content-center gap-2">
                         <button class="btn btn-sm btn-outline-primary" (click)="emailCustomer(customer.email, \$event)"><i class="fas fa-envelope"></i></button>
                         <button class="btn btn-sm btn-outline-info" (click)="callCustomer(customer.phone, \$event)"><i class="fas fa-phone"></i></button>
-                        <button class="btn btn-sm btn-outline-danger" (click)="deactivateCustomer(customer, \$event)">Deactivate</button>
+                        <button class="btn btn-sm btn-outline-danger" (click)="deactivateCustomer(customer, \$event)">
+                            <i class="fas fa-toggle-on" *ngIf="customer.status === 'active'"></i>
+                            <i class="fas fa-toggle-off" *ngIf="customer.status === 'inactive'"></i>
+                        </button>
                     </div>
                 </div>
                 <div class="card-footer bg-light border-0 text-center">
@@ -85,7 +93,7 @@ import { FormsModule } from '@angular/forms';
     </div>
 
     <!-- Floating Add Button -->
-    <button class="btn btn-primary rounded-circle shadow-lg floating-add-btn" title="Add Customer">
+    <button class="btn btn-primary rounded-circle shadow-lg floating-add-btn" title="Add Customer" (click)="addNewCustomer()">
         <i class="fas fa-user-plus fa-lg"></i>
     </button>
 
@@ -262,16 +270,21 @@ export class CustomersComponent {
   emailCustomer(email: string, event: Event) {
     event.stopPropagation();
     window.open('mailto:' + email);
+    alert(`Opening email client to send email to ${email}`);
   }
 
   callCustomer(phone: string, event: Event) {
     event.stopPropagation();
     window.open('tel:' + phone);
+    alert(`Initiating call to ${phone}`);
   }
 
   deactivateCustomer(customer: any, event: Event) {
     event.stopPropagation();
-    customer.status = 'inactive';
+    if (confirm(`Are you sure you want to deactivate ${customer.name}?`)) {
+      customer.status = customer.status === 'active' ? 'inactive' : 'active';
+      alert(`Customer ${customer.name} has been ${customer.status === 'active' ? 'activated' : 'deactivated'}`);
+    }
   }
 
   selectCustomer(customer: any) {
@@ -280,6 +293,42 @@ export class CustomersComponent {
 
   closeDetails() {
     this.selectedCustomer = null;
+  }
+
+  addNewCustomer() {
+    const newCustomer = {
+      id: this.customers.length + 1,
+      name: 'New Customer',
+      email: 'new@email.com',
+      phone: '+1 555-0000',
+      joined: new Date(),
+      status: 'active',
+      avatar: 'https://randomuser.me/api/portraits/men/0.jpg',
+      totalSpent: 0,
+      bookings: 0
+    };
+    this.customers.push(newCustomer);
+    alert('New customer template added! Click to edit details.');
+  }
+
+  exportCustomers() {
+    const csvContent = [
+      'ID,Name,Email,Phone,Joined,Status,Total Spent,Bookings',
+      ...this.filteredCustomers.map(customer => 
+        `${customer.id},"${customer.name}","${customer.email}","${customer.phone}",${customer.joined.toISOString().split('T')[0]},${customer.status},${customer.totalSpent},${customer.bookings}`
+      )
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `customers_export_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    alert('Customer data exported successfully!');
   }
 }
 

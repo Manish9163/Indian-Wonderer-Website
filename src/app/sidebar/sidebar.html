@@ -1,6 +1,7 @@
 <div class="sidebar" [ngClass]="{'show': sidebarOpen}">
     <div class="sidebar-brand">
-        <h4><i class="fas fa-map-marked-alt"></i> Indian Wonderer</h4>
+        <img src="assets/WhatsApp.jpg" alt="Indian Wonderer" class="brand-logo">
+        <h4>Indian Wonderer</h4>
     </div>
     <ul class="nav flex-column sidebar-nav">
         <li class="nav-item">
@@ -31,6 +32,11 @@
         <li class="nav-item">
             <a class="nav-link" routerLink="/guides" routerLinkActive="active">
                 <i class="fas fa-user-tie"></i> Tour Guides
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" routerLink="/payments" routerLinkActive="active">
+                <i class="fas fa-credit-card"></i> Payments
             </a>
         </li>
         <li class="nav-item">

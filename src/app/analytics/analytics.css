@@ -1,0 +1,44 @@
+/* Analytics Payment Section Styles */
+
+/* Add extra padding to Payment Analytics card header */
+.payment-analytics-header {
+    padding: 2rem 2.5rem !important;
+}
+
+/* Add padding to the entire Payment Analytics card */
+.payment-analytics-card {
+    padding: 1.5rem;
+}
+
+.payment-analytics-card .card-body {
+    padding: 2rem !important;
+}
+
+/* Enhanced spacing for Payment Analytics metrics */
+.payment-analytics-card .analytics-metric {
+    margin-bottom: 0.75rem;
+}
+
+.payment-analytics-card .analytics-label {
+    margin-bottom: 1.5rem;
+}
+
+/* Add padding to Payment Analytics content sections */
+.payment-analytics-card hr {
+    margin: 2rem 0;
+}
+
+.payment-analytics-card .row {
+    margin-bottom: 1rem;
+}
+
+/* Dark mode support for Payment Analytics */
+[data-theme="dark"] .payment-analytics-header {
+    background: rgba(30, 30, 30, 0.9) !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .payment-analytics-card {
+    background: rgba(20, 20, 20, 0.9) !important;
+    color: #ffffff !important;
+}

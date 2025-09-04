@@ -14,18 +14,18 @@ interface Customer {
   avatar: string;
   location: string;
   lastActivity: string;
-  neuralScore: number;
+  score: number;
 }
 
 @Component({
-  selector: 'app-customers-cyber',
+  selector: 'app-customers',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <!-- Cyber Command Center Header -->
-    <div class="cyber-header mb-5">
-      <h1 class="cyber-title">🌐 Neural Customer Matrix</h1>
-      <p class="cyber-subtitle">Advanced customer intelligence and quantum analytics</p>
+    <!-- Command Center Header -->
+    <div class="admin-header mb-5">
+      <h1 class="main-title">🌐 Customer Management</h1>
+      <p class="subtitle">Advanced customer intelligence and analytics</p>
     </div>
 
     <!-- Quantum Stats Overview -->
@@ -82,7 +82,7 @@ interface Customer {
           </div>
           <div class="stats-content">
             <div class="stats-number">\${{totalSpent | number}}</div>
-            <div class="stats-label">Neural Revenue</div>
+            <div class="stats-label">Revenue</div>
             <div class="stats-trend">
               <i class="fas fa-arrow-up"></i> +23.1%
             </div>
@@ -100,7 +100,7 @@ interface Customer {
             <input 
               type="text" 
               class="form-control-futuristic" 
-              placeholder="🔍 Neural Search Customers..." 
+              placeholder="🔍 Search Customers..." 
               [(ngModel)]="searchQuery"
             >
             <div class="search-glow"></div>
@@ -116,15 +116,15 @@ interface Customer {
         </div>
         <div class="col-md-3">
           <select class="form-control-futuristic" [(ngModel)]="sortBy">
-            <option value="name">Sort by Neural ID</option>
-            <option value="totalSpent">Sort by Quantum Value</option>
-            <option value="joinDate">Sort by Matrix Entry</option>
-            <option value="neuralScore">Sort by Neural Score</option>
+            <option value="name">Sort by Name</option>
+            <option value="totalSpent">Sort by Value</option>
+            <option value="joinDate">Sort by Join Date</option>
+            <option value="score">Sort by Score</option>
           </select>
         </div>
         <div class="col-md-2">
           <button class="btn-neon w-100" (click)="addCustomer()">
-            <i class="fas fa-plus"></i> Add Entity
+            <i class="fas fa-plus"></i> Add Customer
           </button>
         </div>
       </div>
@@ -155,10 +155,10 @@ interface Customer {
                 </span>
               </div>
             </div>
-            <div class="neural-score">
+            <div class="customer-score">
               <div class="score-circle">
-                <span class="score-value">{{customer.neuralScore}}</span>
-                <span class="score-label">Neural</span>
+                <span class="score-value">{{customer.score}}</span>
+                <span class="score-label">Score</span>
               </div>
             </div>
           </div>
@@ -208,13 +208,13 @@ interface Customer {
       </div>
     </div>
 
-    <!-- Floating Quantum Actions -->
-    <div class="quantum-actions">
-      <div class="action-orb" (click)="exportData()" title="Export Neural Data">
+    <!-- Floating Actions -->
+    <div class="floating-actions">
+      <div class="action-orb" (click)="exportData()" title="Export Data">
         <i class="fas fa-download"></i>
       </div>
       <div class="action-orb" (click)="analyzePattern()" title="Analyze Patterns">
-        <i class="fas fa-brain"></i>
+        <i class="fas fa-chart-bar"></i>
       </div>
       <div class="action-orb" (click)="generateReport()" title="Generate Report">
         <i class="fas fa-chart-line"></i>
@@ -239,9 +239,9 @@ export class CustomersCyberComponent {
       status: 'vip',
       joinDate: '2023-01-15',
       avatar: 'https://randomuser.me/api/portraits/women/1.jpg',
-      location: 'Neo Tokyo',
+      location: 'New York',
       lastActivity: '2 hours ago',
-      neuralScore: 95
+      score: 78
     },
     {
       id: 2,
@@ -253,9 +253,9 @@ export class CustomersCyberComponent {
       status: 'active',
       joinDate: '2023-03-22',
       avatar: 'https://randomuser.me/api/portraits/men/2.jpg',
-      location: 'New Angeles',
+      location: 'Los Angeles',
       lastActivity: '1 day ago',
-      neuralScore: 78
+      score: 78
     },
     {
       id: 3,
@@ -267,9 +267,9 @@ export class CustomersCyberComponent {
       status: 'vip',
       joinDate: '2022-11-08',
       avatar: 'https://randomuser.me/api/portraits/women/3.jpg',
-      location: 'Dubai Prime',
+      location: 'Dubai',
       lastActivity: '30 minutes ago',
-      neuralScore: 98
+      score: 98
     },
     {
       id: 4,
@@ -281,9 +281,9 @@ export class CustomersCyberComponent {
       status: 'active',
       joinDate: '2023-06-10',
       avatar: 'https://randomuser.me/api/portraits/men/4.jpg',
-      location: 'Moscow Central',
+      location: 'Moscow',
       lastActivity: '3 hours ago',
-      neuralScore: 65
+      score: 65
     },
     {
       id: 5,
@@ -295,9 +295,9 @@ export class CustomersCyberComponent {
       status: 'inactive',
       joinDate: '2023-08-15',
       avatar: 'https://randomuser.me/api/portraits/women/5.jpg',
-      location: 'Seoul Digital',
+      location: 'Seoul',
       lastActivity: '2 weeks ago',
-      neuralScore: 45
+      score: 45
     }
   ];
 
@@ -316,8 +316,8 @@ export class CustomersCyberComponent {
           return b.totalSpent - a.totalSpent;
         case 'joinDate':
           return new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime();
-        case 'neuralScore':
-          return b.neuralScore - a.neuralScore;
+        case 'score':
+          return b.score - a.score;
         default:
           return a.name.localeCompare(b.name);
       }

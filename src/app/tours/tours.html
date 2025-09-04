@@ -1,8 +1,13 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4>Tours Management</h4>
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#tourModal" (click)="editingTour = null">
-        <i class="fas fa-plus"></i> Add New Tour
-    </button>
+    <div class="d-flex gap-2">
+        <button class="btn btn-success" (click)="exportTours()">
+            <i class="fas fa-download"></i> Export
+        </button>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#tourModal" (click)="editingTour = null">
+            <i class="fas fa-plus"></i> Add New Tour
+        </button>
+    </div>
 </div>
 
 <div class="card-modern">
@@ -36,15 +41,23 @@
                             'bg-success': tour.status === 'active',
                             'bg-secondary': tour.status === 'draft',
                             'bg-danger': tour.status === 'inactive'
-                        }">{{tour.status}}</span>
+                        }" style="cursor: pointer;" (click)="toggleTourStatus(tour)">{{tour.status}}</span>
                     </td>
                     <td>
-                        <button class="btn btn-action btn-primary" data-bs-toggle="modal" data-bs-target="#tourModal" (click)="editTour(tour)">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-action btn-danger" (click)="deleteTour(tour.id)">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-action btn-info" (click)="previewTour(tour)" title="Preview">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-action btn-primary" data-bs-toggle="modal" data-bs-target="#tourModal" (click)="editTour(tour)" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-action btn-warning" (click)="duplicateTour(tour)" title="Duplicate">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                            <button class="btn btn-action btn-danger" (click)="deleteTour(tour.id)" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
                     </td>
                 </tr>
             </tbody>

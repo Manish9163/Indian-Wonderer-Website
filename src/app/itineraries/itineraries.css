@@ -1,32 +1,49 @@
-/* Epic Itinerary Management Styles */
+/* Professional Itinerary Management Styles */
 .itinerary-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 3rem;
-    padding: 2rem;
-    background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(180, 0, 255, 0.1) 100%);
+    padding: 2rem 2.5rem;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
     border-radius: 20px;
-    border: 2px solid rgba(0, 212, 255, 0.2);
+    border: 2px solid rgba(102, 126, 234, 0.2);
     backdrop-filter: blur(20px);
+    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.1);
 }
 
-.itinerary-header .cyber-title {
-    font-size: 2.5rem;
+.main-title {
+    font-size: 2.2rem;
+    font-weight: 700;
     margin: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 0.5px;
 }
 
-/* Itinerary Card Styles */
+.btn-create {
+    padding: 12px 24px !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    border-radius: 12px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+}
+
+/* Professional Itinerary Card Styles */
 .itinerary-card {
     background: var(--bg-card);
     border: 2px solid transparent;
-    border-radius: 25px;
+    border-radius: 20px;
     overflow: hidden;
-    transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     backdrop-filter: blur(20px);
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.1);
     height: 100%;
     position: relative;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
 }
 
 .itinerary-card::before {
@@ -36,19 +53,19 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, var(--neon-blue) 0%, var(--neon-purple) 100%);
-    opacity: 0.05;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    opacity: 0.03;
     transition: opacity 0.3s ease;
 }
 
 .itinerary-card:hover {
-    transform: translateY(-15px) rotateX(5deg);
-    border-color: var(--neon-blue);
-    box-shadow: 0 30px 80px rgba(0, 212, 255, 0.3);
+    transform: translateY(-8px) scale(1.02);
+    border-color: #667eea;
+    box-shadow: 0 20px 60px rgba(102, 126, 234, 0.25);
 }
 
 .itinerary-card:hover::before {
-    opacity: 0.1;
+    opacity: 0.08;
 }
 
 /* Header Card */
@@ -210,26 +227,27 @@
     filter: drop-shadow(0 0 5px currentColor);
 }
 
-/* Footer Actions */
+/* Professional Footer Actions */
 .itinerary-footer {
     padding: 1.5rem 2rem 2rem 2rem;
-    background: rgba(255, 255, 255, 0.05);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, rgba(102, 126, 234, 0.02) 100%);
+    border-top: 1px solid rgba(102, 126, 234, 0.1);
+    border-radius: 0 0 20px 20px;
+}
+
+.action-buttons {
     display: flex;
     gap: 0.75rem;
     justify-content: center;
     flex-wrap: wrap;
-    min-height: 80px;
     align-items: center;
 }
 
-.btn-cyber {
-    background: linear-gradient(135deg, var(--neon-blue) 0%, var(--neon-purple) 100%);
-    color: white;
+.btn-admin {
     border: none;
-    padding: 0.6rem 1.2rem;
-    border-radius: 50px;
-    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 500;
     font-size: 0.875rem;
     transition: all 0.3s ease;
     text-decoration: none;
@@ -238,48 +256,73 @@
     gap: 0.4rem;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 5px 20px rgba(0, 212, 255, 0.3);
     white-space: nowrap;
-    min-width: 90px;
+    min-width: 80px;
     justify-content: center;
+    cursor: pointer;
 }
 
-.btn-cyber::before {
+.btn-edit {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 3px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-edit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+.btn-preview {
+    background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+    color: white;
+    box-shadow: 0 3px 12px rgba(23, 162, 184, 0.3);
+}
+
+.btn-preview:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(23, 162, 184, 0.4);
+    color: white;
+}
+
+.btn-export {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    box-shadow: 0 3px 12px rgba(40, 167, 69, 0.3);
+}
+
+.btn-export:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+    color: white;
+}
+
+.btn-delete {
+    background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+    color: white;
+    box-shadow: 0 3px 12px rgba(220, 53, 69, 0.3);
+}
+
+.btn-delete:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+    color: white;
+}
+
+.btn-admin::before {
     content: '';
     position: absolute;
     top: 0;
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%);
     transition: left 0.5s ease;
 }
 
-.btn-cyber:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 30px rgba(0, 212, 255, 0.5);
-}
-
-.btn-cyber:hover::before {
+.btn-admin:hover::before {
     left: 100%;
-}
-
-.btn-cyber.btn-danger {
-    background: linear-gradient(135deg, var(--neon-pink) 0%, var(--neon-orange) 100%);
-    box-shadow: 0 5px 20px rgba(255, 0, 128, 0.3);
-}
-
-.btn-cyber.btn-danger:hover {
-    box-shadow: 0 10px 30px rgba(255, 0, 128, 0.5);
-}
-
-.btn-cyber.btn-success {
-    background: linear-gradient(135deg, var(--neon-green) 0%, var(--neon-blue) 100%);
-    box-shadow: 0 5px 20px rgba(0, 255, 136, 0.3);
-}
-
-.btn-cyber.btn-success:hover {
-    box-shadow: 0 10px 30px rgba(0, 255, 136, 0.5);
 }
 
 /* Responsive Design */
@@ -312,7 +355,7 @@
         gap: 0.5rem;
     }
     
-    .btn-cyber {
+    .btn-admin {
         padding: 0.5rem 1rem;
         font-size: 0.8rem;
         min-width: 80px;
@@ -339,3 +382,213 @@
 .itinerary-card:nth-child(2) { animation-delay: 0.2s; }
 .itinerary-card:nth-child(3) { animation-delay: 0.3s; }
 .itinerary-card:nth-child(4) { animation-delay: 0.4s; }
+
+/* Journey Form Modal Styles */
+.schedule-day-form {
+    background: rgba(0, 212, 255, 0.05);
+    border: 1px solid rgba(0, 212, 255, 0.2) !important;
+    transition: all 0.3s ease;
+}
+
+.schedule-day-form:hover {
+    background: rgba(0, 212, 255, 0.1);
+    border-color: rgba(0, 212, 255, 0.4) !important;
+}
+
+/* Light mode form controls */
+.schedule-day-form .form-control {
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    color: #1a1a1a;
+    transition: all 0.3s ease;
+}
+
+.schedule-day-form .form-control:focus {
+    background: #ffffff;
+    border-color: var(--neon-blue);
+    box-shadow: 0 0 0 0.2rem rgba(0, 212, 255, 0.25);
+    color: #1a1a1a;
+}
+
+.schedule-day-form .form-control::placeholder {
+    color: #6b7280;
+}
+
+/* Dark mode form controls */
+[data-theme="dark"] .schedule-day-form .form-control {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .schedule-day-form .form-control:focus {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: var(--neon-blue) !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 212, 255, 0.25) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .schedule-day-form .form-control::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Modal form controls - Light mode */
+#journeyModal .form-control {
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    color: #1a1a1a;
+}
+
+#journeyModal .form-control:focus {
+    background: #ffffff;
+    border-color: var(--neon-blue);
+    color: #1a1a1a;
+}
+
+#journeyModal .form-control::placeholder {
+    color: #6b7280;
+}
+
+/* Modal form controls - Dark mode */
+[data-theme="dark"] #journeyModal .form-control {
+    background: rgba(30, 30, 30, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] #journeyModal .form-control:focus {
+    background: rgba(40, 40, 40, 0.9) !important;
+    border-color: var(--neon-blue) !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] #journeyModal .form-control::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.modal-xl .modal-dialog {
+    max-width: 1200px;
+}
+
+/* Custom scrollbar for schedule container */
+.modal-body .border::-webkit-scrollbar {
+    width: 8px;
+}
+
+/* Professional Dark Mode Support */
+[data-theme="dark"] .itinerary-header {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+    border-color: rgba(102, 126, 234, 0.3);
+    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.2);
+}
+
+[data-theme="dark"] .main-title {
+    color: #ffffff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+[data-theme="dark"] .itinerary-card {
+    background: linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(25, 25, 25, 0.9) 100%);
+    border-color: rgba(102, 126, 234, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    color: #ffffff;
+}
+
+[data-theme="dark"] .itinerary-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+}
+
+[data-theme="dark"] .itinerary-header-card {
+    background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+    color: #ffffff;
+}
+
+[data-theme="dark"] .tour-name {
+    color: #ffffff;
+}
+
+[data-theme="dark"] .duration-badge {
+    background: rgba(102, 126, 234, 0.2);
+    color: #ffffff;
+}
+
+[data-theme="dark"] .timeline-item {
+    color: #ffffff;
+}
+
+[data-theme="dark"] .timeline-marker {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #ffffff;
+}
+
+[data-theme="dark"] .day-title {
+    color: #ffffff;
+}
+
+[data-theme="dark"] .day-description {
+    color: #a0a0a0;
+}
+
+[data-theme="dark"] .day-time {
+    color: #a0a0a0;
+}
+
+[data-theme="dark"] .itinerary-footer {
+    background: linear-gradient(135deg, rgba(25, 25, 25, 0.9) 0%, rgba(30, 30, 30, 0.8) 100%);
+    border-color: rgba(102, 126, 234, 0.2);
+}
+
+[data-theme="dark"] .btn-neon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #ffffff;
+    border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+[data-theme="dark"] .btn-neon:hover {
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    color: #ffffff;
+}
+
+/* Dark mode button overrides to maintain professional look */
+[data-theme="dark"] .btn-edit,
+[data-theme="dark"] .btn-preview,
+[data-theme="dark"] .btn-export,
+[data-theme="dark"] .btn-delete {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .btn-edit:hover,
+[data-theme="dark"] .btn-preview:hover,
+[data-theme="dark"] .btn-export:hover,
+[data-theme="dark"] .btn-delete:hover {
+    color: #ffffff !important;
+}
+
+.modal-body .border::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.modal-body .border::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+    border-radius: 4px;
+}
+
+.modal-body .border::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+}
+
+/* Form validation styling */
+.form-control.is-invalid {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.form-control.is-valid {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}

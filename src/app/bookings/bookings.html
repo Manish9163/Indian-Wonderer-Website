@@ -1,12 +1,15 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4>Bookings Management</h4>
     <div class="d-flex gap-2">
-        <select class="form-select" [(ngModel)]="bookingFilter">
+        <select class="form-select" [(ngModel)]="bookingFilter" (change)="filterBookings()">
             <option value="">All Bookings</option>
             <option value="confirmed">Confirmed</option>
             <option value="pending">Pending</option>
             <option value="cancelled">Cancelled</option>
         </select>
+        <button class="btn btn-primary" (click)="exportBookings()">
+            <i class="fas fa-download"></i> Export
+        </button>
     </div>
 </div>
 
@@ -41,9 +44,17 @@
                         }">{{booking.status}}</span>
                     </td>
                     <td>
-                        <button class="btn btn-action btn-success" *ngIf="booking.status === 'pending'" (click)="confirmBooking(booking.id)">
-                            <i class="fas fa-check"></i>
-                        </button>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-action btn-info" (click)="viewBookingDetails(booking)" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-action btn-success" *ngIf="booking.status === 'pending'" (click)="confirmBooking(booking.id)" title="Confirm">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button class="btn btn-action btn-danger" *ngIf="booking.status !== 'cancelled'" (click)="cancelBooking(booking.id)" title="Cancel">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                     </td>
                 </tr>
             </tbody>

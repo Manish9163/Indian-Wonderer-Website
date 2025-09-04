@@ -1,9 +1,10 @@
-import { Component, OnInit, Renderer2 } from '@angular/core';
+import { Component, OnInit, Renderer2, Inject, PLATFORM_ID } from '@angular/core';
 import { Router, NavigationEnd, RouterOutlet } from '@angular/router';
 import { SidebarComponent } from './sidebar/sidebar';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { filter } from 'rxjs/operators';
+import { ThemeService } from './theme.service';
 
 @Component({
   selector: 'app-root',
@@ -18,7 +19,12 @@ export class AppComponent implements OnInit {
   activeTab = 'dashboard';
   isDarkMode = false;
 
-  constructor(private router: Router, private renderer: Renderer2) {
+  constructor(
+    private router: Router, 
+    private renderer: Renderer2, 
+    private themeService: ThemeService,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
@@ -27,10 +33,11 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
-    // Check for saved theme preference or default to light mode
-    const savedTheme = localStorage.getItem('theme');
-    this.isDarkMode = savedTheme === 'dark';
-    this.updateTheme();
+    // Subscribe to theme changes
+    this.themeService.isDarkMode$.subscribe(isDark => {
+      this.isDarkMode = isDark;
+    });
+    
     this.createParticles();
   }
 
@@ -39,31 +46,24 @@ export class AppComponent implements OnInit {
   }
 
   toggleTheme() {
-    this.isDarkMode = !this.isDarkMode;
-    this.updateTheme();
-    localStorage.setItem('theme', this.isDarkMode ? 'dark' : 'light');
-  }
-
-  private updateTheme() {
-    if (this.isDarkMode) {
-      this.renderer.setAttribute(document.documentElement, 'data-theme', 'dark');
-    } else {
-      this.renderer.removeAttribute(document.documentElement, 'data-theme');
-    }
+    this.themeService.toggleTheme();
   }
 
   private createParticles() {
-    const particlesContainer = document.createElement('div');
-    particlesContainer.className = 'particles';
-    document.body.appendChild(particlesContainer);
+    // Only create particles in browser environment
+    if (isPlatformBrowser(this.platformId)) {
+      const particlesContainer = document.createElement('div');
+      particlesContainer.className = 'particles';
+      document.body.appendChild(particlesContainer);
 
-    for (let i = 0; i < 50; i++) {
-      const particle = document.createElement('div');
-      particle.className = 'particle';
-      particle.style.left = Math.random() * 100 + '%';
-      particle.style.animationDelay = Math.random() * 6 + 's';
-      particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
-      particlesContainer.appendChild(particle);
+      for (let i = 0; i < 50; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 6 + 's';
+        particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
+        particlesContainer.appendChild(particle);
+      }
     }
   }
 
@@ -75,6 +75,7 @@ export class AppComponent implements OnInit {
         bookings: 'Bookings Management',
         customers: 'Customer Management',
         guides: 'Tour Guide Management',
+        payments: 'Payment Management',
         analytics: 'Analytics & Reports',
         settings: 'System Settings'
     };

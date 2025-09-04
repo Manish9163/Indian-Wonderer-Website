@@ -8,106 +8,145 @@ import { FormsModule } from '@angular/forms';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="payments-dashboard">
-      <!-- Payment Stats -->
-      <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-          <div class="stats-card fade-in-up">
-            <div class="icon" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
+      <!-- Enhanced Payment Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-gradient-header rounded">
+        <div>
+          <h4 class="mb-1">💳 Payment Management Center</h4>
+          <small class="text-light">Comprehensive payment processing and analytics</small>
+        </div>
+        <div class="d-flex gap-2">
+          <select class="form-select form-select-sm payment-filter" [(ngModel)]="selectedFilter" (change)="applyFilter()" style="width: auto;">
+            <option value="all">All Payments</option>
+            <option value="completed">Completed</option>
+            <option value="pending">Pending</option>
+            <option value="failed">Failed</option>
+            <option value="refunded">Refunded</option>
+          </select>
+          <button class="btn btn-light btn-sm" (click)="generateReport()">
+            <i class="fas fa-chart-bar"></i> Generate Report
+          </button>
+          <button class="btn btn-light btn-sm" (click)="exportPayments()">
+            <i class="fas fa-download"></i> Export
+          </button>
+        </div>
+      </div>
+
+      <!-- Enhanced Payment Statistics Cards -->
+      <div class="row g-4 mb-4">
+        <div class="col-md-3">
+          <div class="payment-stats-card gradient-success fade-in-up" (click)="onRevenueCardClick()">
+            <div class="payment-icon">
+              <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div class="payment-metric">{{ '$' + (paymentStats.totalRevenue | number) }}</div>
+            <div class="payment-label">Total Revenue</div>
+            <div class="payment-change positive">
+              <i class="fas fa-arrow-up"></i>
+              +{{paymentStats.revenueGrowth}}% this month
+            </div>
+            <div class="payment-subtitle">Across all payment gateways</div>
+            <div class="payment-progress">
+              <div class="progress-bar success" [style.width]="'85%'"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="payment-stats-card gradient-primary fade-in-up" (click)="onTransactionsCardClick()">
+            <div class="payment-icon">
               <i class="fas fa-credit-card"></i>
             </div>
-            <h3 class="mb-1">{{paymentStats.totalProcessed | currency}}</h3>
-            <p class="text-muted mb-0">Total Processed</p>
-            <div class="analytics-change positive">
+            <div class="payment-metric">{{paymentStats.totalTransactions | number}}</div>
+            <div class="payment-label">Total Transactions</div>
+            <div class="payment-change positive">
               <i class="fas fa-arrow-up"></i>
-              +{{paymentStats.growthRate}}% this month
+              +{{paymentStats.transactionGrowth}}% this month
+            </div>
+            <div class="payment-subtitle">Successfully processed</div>
+            <div class="payment-progress">
+              <div class="progress-bar success" [style.width]="'92%'"></div>
             </div>
           </div>
         </div>
-        <div class="col-md-3 mb-3">
-          <div class="stats-card fade-in-up" style="animation-delay: 0.1s;">
-            <div class="icon" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white;">
+
+        <div class="col-md-3">
+          <div class="payment-stats-card gradient-warning fade-in-up" (click)="onPendingCardClick()">
+            <div class="payment-icon">
               <i class="fas fa-clock"></i>
             </div>
-            <h3 class="mb-1">{{paymentStats.pendingPayments}}</h3>
-            <p class="text-muted mb-0">Pending Payments</p>
-            <div class="analytics-change negative">
+            <div class="payment-metric">{{ '$' + (paymentStats.pendingPayments | number) }}</div>
+            <div class="payment-label">Pending Payments</div>
+            <div class="payment-change negative">
               <i class="fas fa-arrow-down"></i>
-              -{{paymentStats.pendingDecrease}}% from last week
+              {{paymentStats.pendingGrowth}}% this month
+            </div>
+            <div class="payment-subtitle">Awaiting processing</div>
+            <div class="payment-progress">
+              <div class="progress-bar warning" [style.width]="'35%'"></div>
             </div>
           </div>
         </div>
-        <div class="col-md-3 mb-3">
-          <div class="stats-card fade-in-up" style="animation-delay: 0.2s;">
-            <div class="icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white;">
-              <i class="fas fa-percentage"></i>
-            </div>
-            <h3 class="mb-1">{{paymentStats.successRate}}%</h3>
-            <p class="text-muted mb-0">Success Rate</p>
-            <div class="analytics-change positive">
-              <i class="fas fa-arrow-up"></i>
-              +{{paymentStats.successImprovement}}% this month
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3 mb-3">
-          <div class="stats-card fade-in-up" style="animation-delay: 0.3s;">
-            <div class="icon" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white;">
+
+        <div class="col-md-3">
+          <div class="payment-stats-card gradient-danger fade-in-up" (click)="onFailedCardClick()">
+            <div class="payment-icon">
               <i class="fas fa-exclamation-triangle"></i>
             </div>
-            <h3 class="mb-1">{{paymentStats.failedPayments}}</h3>
-            <p class="text-muted mb-0">Failed Payments</p>
-            <div class="analytics-change positive">
+            <div class="payment-metric">{{paymentStats.failedPayments}}</div>
+            <div class="payment-label">Failed Payments</div>
+            <div class="payment-change positive">
               <i class="fas fa-arrow-down"></i>
-              -{{paymentStats.failureReduction}}% this month
+              {{paymentStats.failureGrowth}}% this month
+            </div>
+            <div class="payment-subtitle">Declined or errors</div>
+            <div class="payment-progress">
+              <div class="progress-bar danger" [style.width]="'12%'"></div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Payment Filters -->
-      <div class="row mb-4">
-        <div class="col-md-12">
-          <div class="card-modern">
-            <div class="card-body">
-              <div class="row align-items-center">
-                <div class="col-md-3">
-                  <label class="form-label">Payment Status</label>
-                  <select class="form-select" [(ngModel)]="filters.status" (change)="applyFilters()">
-                    <option value="">All Statuses</option>
-                    <option value="completed">Completed</option>
-                    <option value="pending">Pending</option>
-                    <option value="failed">Failed</option>
-                    <option value="refunded">Refunded</option>
-                  </select>
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label">Payment Method</label>
-                  <select class="form-select" [(ngModel)]="filters.method" (change)="applyFilters()">
-                    <option value="">All Methods</option>
-                    <option value="credit_card">Credit Card</option>
-                    <option value="paypal">PayPal</option>
-                    <option value="bank_transfer">Bank Transfer</option>
-                    <option value="crypto">Cryptocurrency</option>
-                  </select>
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label">Date Range</label>
-                  <select class="form-select" [(ngModel)]="filters.dateRange" (change)="applyFilters()">
-                    <option value="today">Today</option>
-                    <option value="week">This Week</option>
-                    <option value="month">This Month</option>
-                    <option value="quarter">This Quarter</option>
-                  </select>
-                </div>
-                <div class="col-md-3">
-                  <label class="form-label">Amount Range</label>
-                  <select class="form-select" [(ngModel)]="filters.amountRange" (change)="applyFilters()">
-                    <option value="">All Amounts</option>
-                    <option value="0-500">$0 - $500</option>
-                    <option value="500-2000">$500 - $2,000</option>
-                    <option value="2000-5000">$2,000 - $5,000</option>
-                    <option value="5000+">$5,000+</option>
-                  </select>
+      <!-- Payment Gateway Status Panel -->
+      <div class="payment-gateway-panel mb-4 fade-in-up">
+        <div class="panel-header">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="mb-1"><i class="fas fa-globe"></i> Payment Gateway Status</h5>
+              <small>Real-time monitoring of payment processors</small>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-light btn-sm" (click)="refreshGatewayStatus()">
+                <i class="fas fa-sync-alt"></i> Refresh
+              </button>
+              <button class="btn btn-light btn-sm" (click)="toggleMonitoring()">
+                <i class="fas fa-play" *ngIf="!monitoringActive"></i>
+                <i class="fas fa-pause" *ngIf="monitoringActive"></i>
+                {{monitoringActive ? 'Stop' : 'Start'}} Monitor
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="panel-body">
+          <div class="row">
+            <div class="col-md-3" *ngFor="let gateway of paymentGateways">
+              <div class="gateway-status" [ngClass]="gateway.status" (click)="configureGateway(gateway.name)">
+                <div class="text-center">
+                  <div class="gateway-icon">
+                    <i [class]="gateway.icon"></i>
+                  </div>
+                  <div class="gateway-name">{{gateway.name}}</div>
+                  <div class="gateway-metric">{{ '$' + (gateway.revenue | number) }}</div>
+                  <div class="gateway-status-text">{{gateway.status.toUpperCase()}}</div>
+                  <div class="gateway-uptime">Uptime: {{gateway.uptime}}</div>
+                  <div class="gateway-uptime">Response: {{gateway.responseTime}}</div>
+                  <div class="mt-2">
+                    <button class="btn btn-sm" 
+                            [ngClass]="gateway.status === 'active' ? 'btn-warning' : 'btn-success'"
+                            (click)="toggleGateway(gateway.name); $event.stopPropagation()">
+                      {{gateway.status === 'active' ? 'Disable' : 'Enable'}}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -115,89 +154,91 @@ import { FormsModule } from '@angular/forms';
         </div>
       </div>
 
-      <!-- Payment Transactions Table -->
-      <div class="card-modern">
-        <div class="card-header-modern d-flex justify-content-between align-items-center">
-          <h6 class="mb-0">Payment Transactions</h6>
-          <div class="d-flex gap-2">
-            <button class="btn btn-primary" (click)="exportPayments()">
-              <i class="fas fa-download me-2"></i>Export
-            </button>
-            <button class="btn btn-success" (click)="processRefund()">
-              <i class="fas fa-undo me-2"></i>Process Refund
-            </button>
+      <!-- Enhanced Payments Table -->
+      <div class="card-modern mb-4 fade-in-up">
+        <div class="panel-header">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="mb-1"><i class="fas fa-list"></i> Recent Transactions</h5>
+              <small>Latest payment activities and transactions</small>
+            </div>
+            <div class="d-flex gap-2">
+              <select class="form-select form-select-sm payment-filter" [(ngModel)]="selectedPaymentGateway" (change)="applyGatewayFilter()" style="width: auto;">
+                <option value="all">All Gateways</option>
+                <option value="Stripe">Stripe</option>
+                <option value="PayPal">PayPal</option>
+                <option value="Razorpay">Razorpay</option>
+                <option value="Square">Square</option>
+              </select>
+              <select class="form-select form-select-sm payment-filter" [(ngModel)]="selectedDateRange" (change)="applyDateRange()" style="width: auto;">
+                <option value="today">Today</option>
+                <option value="this-week">This Week</option>
+                <option value="this-month">This Month</option>
+                <option value="last-month">Last Month</option>
+              </select>
+            </div>
           </div>
         </div>
-        <div class="card-body p-0">
+        
+        <div class="panel-body">
           <div class="table-responsive">
-            <table class="table table-modern">
+            <table class="table">
               <thead>
                 <tr>
-                  <th>
-                    <input type="checkbox" class="form-check-input" (change)="toggleAllPayments($event)">
-                  </th>
                   <th>Transaction ID</th>
                   <th>Customer</th>
-                  <th>Tour</th>
                   <th>Amount</th>
-                  <th>Method</th>
-                  <th>Date</th>
+                  <th>Gateway</th>
                   <th>Status</th>
+                  <th>Date</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let payment of filteredPayments; trackBy: trackByPaymentId">
+                <tr *ngFor="let payment of payments">
                   <td>
-                    <input type="checkbox" class="form-check-input" 
-                           [checked]="selectedPayments.includes(payment.id)"
-                           (change)="togglePaymentSelection(payment.id, $event)">
-                  </td>
-                  <td>
-                    <span class="font-monospace">{{payment.transactionId}}</span>
+                    <span class="fw-bold">{{payment.id}}</span>
                   </td>
                   <td>
                     <div class="d-flex align-items-center">
-                      <div class="avatar-sm me-2">{{payment.customer.charAt(0)}}</div>
-                      <div>
-                        <div class="fw-semibold">{{payment.customer}}</div>
-                        <small class="text-muted">{{payment.customerEmail}}</small>
+                      <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                        {{payment.customerName.charAt(0)}}
                       </div>
+                      {{payment.customerName}}
                     </div>
                   </td>
-                  <td>{{payment.tour}}</td>
-                  <td class="fw-semibold">{{payment.amount | currency}}</td>
                   <td>
-                    <div class="d-flex align-items-center">
-                      <i [class]="getPaymentMethodIcon(payment.method)" class="me-2"></i>
-                      {{getPaymentMethodLabel(payment.method)}}
-                    </div>
+                    <span class="fw-bold">{{ '$' + payment.amount }}</span>
+                    <small class="text-muted d-block">{{payment.currency}}</small>
                   </td>
-                  <td>{{payment.date | date:'short'}}</td>
                   <td>
-                    <span class="payment-status" [ngClass]="payment.status">
-                      <i [class]="getStatusIcon(payment.status)"></i>
+                    <span class="badge bg-info">{{payment.gateway}}</span>
+                  </td>
+                  <td>
+                    <span class="badge" 
+                          [ngClass]="{
+                            'bg-success': payment.status === 'completed',
+                            'bg-warning': payment.status === 'pending',
+                            'bg-danger': payment.status === 'failed',
+                            'bg-secondary': payment.status === 'refunded'
+                          }">
                       {{payment.status | titlecase}}
                     </span>
                   </td>
+                  <td>{{payment.date | date:'short'}}</td>
                   <td>
-                    <div class="d-flex gap-1">
-                      <button class="btn btn-action btn-primary" 
-                              [title]="'View Details'"
-                              (click)="viewPaymentDetails(payment)">
+                    <div class="btn-group btn-group-sm">
+                      <button class="btn btn-info" (click)="viewPaymentDetails(payment.id)" title="View Details">
                         <i class="fas fa-eye"></i>
                       </button>
-                      <button class="btn btn-action btn-warning" 
-                              *ngIf="payment.status === 'completed'"
-                              [title]="'Process Refund'"
-                              (click)="initiateRefund(payment)">
-                        <i class="fas fa-undo"></i>
+                      <button class="btn btn-success" (click)="downloadReceipt(payment.id)" title="Download Receipt">
+                        <i class="fas fa-download"></i>
                       </button>
-                      <button class="btn btn-action btn-success" 
-                              *ngIf="payment.status === 'pending'"
-                              [title]="'Retry Payment'"
-                              (click)="retryPayment(payment)">
-                        <i class="fas fa-redo"></i>
+                      <button class="btn btn-warning" 
+                              (click)="processRefund(payment.id)" 
+                              [disabled]="payment.status !== 'completed'"
+                              title="Process Refund">
+                        <i class="fas fa-undo"></i>
                       </button>
                     </div>
                   </td>
@@ -208,40 +249,26 @@ import { FormsModule } from '@angular/forms';
         </div>
       </div>
 
-      <!-- Payment Details Modal (simplified representation) -->
-      <div class="modal fade" id="paymentDetailsModal" *ngIf="selectedPaymentDetails">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">Payment Details</h5>
-              <button type="button" class="btn-close" (click)="closePaymentDetails()"></button>
-            </div>
-            <div class="modal-body">
-              <div class="row">
-                <div class="col-md-6">
-                  <h6>Transaction Information</h6>
-                  <table class="table table-borderless">
-                    <tr><td><strong>ID:</strong></td><td>{{selectedPaymentDetails.transactionId}}</td></tr>
-                    <tr><td><strong>Amount:</strong></td><td>{{selectedPaymentDetails.amount | currency}}</td></tr>
-                    <tr><td><strong>Method:</strong></td><td>{{getPaymentMethodLabel(selectedPaymentDetails.method)}}</td></tr>
-                    <tr><td><strong>Status:</strong></td><td>{{selectedPaymentDetails.status | titlecase}}</td></tr>
-                    <tr><td><strong>Date:</strong></td><td>{{selectedPaymentDetails.date | date:'full'}}</td></tr>
-                  </table>
+      <!-- Live Transaction Monitor -->
+      <div class="card-modern fade-in-up" *ngIf="monitoringActive && liveTransactions.length > 0">
+        <div class="panel-header">
+          <h5 class="mb-0"><i class="fas fa-broadcast-tower pulse"></i> Live Transaction Monitor</h5>
+        </div>
+        <div class="panel-body">
+          <div class="live-transactions">
+            <div class="transaction-item" *ngFor="let transaction of liveTransactions">
+              <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                <div>
+                  <strong>{{transaction.customer}}</strong>
+                  <span class="text-muted ms-2">{{ '$' + transaction.amount }}</span>
                 </div>
-                <div class="col-md-6">
-                  <h6>Customer Information</h6>
-                  <table class="table table-borderless">
-                    <tr><td><strong>Name:</strong></td><td>{{selectedPaymentDetails.customer}}</td></tr>
-                    <tr><td><strong>Email:</strong></td><td>{{selectedPaymentDetails.customerEmail}}</td></tr>
-                    <tr><td><strong>Tour:</strong></td><td>{{selectedPaymentDetails.tour}}</td></tr>
-                    <tr><td><strong>Booking ID:</strong></td><td>{{selectedPaymentDetails.bookingId}}</td></tr>
-                  </table>
+                <div class="text-end">
+                  <span class="badge bg-{{transaction.status === 'completed' ? 'success' : transaction.status === 'pending' ? 'warning' : 'info'}}">
+                    {{transaction.status}}
+                  </span>
+                  <small class="text-muted d-block">{{transaction.gateway}}</small>
                 </div>
               </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" (click)="closePaymentDetails()">Close</button>
-              <button type="button" class="btn btn-primary" (click)="downloadReceipt()">Download Receipt</button>
             </div>
           </div>
         </div>
@@ -249,249 +276,667 @@ import { FormsModule } from '@angular/forms';
     </div>
   `,
   styles: [`
-    .avatar-sm {
-      width: 32px;
-      height: 32px;
-      background: var(--primary-color);
+    .payments-dashboard {
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+
+    .bg-gradient-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
       color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    .payment-filter {
+      background: rgba(255, 255, 255, 0.9);
+      border: none;
+      border-radius: 20px;
+      color: #2c3e50;
+    }
+
+    .payment-stats-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 25px;
+      padding: 2rem;
+      text-align: center;
+      transition: all 0.4s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      min-height: 280px;
+    }
+
+    .payment-stats-card:hover {
+      transform: translateY(-15px) scale(1.02);
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+    }
+
+    .payment-stats-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      border-radius: 25px 25px 0 0;
+    }
+
+    .gradient-success::before { background: linear-gradient(90deg, #10b981, #059669); }
+    .gradient-warning::before { background: linear-gradient(90deg, #f59e0b, #d97706); }
+    .gradient-primary::before { background: linear-gradient(90deg, #3b82f6, #1d4ed8); }
+    .gradient-danger::before { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
+    .payment-icon {
+      font-size: 3.5rem;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+    }
+
+    .payment-metric {
+      font-size: 2.8rem;
+      font-weight: 900;
+      margin-bottom: 0.8rem;
+      background: linear-gradient(45deg, #2c3e50, #34495e);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .payment-label {
+      font-size: 1.2rem;
+      color: #7f8c8d;
       font-weight: 600;
-      font-size: 0.875rem;
+      margin-bottom: 1rem;
+      letter-spacing: 0.5px;
+    }
+
+    .payment-change {
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 0.6rem 1.2rem;
+      border-radius: 25px;
+      display: inline-block;
+      margin-bottom: 1rem;
+    }
+
+    .payment-change.positive {
+      background: rgba(16, 185, 129, 0.15);
+      color: #059669;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .payment-change.negative {
+      background: rgba(239, 68, 68, 0.15);
+      color: #dc2626;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .payment-subtitle {
+      font-size: 0.9rem;
+      color: #95a5a6;
+      margin-bottom: 1rem;
+      font-style: italic;
+    }
+
+    .payment-progress {
+      width: 100%;
+      height: 8px;
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 1rem;
+    }
+
+    .payment-progress .progress-bar {
+      height: 100%;
+      border-radius: 10px;
+      transition: width 0.8s ease;
+    }
+
+    .progress-bar.success { background: linear-gradient(90deg, #10b981, #059669); }
+    .progress-bar.warning { background: linear-gradient(90deg, #f59e0b, #d97706); }
+    .progress-bar.danger { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
+    .payment-gateway-panel {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(15px);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .panel-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1.5rem 2rem;
+    }
+
+    .panel-body {
+      padding: 2rem;
+    }
+
+    .gateway-status {
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 15px;
+      padding: 1.5rem;
+      margin: 0.5rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: 2px solid transparent;
+    }
+
+    .gateway-status:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    }
+
+    .gateway-status.active {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.05);
+    }
+
+    .gateway-status.warning {
+      border-color: #f59e0b;
+      background: rgba(245, 158, 11, 0.05);
+    }
+
+    .gateway-status.inactive {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.05);
+    }
+
+    .gateway-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: #667eea;
+    }
+
+    .gateway-name {
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      color: #2c3e50;
+    }
+
+    .gateway-metric {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #34495e;
+      margin-bottom: 0.5rem;
+    }
+
+    .gateway-status-text {
+      font-size: 0.9rem;
+      padding: 0.3rem 0.8rem;
+      border-radius: 15px;
+      display: inline-block;
+      margin-bottom: 0.5rem;
+    }
+
+    .gateway-status.active .gateway-status-text {
+      background: rgba(16, 185, 129, 0.2);
+      color: #059669;
+    }
+
+    .gateway-status.warning .gateway-status-text {
+      background: rgba(245, 158, 11, 0.2);
+      color: #d97706;
+    }
+
+    .gateway-status.inactive .gateway-status-text {
+      background: rgba(239, 68, 68, 0.2);
+      color: #dc2626;
+    }
+
+    .gateway-uptime {
+      font-size: 0.8rem;
+      color: #7f8c8d;
+    }
+
+    .fade-in-up {
+      animation: fadeInUp 0.8s ease forwards;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .card-modern {
+      border: none;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .card-modern:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn {
+      border-radius: 25px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      border: none;
+      padding: 0.6rem 1.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: 0.85rem;
+    }
+
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-light {
+      background: rgba(255, 255, 255, 0.9);
+      color: #2c3e50;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+    }
+
+    .btn-light:hover {
+      background: white;
+      color: #667eea;
+      border-color: #667eea;
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #10b981, #059669);
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-info {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-warning {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+
+    .form-select {
+      border-radius: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.9);
+      transition: all 0.3s ease;
+    }
+
+    .form-select:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    @media (max-width: 768px) {
+      .payment-stats-card {
+        margin-bottom: 1.5rem;
+        min-height: 250px;
+        padding: 1.5rem;
+      }
+      
+      .payment-metric {
+        font-size: 2.2rem;
+      }
+      
+      .payment-icon {
+        font-size: 2.8rem;
+      }
+      
+      .gateway-status {
+        margin: 0.25rem;
+        padding: 1rem;
+      }
+      
+      .payments-dashboard {
+        padding: 15px;
+      }
     }
   `]
 })
 export class PaymentsComponent implements OnInit {
-  selectedPayments: string[] = [];
-  selectedPaymentDetails: any = null;
+  // Properties for enhanced payment management
+  selectedFilter: string = 'all';
+  selectedPaymentGateway: string = 'all';
+  selectedDateRange: string = 'this-week';
   
-  filters = {
-    status: '',
-    method: '',
-    dateRange: 'month',
-    amountRange: ''
-  };
-
+  // Payment statistics
   paymentStats = {
-    totalProcessed: 285750,
-    growthRate: 12.5,
-    pendingPayments: 23,
-    pendingDecrease: 15.2,
-    successRate: 94.2,
-    successImprovement: 2.8,
-    failedPayments: 8,
-    failureReduction: 35.7
+    totalRevenue: 284750,
+    totalTransactions: 1245,
+    pendingPayments: 12450,
+    failedPayments: 23,
+    successRate: 98.5,
+    averageAmount: 189.50,
+    revenueGrowth: 15.8,
+    transactionGrowth: 12.4,
+    pendingGrowth: -8.2,
+    failureGrowth: -32.1,
+    successImprovement: 2.3,
+    averageGrowth: 8.7
   };
 
-  allPayments = [
+  // Payment gateway statuses
+  paymentGateways = [
     {
-      id: 'TXN001',
-      transactionId: 'txn_1a2b3c4d5e',
-      customer: 'John Doe',
-      customerEmail: 'john.doe@email.com',
-      tour: 'Bali Adventure',
-      amount: 2400,
-      method: 'credit_card',
-      date: new Date('2024-03-15'),
-      status: 'completed',
-      bookingId: 'BK001'
+      name: 'Stripe',
+      icon: 'fab fa-stripe',
+      status: 'active',
+      uptime: '99.9%',
+      transactions: 847,
+      revenue: 156820,
+      responseTime: '1.2s',
+      successRate: 99.2
     },
     {
-      id: 'TXN002',
-      transactionId: 'txn_2f3g4h5i6j',
-      customer: 'Sarah Smith',
-      customerEmail: 'sarah.smith@email.com',
-      tour: 'Tokyo Explorer',
-      amount: 890,
-      method: 'paypal',
-      date: new Date('2024-03-18'),
-      status: 'pending',
-      bookingId: 'BK002'
+      name: 'PayPal',
+      icon: 'fab fa-paypal',
+      status: 'active',
+      uptime: '99.7%',
+      transactions: 298,
+      revenue: 87440,
+      responseTime: '2.1s',
+      successRate: 97.8
     },
     {
-      id: 'TXN003',
-      transactionId: 'txn_3k4l5m6n7o',
-      customer: 'Mike Johnson',
-      customerEmail: 'mike.johnson@email.com',
-      tour: 'Paris Romance',
-      amount: 3000,
-      method: 'bank_transfer',
-      date: new Date('2024-03-20'),
-      status: 'completed',
-      bookingId: 'BK003'
+      name: 'Razorpay',
+      icon: 'fas fa-credit-card',
+      status: 'warning',
+      uptime: '98.5%',
+      transactions: 89,
+      revenue: 35290,
+      responseTime: '3.2s',
+      successRate: 96.5
     },
     {
-      id: 'TXN004',
-      transactionId: 'txn_4p5q6r7s8t',
-      customer: 'Emily Brown',
-      customerEmail: 'emily.brown@email.com',
-      tour: 'Safari Kenya',
-      amount: 8400,
-      method: 'credit_card',
-      date: new Date('2024-03-22'),
-      status: 'failed',
-      bookingId: 'BK004'
-    },
-    {
-      id: 'TXN005',
-      transactionId: 'txn_5u6v7w8x9y',
-      customer: 'David Wilson',
-      customerEmail: 'david.wilson@email.com',
-      tour: 'Swiss Alps',
-      amount: 5400,
-      method: 'crypto',
-      date: new Date('2024-03-25'),
-      status: 'completed',
-      bookingId: 'BK005'
-    },
-    {
-      id: 'TXN006',
-      transactionId: 'txn_6z7a8b9c0d',
-      customer: 'Lisa Garcia',
-      customerEmail: 'lisa.garcia@email.com',
-      tour: 'Maldives Escape',
-      amount: 5600,
-      method: 'paypal',
-      date: new Date('2024-03-28'),
-      status: 'refunded',
-      bookingId: 'BK006'
+      name: 'Square',
+      icon: 'fab fa-cc-square',
+      status: 'active',
+      uptime: '99.8%',
+      transactions: 11,
+      revenue: 5200,
+      responseTime: '1.8s',
+      successRate: 98.9
     }
   ];
 
-  filteredPayments = this.allPayments;
+  // Sample payment data
+  payments = [
+    {
+      id: 'PAY-001',
+      customerName: 'John Smith',
+      amount: 299.99,
+      status: 'completed',
+      gateway: 'Stripe',
+      date: new Date('2024-01-15'),
+      currency: 'USD',
+      fee: 8.99
+    },
+    {
+      id: 'PAY-002',
+      customerName: 'Sarah Johnson',
+      amount: 149.50,
+      status: 'pending',
+      gateway: 'PayPal',
+      date: new Date('2024-01-14'),
+      currency: 'USD',
+      fee: 4.35
+    },
+    {
+      id: 'PAY-003',
+      customerName: 'Mike Davis',
+      amount: 599.00,
+      status: 'failed',
+      gateway: 'Stripe',
+      date: new Date('2024-01-13'),
+      currency: 'USD',
+      fee: 0
+    }
+  ];
+
+  // Monitoring data
+  liveTransactions: any[] = [];
+  monitoringActive = false;
+  alertCount = 0;
 
   ngOnInit() {
-    this.applyFilters();
+    this.loadPaymentData();
+    this.startLiveMonitoring();
   }
 
-  applyFilters() {
-    this.filteredPayments = this.allPayments.filter(payment => {
-      if (this.filters.status && payment.status !== this.filters.status) return false;
-      if (this.filters.method && payment.method !== this.filters.method) return false;
-      // Add date range and amount range filtering logic here
-      return true;
+  loadPaymentData() {
+    console.log('Loading comprehensive payment data...');
+    this.updatePaymentStats();
+  }
+
+  updatePaymentStats() {
+    const variation = () => (Math.random() - 0.5) * 0.1;
+    
+    this.paymentStats = {
+      ...this.paymentStats,
+      totalRevenue: Math.round(this.paymentStats.totalRevenue * (1 + variation())),
+      totalTransactions: Math.round(this.paymentStats.totalTransactions * (1 + variation())),
+      pendingPayments: Math.round(this.paymentStats.pendingPayments * (1 + variation())),
+      failedPayments: Math.round(this.paymentStats.failedPayments * (1 + variation()))
+    };
+  }
+
+  applyFilter() {
+    console.log(`Applying payment filter: ${this.selectedFilter}`);
+  }
+
+  applyGatewayFilter() {
+    console.log(`Filtering by gateway: ${this.selectedPaymentGateway}`);
+  }
+
+  applyDateRange() {
+    console.log(`Applying date range: ${this.selectedDateRange}`);
+  }
+
+  processRefund(paymentId: string) {
+    console.log(`Processing refund for payment: ${paymentId}`);
+    const confirmed = confirm(`Are you sure you want to process a refund for payment ${paymentId}?`);
+    
+    if (confirmed) {
+      const payment = this.payments.find(p => p.id === paymentId);
+      if (payment) {
+        payment.status = 'refunded';
+        alert(`Refund processed successfully for ${payment.customerName}!\n\nAmount: $${payment.amount}\nRefund ID: REF-${Date.now()}`);
+        this.paymentStats.totalRevenue -= payment.amount;
+        this.paymentStats.totalTransactions--;
+      }
+    }
+  }
+
+  viewPaymentDetails(paymentId: string) {
+    console.log(`Viewing details for payment: ${paymentId}`);
+    const payment = this.payments.find(p => p.id === paymentId);
+    if (payment) {
+      const details = `Payment Details for ${payment.id}:\n\nCustomer: ${payment.customerName}\nAmount: $${payment.amount} ${payment.currency}\nStatus: ${payment.status.toUpperCase()}\nGateway: ${payment.gateway}\nDate: ${payment.date.toLocaleDateString()}\nProcessing Fee: $${payment.fee}\nNet Amount: $${(payment.amount - payment.fee).toFixed(2)}`;
+      alert(details);
+    }
+  }
+
+  downloadReceipt(paymentId: string) {
+    console.log(`Downloading receipt for payment: ${paymentId}`);
+    const payment = this.payments.find(p => p.id === paymentId);
+    if (payment) {
+      const receiptContent = this.generateReceiptHTML(payment);
+      this.downloadFile(receiptContent, `receipt-${payment.id}.html`, 'text/html');
+      alert(`Receipt downloaded for payment ${payment.id}!`);
+    }
+  }
+
+  generateReceiptHTML(payment: any): string {
+    return `<!DOCTYPE html><html><head><title>Payment Receipt - ${payment.id}</title><style>body{font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px}.header{text-align:center;border-bottom:2px solid #333;padding-bottom:20px}.details{margin:20px 0}.amount{font-size:24px;font-weight:bold;color:#28a745}.footer{margin-top:40px;text-align:center;color:#666}</style></head><body><div class="header"><h1>Payment Receipt</h1><p>Transaction ID: ${payment.id}</p></div><div class="details"><h3>Customer Information</h3><p><strong>Name:</strong> ${payment.customerName}</p><p><strong>Date:</strong> ${payment.date.toLocaleDateString()}</p><h3>Payment Details</h3><p><strong>Amount:</strong> <span class="amount">$${payment.amount}</span></p><p><strong>Currency:</strong> ${payment.currency}</p><p><strong>Payment Method:</strong> ${payment.gateway}</p><p><strong>Status:</strong> ${payment.status.toUpperCase()}</p><p><strong>Processing Fee:</strong> $${payment.fee}</p><p><strong>Net Amount:</strong> $${(payment.amount - payment.fee).toFixed(2)}</p></div><div class="footer"><p>Thank you for your business!</p><p>Generated on ${new Date().toLocaleString()}</p></div></body></html>`;
+  }
+
+  toggleGateway(gatewayName: string) {
+    console.log(`Toggling gateway: ${gatewayName}`);
+    const gateway = this.paymentGateways.find(g => g.name === gatewayName);
+    if (gateway) {
+      gateway.status = gateway.status === 'active' ? 'inactive' : 'active';
+      alert(`${gatewayName} gateway ${gateway.status === 'active' ? 'activated' : 'deactivated'} successfully!`);
+    }
+  }
+
+  refreshGatewayStatus() {
+    console.log('Refreshing gateway statuses...');
+    this.paymentGateways.forEach(gateway => {
+      gateway.uptime = (98 + Math.random() * 2).toFixed(1) + '%';
+      gateway.responseTime = (1 + Math.random() * 2).toFixed(1) + 's';
+      gateway.successRate = parseFloat((96 + Math.random() * 4).toFixed(1));
     });
+    alert('Gateway statuses refreshed successfully!');
   }
 
-  getPaymentMethodIcon(method: string): string {
-    const icons: { [key: string]: string } = {
-      'credit_card': 'fas fa-credit-card text-primary',
-      'paypal': 'fab fa-paypal text-info',
-      'bank_transfer': 'fas fa-university text-success',
-      'crypto': 'fab fa-bitcoin text-warning'
-    };
-    return icons[method] || 'fas fa-money-bill';
-  }
-
-  getPaymentMethodLabel(method: string): string {
-    const labels: { [key: string]: string } = {
-      'credit_card': 'Credit Card',
-      'paypal': 'PayPal',
-      'bank_transfer': 'Bank Transfer',
-      'crypto': 'Cryptocurrency'
-    };
-    return labels[method] || method;
-  }
-
-  getStatusIcon(status: string): string {
-    const icons: { [key: string]: string } = {
-      'completed': 'fas fa-check-circle',
-      'pending': 'fas fa-clock',
-      'failed': 'fas fa-times-circle',
-      'refunded': 'fas fa-undo'
-    };
-    return icons[status] || 'fas fa-question-circle';
-  }
-
-  toggleAllPayments(event: any) {
-    if (event.target.checked) {
-      this.selectedPayments = this.filteredPayments.map(p => p.id);
-    } else {
-      this.selectedPayments = [];
+  configureGateway(gatewayName: string) {
+    console.log(`Configuring gateway: ${gatewayName}`);
+    const config = prompt(`Enter configuration for ${gatewayName}:\n\nExample: API_KEY=your_key, WEBHOOK_URL=your_url`);
+    if (config) {
+      alert(`${gatewayName} configuration updated successfully!\n\nConfiguration: ${config}`);
     }
   }
 
-  togglePaymentSelection(paymentId: string, event: any) {
-    if (event.target.checked) {
-      this.selectedPayments.push(paymentId);
-    } else {
-      this.selectedPayments = this.selectedPayments.filter(id => id !== paymentId);
+  startLiveMonitoring() {
+    console.log('Starting live payment monitoring...');
+    this.monitoringActive = true;
+    
+    setInterval(() => {
+      if (this.monitoringActive) {
+        this.simulateLiveTransaction();
+      }
+    }, 5000);
+  }
+
+  simulateLiveTransaction() {
+    const customers = ['Alice Chen', 'Bob Wilson', 'Carol Brown', 'David Lee', 'Emma Taylor'];
+    const gateways = ['Stripe', 'PayPal', 'Razorpay', 'Square'];
+    const statuses = ['completed', 'pending', 'processing'];
+    
+    const transaction = {
+      id: `PAY-${Date.now()}`,
+      customer: customers[Math.floor(Math.random() * customers.length)],
+      amount: Math.round((Math.random() * 500 + 50) * 100) / 100,
+      gateway: gateways[Math.floor(Math.random() * gateways.length)],
+      status: statuses[Math.floor(Math.random() * statuses.length)],
+      timestamp: new Date()
+    };
+    
+    this.liveTransactions.unshift(transaction);
+    if (this.liveTransactions.length > 10) {
+      this.liveTransactions.pop();
     }
   }
 
-  trackByPaymentId(index: number, payment: any): string {
-    return payment.id;
+  toggleMonitoring() {
+    this.monitoringActive = !this.monitoringActive;
+    console.log(`Payment monitoring ${this.monitoringActive ? 'started' : 'stopped'}`);
   }
 
-  viewPaymentDetails(payment: any) {
-    this.selectedPaymentDetails = payment;
-    // In a real app, you'd open a modal here
-    console.log('Viewing payment details:', payment);
+  generateReport() {
+    console.log('Generating comprehensive payment report...');
+    const reportData = {
+      generatedOn: new Date().toLocaleString(),
+      period: this.selectedDateRange,
+      totalRevenue: this.paymentStats.totalRevenue,
+      totalTransactions: this.paymentStats.totalTransactions,
+      averageTransaction: this.paymentStats.averageAmount,
+      successRate: this.paymentStats.successRate,
+      topGateway: this.paymentGateways.reduce((prev, current) => 
+        (prev.revenue > current.revenue) ? prev : current
+      ).name,
+      failureRate: (100 - this.paymentStats.successRate).toFixed(1)
+    };
+    
+    const reportHTML = this.generateReportHTML(reportData);
+    this.downloadFile(reportHTML, `payment-report-${Date.now()}.html`, 'text/html');
+    alert('Payment report generated and downloaded successfully!');
   }
 
-  closePaymentDetails() {
-    this.selectedPaymentDetails = null;
-  }
-
-  initiateRefund(payment: any) {
-    console.log('Initiating refund for:', payment.transactionId);
-    // Implementation for refund process
-  }
-
-  retryPayment(payment: any) {
-    console.log('Retrying payment for:', payment.transactionId);
-    payment.status = 'pending';
-  }
-
-  processRefund() {
-    console.log('Processing refunds for selected payments:', this.selectedPayments);
+  generateReportHTML(data: any): string {
+    return `<!DOCTYPE html><html><head><title>Payment Analytics Report</title><style>body{font-family:Arial,sans-serif;max-width:800px;margin:0 auto;padding:20px}.header{text-align:center;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:30px;border-radius:10px}.metric{background:#f8f9fa;padding:20px;margin:10px 0;border-radius:8px;border-left:4px solid #667eea}.metric-value{font-size:24px;font-weight:bold;color:#2c3e50}.metric-label{color:#7f8c8d;margin-top:5px}</style></head><body><div class="header"><h1>💳 Payment Analytics Report</h1><p>Generated on: ${data.generatedOn}</p><p>Report Period: ${data.period}</p></div><div class="metric"><div class="metric-value">$${data.totalRevenue.toLocaleString()}</div><div class="metric-label">Total Revenue</div></div><div class="metric"><div class="metric-value">${data.totalTransactions.toLocaleString()}</div><div class="metric-label">Total Transactions</div></div><div class="metric"><div class="metric-value">$${data.averageTransaction}</div><div class="metric-label">Average Transaction Value</div></div><div class="metric"><div class="metric-value">${data.successRate}%</div><div class="metric-label">Success Rate</div></div><div class="metric"><div class="metric-value">${data.topGateway}</div><div class="metric-label">Top Performing Gateway</div></div></body></html>`;
   }
 
   exportPayments() {
-    console.log('Exporting payments data');
-    // Implementation for CSV/Excel export
+    console.log('Exporting payment data...');
+    const csvContent = this.generatePaymentCSV();
+    this.downloadFile(csvContent, `payments-export-${Date.now()}.csv`, 'text/csv');
+    alert('Payment data exported successfully!');
   }
 
-  downloadReceipt() {
-    console.log('Downloading receipt for:', this.selectedPaymentDetails?.transactionId);
+  generatePaymentCSV(): string {
+    const headers = ['ID', 'Customer', 'Amount', 'Currency', 'Status', 'Gateway', 'Date', 'Fee'];
+    const rows = this.payments.map(payment => [
+      payment.id,
+      payment.customerName,
+      payment.amount,
+      payment.currency,
+      payment.status,
+      payment.gateway,
+      payment.date.toISOString().split('T')[0],
+      payment.fee
+    ]);
+    return [headers, ...rows].map(row => row.join(',')).join('\n');
   }
-}   
 
-// <h3 class="mb-1">{{paymentStats.totalProcessed | currency}}</h3>
-//             <p class="text-muted mb-0">Total Processed</p>
-//             <div class="analytics-change positive">
-//               <i class="fas fa-arrow-up"></i>
-//               +{{paymentStats.growthRate}}% this month
-//             </div>
-//           </div>
-//         </div>
-//         <div class="col-md-3 mb-3">
-//           <div class="stats-card fade-in-up" style="animation-delay: 0.1s;">
-//             <div class="icon" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white;">
-//               <i class="fas fa-clock"></i>
-//             </div>
-//             <h3 class="mb-1">{{paymentStats.pendingPayments}}</h3>
-//             <p class="text-muted mb-0">Pending Payments</p>
-//             <div class="analytics-change negative">
-//               <i class="fas fa-arrow-down"></i>
-//               -{{paymentStats.pendingDecrease}}% from last week
-//             </div>
-//           </div>
-//         </div>
-//         <div class="col-md-3 mb-3">
-//           <div class="stats-card fade-in-up" style="animation-delay: 0.2s;">
-//             <div class="icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white;">
-//               <i class="fas fa-percentage"></i>
-//             </div>
-//             <h3 class="mb-1">{{paymentStats.successRate}}%</h3>
-//             <p class="text-muted mb-0">Success Rate</p>
-//             <div class="analytics-change positive">
-//               <i class="fas fa-arrow-up"></i>
-//               +{{paymentStats.successImprovement}}% this month
-//             </div>
-//           </div>
-//         </div>
+  downloadFile(content: string, filename: string, contentType: string) {
+    const blob = new Blob([content], { type: contentType });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
 
-        
+  onRevenueCardClick() {
+    console.log('Revenue card clicked - showing detailed revenue breakdown');
+    alert(`Revenue Breakdown:\n\nStripe: $156,820\nPayPal: $87,440\nRazorpay: $35,290\nSquare: $5,200\n\nTotal: $${this.paymentStats.totalRevenue.toLocaleString()}`);
+  }
+
+  onTransactionsCardClick() {
+    console.log('Transactions card clicked - showing transaction analysis');
+    alert(`Transaction Analysis:\n\nCompleted: ${Math.round(this.paymentStats.totalTransactions * 0.985)}\nPending: ${Math.round(this.paymentStats.totalTransactions * 0.012)}\nFailed: ${Math.round(this.paymentStats.totalTransactions * 0.003)}\n\nTotal: ${this.paymentStats.totalTransactions}`);
+  }
+
+  onPendingCardClick() {
+    console.log('Pending payments card clicked - showing pending details');
+    alert(`Pending Payments Details:\n\nAwaiting confirmation: 8\nProcessing: 3\nUnder review: 1\n\nTotal Pending: $${this.paymentStats.pendingPayments.toLocaleString()}`);
+  }
+
+  onFailedCardClick() {
+    console.log('Failed payments card clicked - showing failure analysis');
+    alert(`Failed Payments Analysis:\n\nInsufficient funds: 12\nCard declined: 8\nNetwork timeout: 3\n\nTotal Failed: ${this.paymentStats.failedPayments}`);
+  }
+}

@@ -38,6 +38,13 @@
                         <label for="maintenance" class="toggle-label"></label>
                     </div>
                 </div>
+                <div class="setting-toggle">
+                    <label>Enable GPT-5 mini (Preview) for all clients</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" [(ngModel)]="settings.enableGpt5Mini" id="gpt5mini">
+                        <label for="gpt5mini" class="toggle-label"></label>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -201,7 +208,7 @@
             <div class="settings-content">
                 <div class="setting-item">
                     <label>Theme</label>
-                    <select class="cyber-select" [(ngModel)]="settings.theme">
+                    <select class="cyber-select" [(ngModel)]="settings.theme" (change)="onThemeChange()">
                         <option value="cyber">Cyber (Current)</option>
                         <option value="classic">Classic</option>
                         <option value="minimal">Minimal</option>
@@ -265,6 +272,30 @@
                 <button class="action-btn" (click)="testEmail()">
                     <i class="fas fa-envelope"></i>
                     <span>Test Email</span>
+                </button>
+                <button class="action-btn" (click)="validateSettings()">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Validate</span>
+                </button>
+                <button class="action-btn" (click)="generateSystemReport()">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>System Report</span>
+                </button>
+                <button class="action-btn" (click)="exportSettingsAsCode()">
+                    <i class="fas fa-code"></i>
+                    <span>Export Code</span>
+                </button>
+                <button class="action-btn" (click)="shareSettingsConfig()">
+                    <i class="fas fa-share-alt"></i>
+                    <span>Share Config</span>
+                </button>
+                <button class="action-btn" (click)="previewThemeChanges()">
+                    <i class="fas fa-eye"></i>
+                    <span>Preview Theme</span>
+                </button>
+                <button class="action-btn" (click)="copySettingsToClipboard()">
+                    <i class="fas fa-copy"></i>
+                    <span>Copy Settings</span>
                 </button>
             </div>
         </div>
