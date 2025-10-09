@@ -1,0 +1,441 @@
+  .analytics-dashboard {
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* Professional Admin Panel Header */
+    .admin-header-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Loading Container */
+    .loading-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1000;
+    }
+
+    /* Stat Badge */
+    .stat-badge {
+      display: inline-block;
+      padding: 0.35rem 0.85rem;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      margin-left: 0.5rem;
+    }
+
+    .stat-badge.success {
+      background: rgba(46, 204, 113, 0.3);
+      color: #2ecc71;
+    }
+
+    .stat-badge.warning {
+      background: rgba(241, 196, 15, 0.3);
+      color: #f1c40f;
+    }
+
+    .stat-badge.danger {
+      background: rgba(231, 76, 60, 0.3);
+      color: #e74c3c;
+    }
+
+    /* Professional Admin Buttons */
+    .btn-group .btn {
+      border-radius: 0;
+      border-right: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .btn-group .btn:first-child {
+      border-top-left-radius: 8px;
+      border-bottom-left-radius: 8px;
+    }
+
+    .btn-group .btn:last-child {
+      border-top-right-radius: 8px;
+      border-bottom-right-radius: 8px;
+      border-right: none;
+    }
+
+    /* Enhanced Card Styling */
+    .card-modern {
+      border: none;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .card-modern:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-header-modern {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1.5rem;
+      border: none;
+      font-weight: 600;
+    }
+
+    /* Data Table Enhancements */
+    .table {
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .table thead th {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      padding: 1rem;
+    }
+
+    .table tbody tr {
+      transition: all 0.3s ease;
+    }
+
+    .table tbody tr:hover {
+      background: rgba(102, 126, 234, 0.05);
+      transform: scale(1.01);
+    }
+
+    /* Progress Bars */
+    .progress-modern {
+      height: 8px;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .progress-modern .progress-bar {
+      border-radius: 10px;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      transition: width 0.6s ease;
+    }
+
+    /* Status Badges */
+    .badge {
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .analytics-dashboard {
+        padding: 10px;
+      }
+      
+      .analytics-card {
+        margin-bottom: 1rem;
+      }
+      
+      .analytics-metric {
+        font-size: 2rem;
+      }
+      
+      .admin-header-card {
+        padding: 1rem;
+      }
+      
+      .btn-group {
+        flex-wrap: wrap;
+      }
+      
+      .chart-container {
+        height: 300px;
+      }
+    }
+
+    .analytics-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 2rem;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .analytics-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .analytics-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+    }
+
+    .gradient-blue { border-left: 5px solid #3498db; }
+    .gradient-green { border-left: 5px solid #2ecc71; }
+    .gradient-purple { border-left: 5px solid #9b59b6; }
+    .gradient-orange { border-left: 5px solid #f39c12; }
+
+    .analytics-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      color: #3498db;
+      background: linear-gradient(45deg, #3498db, #2ecc71);
+      -webkit-background-clip: text;
+            background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .analytics-metric {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(45deg, #2c3e50, #34495e);
+      -webkit-background-clip: text;
+        background-clip: text;
+
+      -webkit-text-fill-color: transparent;
+    }
+
+    .analytics-label {
+      font-size: 1.1rem;
+      color: #7f8c8d;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .analytics-change {
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      display: inline-block;
+    }
+
+    .analytics-change.positive {
+      background: rgba(46, 204, 113, 0.1);
+      color: #27ae60;
+    }
+
+    .analytics-change.negative {
+      background: rgba(231, 76, 60, 0.1);
+      color: #e74c3c;
+    }
+
+    .analytics-subtitle {
+      font-size: 0.8rem;
+      color: #95a5a6;
+      margin-top: 1rem;
+      font-style: italic;
+    }
+
+    .performance-summary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .performance-metric {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 1.5rem;
+      margin: 0.5rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+    }
+
+    .performance-metric:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.05);
+    }
+
+    .metric-value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+    }
+
+    .metric-value.good { color: #2ecc71; }
+    .metric-value.excellent { color: #f39c12; }
+
+    .metric-label {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      margin-bottom: 0.5rem;
+    }
+
+    .metric-change {
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .metric-change.up { color: #2ecc71; }
+    .metric-change.down { color: #e74c3c; }
+
+    .chart-container-enhanced {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .chart-container {
+      position: relative;
+      height: 400px;
+    }
+
+    .chart-placeholder {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      border-radius: 15px;
+    }
+
+    .chart-overlay {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      gap: 5px;
+    }
+
+    .chart-control {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .chart-control:hover {
+      background: #3498db;
+      color: white;
+      transform: scale(1.1);
+    }
+
+    .chart-insights {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 15px;
+      padding: 1rem;
+      color: white;
+    }
+
+    .fade-in-up {
+      animation: fadeInUp 0.8s ease forwards;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .card-modern {
+      border: none;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .card-modern:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-header-modern {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1.5rem;
+      border: none;
+    }
+
+    .progress-modern {
+      height: 8px;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .progress-modern .progress-bar {
+      border-radius: 10px;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      transition: width 0.6s ease;
+    }
+
+    .btn {
+      border-radius: 25px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      border: none;
+      padding: 0.5rem 1.5rem;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-outline-primary {
+      border: 2px solid #3498db;
+      color: #3498db;
+      background: transparent;
+    }
+
+    .btn-outline-primary:hover {
+      background: #3498db;
+      color: white;
+    }
+
+    @media (max-width: 768px) {
+      .analytics-card {
+        margin-bottom: 1rem;
+      }
+      
+      .analytics-metric {
+        font-size: 2rem;
+      }
+      
+      .performance-metric {
+        margin: 0.25rem;
+        padding: 1rem;
+      }
+      
+      .chart-container {
+        height: 300px;
+      }
+    }

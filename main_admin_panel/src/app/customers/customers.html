@@ -1,0 +1,274 @@
+
+<div class="admin-container">
+  
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner-grow text-light" style="width: 4rem; height: 4rem;"></div>
+    <h3 class="mt-4 text-white">
+      <i class="fas fa-users fa-spin me-2"></i>Loading Customers...
+    </h3>
+    <p class="text-white-50">Fetching customer data from database</p>
+    <div class="progress mx-auto mt-3" style="width: 300px; height: 6px;">
+      <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" style="width: 100%"></div>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage && !isLoading" class="alert alert-danger alert-dismissible fade show m-3">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    <strong>Error:</strong> {{errorMessage}}
+    <button type="button" class="btn-close" (click)="errorMessage = ''" aria-label="Close"></button>
+    <div class="mt-2">
+      <button class="btn btn-sm btn-light" (click)="loadCustomers()">
+        <i class="fas fa-redo me-1"></i> Retry
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="!isLoading" class="fade-in-up">
+    
+    <!-- Page Header -->
+    <div class="admin-header-card">
+      <div class="d-flex justify-content-between align-items-center flex-wrap">
+        <div class="mb-3 mb-md-0">
+          <h2 class="mb-2">
+            <i class="fas fa-users me-2"></i>Customer Management
+          </h2>
+          <small>
+            <i class="fas fa-user-friends me-1"></i>Manage customer accounts and relationships
+          </small>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-light btn-sm" (click)="loadCustomers()">
+            <i class="fas fa-sync-alt"></i>
+          </button>
+          <button class="btn btn-success btn-sm" (click)="addNewCustomer()">
+            <i class="fas fa-user-plus me-1"></i> Add Customer
+          </button>
+          <button class="btn btn-info btn-sm" (click)="exportCustomers()">
+            <i class="fas fa-file-csv me-1"></i> Export
+          </button>
+          <button class="btn btn-primary btn-sm" (click)="importCustomers()">
+            <i class="fas fa-file-import me-1"></i> Import
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+      <div class="col-md-3 mb-3">
+        <div class="stats-card fade-in-up">
+          <div class="icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+            <i class="fas fa-users"></i>
+          </div>
+          <h3>{{customerStats.total}}</h3>
+          <p>Total Customers</p>
+          <div class="analytics-change positive">
+            <i class="fas fa-arrow-up"></i>
+            All time
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="stats-card fade-in-up" style="animation-delay: 0.1s;">
+          <div class="icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+            <i class="fas fa-user-check"></i>
+          </div>
+          <h3>{{customerStats.active}}</h3>
+          <p>Active Customers</p>
+          <div class="analytics-change positive">
+            <i class="fas fa-check"></i>
+            Currently active
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="stats-card fade-in-up" style="animation-delay: 0.2s;">
+          <div class="icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+            <i class="fas fa-crown"></i>
+          </div>
+          <h3>{{customerStats.premium}}</h3>
+          <p>Premium Customers</p>
+          <div class="analytics-change positive">
+            <i class="fas fa-star"></i>
+            VIP status
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="stats-card fade-in-up" style="animation-delay: 0.3s;">
+          <div class="icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+            <i class="fas fa-user-plus"></i>
+          </div>
+          <h3>{{customerStats.newThisMonth}}</h3>
+          <p>New This Month</p>
+          <div class="analytics-change positive">
+            <i class="fas fa-calendar"></i>
+            Recent joins
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search and Filter Bar -->
+    <div class="card-modern mb-4">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="input-group">
+              <span class="input-group-text bg-light border-0">
+                <i class="fas fa-search"></i>
+              </span>
+              <input 
+                type="text" 
+                class="form-control border-0" 
+                placeholder="Search by name, email, or phone..."
+                [(ngModel)]="searchTerm"
+                (ngModelChange)="onSearchChange()"
+              />
+            </div>
+          </div>
+          <div class="col-md-3">
+            <select class="form-select" [(ngModel)]="statusFilter" (change)="onFilterChange()">
+              <option value="all">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <select class="form-select" [(ngModel)]="typeFilter" (change)="onFilterChange()">
+              <option value="all">All Types</option>
+              <option value="premium">Premium</option>
+              <option value="regular">Regular</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-outline-secondary w-100" (click)="resetFilters()">
+              <i class="fas fa-redo me-1"></i> Reset
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Customers Table -->
+    <div class="card-modern">
+      <div class="card-header-modern">
+        <h6 class="mb-0">
+          <i class="fas fa-list me-2"></i>Customer List
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-modern">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Customer</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Join Date</th>
+                <th>Bookings</th>
+                <th>Total Spent</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let customer of filteredCustomers; trackBy: trackByCustomerId">
+                <td>{{customer.id}}</td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <img 
+                      [src]="customer.avatar || getDefaultAvatar(customer.name)" 
+                      (error)="onImageError($event, customer.name)"
+                      class="rounded-circle me-2" 
+                      width="40" 
+                      height="40"
+                      style="object-fit: cover;"
+                      [alt]="customer.name"
+                    />
+                    <div>
+                      <strong>{{customer.name}}</strong>
+                    </div>
+                  </div>
+                </td>
+                <td>{{customer.email}}</td>
+                <td>{{customer.phone}}</td>
+                <td>
+                  <span 
+                    class="badge" 
+                    [ngClass]="{
+                      'bg-warning': customer.type === 'premium',
+                      'bg-secondary': customer.type === 'regular'
+                    }"
+                  >
+                    <i class="fas" [ngClass]="{
+                      'fa-crown': customer.type === 'premium',
+                      'fa-user': customer.type === 'regular'
+                    }"></i>
+                    {{customer.type | titlecase}}
+                  </span>
+                </td>
+                <td>
+                  <span 
+                    class="badge" 
+                    [ngClass]="{
+                      'bg-success': customer.status === 'active',
+                      'bg-danger': customer.status === 'inactive'
+                    }"
+                  >
+                    {{customer.status | titlecase}}
+                  </span>
+                </td>
+                <td>{{customer.joinDate | date:'mediumDate'}}</td>
+                <td>
+                  <strong>{{customer.totalBookings || 0}}</strong>
+                </td>
+                <td>
+                  <strong class="text-success">₹{{customer.totalSpent || 0}}</strong>
+                </td>
+                <td>
+                  <div class="btn-group btn-group-sm">
+                    <button 
+                      class="btn btn-primary" 
+                      (click)="viewCustomer(customer.id)"
+                      title="View Details"
+                    >
+                      <i class="fas fa-eye"></i>
+                    </button>
+                    <button 
+                      class="btn btn-success" 
+                      (click)="editCustomer(customer.id)"
+                      title="Edit Customer"
+                    >
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button 
+                      class="btn btn-danger" 
+                      (click)="deleteCustomer(customer.id)"
+                      title="Delete Customer"
+                    >
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredCustomers.length === 0" class="empty-state">
+      <i class="fas fa-users"></i>
+      <h4>No Customers Found</h4>
+      <p>No customers match your search criteria. Try adjusting your filters.</p>
+      <button class="btn btn-primary" (click)="resetFilters()">
+        <i class="fas fa-redo me-1"></i> Reset Filters
+      </button>
+    </div>
+
+  </div>
+</div>

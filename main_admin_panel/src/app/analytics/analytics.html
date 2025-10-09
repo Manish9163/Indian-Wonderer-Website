@@ -1,0 +1,426 @@
+    <div class="analytics-dashboard">
+      <!-- Loading Indicator -->
+      <div *ngIf="isLoading" class="loading-container text-center py-5">
+        <div class="spinner-grow text-light" role="status" style="width: 4rem; height: 4rem;">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <h3 class="mt-4 text-white"><i class="fas fa-chart-line me-2"></i>Loading Analytics...</h3>
+        <p class="text-white-50">Fetching real-time data from database</p>
+        <div class="progress mx-auto mt-3" style="width: 300px; height: 6px;">
+          <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" style="width: 100%"></div>
+        </div>
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="errorMessage && !isLoading" class="alert alert-danger alert-dismissible fade show m-3" role="alert" style="background: rgba(220, 53, 69, 0.9); border: none; color: white;">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>Connection Error:</strong> {{errorMessage}}
+        <button type="button" class="btn-close btn-close-white" (click)="errorMessage = ''" aria-label="Close"></button>
+        <div class="mt-2">
+          <button class="btn btn-sm btn-light" (click)="loadAnalyticsData()">
+            <i class="fas fa-redo me-1"></i> Retry Connection
+          </button>
+        </div>
+      </div>
+
+      <!-- Analytics Content -->
+      <div *ngIf="!isLoading" class="fade-in-up">
+        <!-- Analytics Header with Actions -->
+        <div class="admin-header-card mb-4">
+          <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h2 class="mb-2" style="color: white; font-weight: 800;">
+            <i class="fas fa-chart-pie me-2"></i>Analytics Dashboard
+          </h2>
+          <small class="text-white-50" style="font-size: 0.95rem;">
+            <i class="fas fa-database me-1"></i>Real-time business insights from live database
+          </small>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+          <div class="btn-group" role="group">
+            <select class="form-select form-select-sm admin-select" [(ngModel)]="selectedTimeRange" (change)="onTimeRangeChange()" style="width: 160px; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
+              <option value="today" style="color: #333;">Today</option>
+              <option value="week" style="color: #333;">This Week</option>
+              <option value="month" style="color: #333;">This Month</option>
+              <option value="quarter" style="color: #333;">This Quarter</option>
+              <option value="year" style="color: #333;">This Year</option>
+            </select>
+          </div>
+          <div class="btn-group" role="group">
+            <button class="btn btn-light btn-sm" (click)="refreshAnalytics()" title="Refresh Data">
+              <i class="fas fa-sync-alt"></i>
+            </button>
+            <button class="btn btn-success btn-sm" (click)="exportAnalyticsReport()" title="Export CSV">
+              <i class="fas fa-file-csv"></i> CSV
+            </button>
+            <button class="btn btn-info btn-sm" (click)="generateDetailedReport()" title="Generate PDF Report">
+              <i class="fas fa-file-pdf"></i> PDF
+            </button>
+            <button class="btn btn-danger btn-sm" (click)="openRealTimeMonitor()" title="Real-time Monitor">
+              <i class="fas fa-broadcast-tower"></i> Live
+            </button>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <!-- Database Connection Status -->
+      <div class="alert alert-success mb-4 d-flex justify-content-between align-items-center" style="background: rgba(46, 204, 113, 0.2); border: 1px solid rgba(46, 204, 113, 0.4); color: white;">
+        <div>
+          <i class="fas fa-check-circle me-2"></i>
+          <strong>Database Connected</strong> - Displaying live data from <code style="background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px;">indian_wonderer_base</code>
+        </div>
+        <div>
+          <span class="badge bg-success">
+            <i class="fas fa-clock me-1"></i>Last Updated: {{getCurrentTime()}}
+          </span>
+        </div>
+      </div>
+      
+      <!-- Key Metrics -->
+      <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+          <div class="analytics-card fade-in-up gradient-blue" (click)="drillDownRevenue()">
+            <div class="analytics-icon">
+              <i class="fas fa-rupee-sign"></i>
+            </div>
+            <div class="analytics-metric">₹{{analytics.totalRevenue | number:'1.0-0'}}</div>
+            <div class="analytics-label">Total Revenue</div>
+            <div class="analytics-change positive">
+              <i class="fas fa-arrow-up"></i>
+              +{{analytics.revenueGrowth}}% from last month
+            </div>
+            <div class="analytics-subtitle">Click for details</div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="analytics-card fade-in-up gradient-green" style="animation-delay: 0.1s;" (click)="drillDownBookings()">
+            <div class="analytics-icon">
+              <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="analytics-metric">{{analytics.totalBookings}}</div>
+            <div class="analytics-label">Total Bookings</div>
+            <div class="analytics-change positive">
+              <i class="fas fa-arrow-up"></i>
+              +{{analytics.bookingsGrowth}}% this month
+            </div>
+            <div class="analytics-subtitle">Click for breakdown</div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="analytics-card fade-in-up gradient-purple" style="animation-delay: 0.2s;" (click)="drillDownAvgValue()">
+            <div class="analytics-icon">
+              <i class="fas fa-chart-bar"></i>
+            </div>
+            <div class="analytics-metric">₹{{analytics.averageBookingValue | number:'1.0-0'}}</div>
+            <div class="analytics-label">Avg Booking Value</div>
+            <div class="analytics-change negative">
+              <i class="fas fa-arrow-down"></i>
+              -{{analytics.avgValueChange}}% from last month
+            </div>
+            <div class="analytics-subtitle">View trends</div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="analytics-card fade-in-up gradient-orange" style="animation-delay: 0.3s;" (click)="drillDownConversion()">
+            <div class="analytics-icon">
+              <i class="fas fa-percentage"></i>
+            </div>
+            <div class="analytics-metric">{{analytics.conversionRate}}%</div>
+            <div class="analytics-label">Conversion Rate</div>
+            <div class="analytics-change positive">
+              <i class="fas fa-arrow-up"></i>
+              +{{analytics.conversionGrowth}}% this month
+            </div>
+            <div class="analytics-subtitle">Optimize further</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Refund & Financial Impact -->
+      <div class="row mb-4" *ngIf="refundAnalytics.totalRefunds > 0">
+        <div class="col-md-3 mb-3">
+          <div class="analytics-card fade-in-up" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); animation-delay: 0s;">
+            <div class="analytics-icon">
+              <i class="fas fa-undo"></i>
+            </div>
+            <div class="analytics-metric">{{refundAnalytics.pendingRefunds}}</div>
+            <div class="analytics-label">Pending Refunds</div>
+            <div class="analytics-change" style="background: rgba(255,255,255,0.2); color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem;">
+              <i class="fas fa-exclamation-triangle"></i>
+              ₹{{refundAnalytics.pendingRefundAmount | number:'1.0-0'}} to process
+            </div>
+            <div class="analytics-subtitle" style="cursor: pointer;" (click)="viewPendingRefunds()">
+              <i class="fas fa-eye me-1"></i>View details
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="analytics-card fade-in-up" style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); animation-delay: 0.1s;">
+            <div class="analytics-icon">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="analytics-metric">{{refundAnalytics.completedRefunds}}</div>
+            <div class="analytics-label">Completed Refunds</div>
+            <div class="analytics-change positive">
+              <i class="fas fa-rupee-sign"></i>
+              ₹{{refundAnalytics.completedRefundAmount | number:'1.0-0'}} refunded
+            </div>
+            <div class="analytics-subtitle">{{refundAnalytics.refundRate | number:'1.1-1'}}% of revenue</div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="analytics-card fade-in-up" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); animation-delay: 0.2s;">
+            <div class="analytics-icon">
+              <i class="fas fa-gift"></i>
+            </div>
+            <div class="analytics-metric">{{refundAnalytics.giftCardsIssued}}</div>
+            <div class="analytics-label">Gift Cards Issued</div>
+            <div class="analytics-change positive">
+              <i class="fas fa-rupee-sign"></i>
+              ₹{{refundAnalytics.giftCardAmount | number:'1.0-0'}} credit
+            </div>
+            <div class="analytics-subtitle">10% bonus included</div>
+          </div>
+        </div>
+        <div class="col-md-3 mb-3">
+          <div class="analytics-card fade-in-up" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); animation-delay: 0.3s;">
+            <div class="analytics-icon">
+              <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="analytics-metric">₹{{refundAnalytics.netRevenue | number:'1.0-0'}}</div>
+            <div class="analytics-label">Net Revenue</div>
+            <div class="analytics-change" style="background: rgba(255,255,255,0.15); color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem;">
+              <i class="fas fa-info-circle"></i>
+              After ₹{{refundAnalytics.totalRefundAmount | number:'1.0-0'}} refunds
+            </div>
+            <div class="analytics-subtitle">True revenue impact</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Performance Summary -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card-modern performance-summary">
+            <div class="card-header-modern d-flex justify-content-between align-items-center">
+              <h6 class="mb-0">📈 Performance Summary</h6>
+              <button class="btn btn-sm btn-outline-primary" (click)="togglePerformanceView()">
+                <i class="fas fa-{{showAdvancedMetrics ? 'eye-slash' : 'eye'}}"></i>
+                {{showAdvancedMetrics ? 'Simple' : 'Advanced'}} View
+              </button>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-2 text-center" *ngFor="let metric of performanceMetrics">
+                  <div class="performance-metric" (click)="showMetricDetails(metric)">
+                    <div class="metric-value" [ngClass]="metric.status">{{metric.value}}</div>
+                    <div class="metric-label">{{metric.label}}</div>
+                    <div class="metric-change" [ngClass]="metric.trend">
+                      <i class="fas fa-{{metric.trend === 'up' ? 'arrow-up' : metric.trend === 'down' ? 'arrow-down' : 'minus'}}"></i>
+                      {{metric.change}}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Enhanced Charts and Detailed Analytics -->
+      <div class="row mb-4">
+        <div class="col-md-8">
+          <div class="card-modern chart-container-enhanced">
+            <div class="card-header-modern d-flex justify-content-between align-items-center">
+              <h6 class="mb-0">📊 Revenue Trends & Analytics</h6>
+              <div class="d-flex gap-2">
+                <select class="form-select form-select-sm" style="width: auto;" [(ngModel)]="revenueTimeframe" (change)="onTimeframeChange()">
+                  <option value="7d">Last 7 Days</option>
+                  <option value="30d">Last 30 Days</option>
+                  <option value="90d">Last 90 Days</option>
+                  <option value="1y">Last Year</option>
+                </select>
+                <button class="btn btn-sm btn-outline-secondary" (click)="toggleChartType()">
+                  <i class="fas fa-{{chartType === 'line' ? 'chart-bar' : 'chart-line'}}"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-info" (click)="downloadChartData()">
+                  <i class="fas fa-download"></i>
+                </button>
+              </div>
+            </div>
+            <div class="card-body" style="padding: 1.5rem;">
+              <div class="chart-container position-relative">
+                <canvas id="revenueChart" width="400" height="200"></canvas>
+                <!-- Enhanced chart placeholder -->
+                <div class="chart-placeholder d-flex align-items-center justify-content-center h-100" *ngIf="!chartInitialized">
+                  <div class="text-center">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Loading revenue analytics...</p>
+                    <small class="text-muted">Analyzing {{revenueTimeframe}} data</small>
+                  </div>
+                </div>
+                <!-- Chart overlay controls -->
+                <div class="chart-overlay" *ngIf="chartInitialized">
+                  <button class="btn btn-sm btn-light chart-control" (click)="resetZoom()" title="Reset Zoom">
+                    <i class="fas fa-search-minus"></i>
+                  </button>
+                  <button class="btn btn-sm btn-light chart-control" (click)="exportChart()" title="Export Chart">
+                    <i class="fas fa-camera"></i>
+                  </button>
+                </div>
+              </div>
+              <!-- Chart insights -->
+              <div class="chart-insights mt-3" *ngIf="chartInitialized">
+                <div class="row">
+                  <div class="col-4 text-center">
+                    <small class="text-muted">Peak Revenue</small>
+                    <div class="fw-bold text-success">₹{{peakRevenue | number}}</div>
+                  </div>
+                  <div class="col-4 text-center">
+                    <small class="text-muted">Average</small>
+                    <div class="fw-bold">₹{{averageRevenue | number}}</div>
+                  </div>
+                  <div class="col-4 text-center">
+                    <small class="text-muted">Growth Rate</small>
+                    <div class="fw-bold text-info">{{revenueGrowthRate}}%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card-modern">
+            <div class="card-header-modern">
+              <h6 class="mb-0">Top Destinations</h6>
+            </div>
+            <div class="card-body" style="padding: 1.5rem;">
+              <div *ngFor="let destination of topDestinations; let i = index" class="mb-3" style="padding: 0.75rem 0;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div class="d-flex align-items-center">
+                    <div class="me-3" style="font-size: 1.5rem;">{{destination.flag}}</div>
+                    <div>
+                      <div class="fw-semibold">{{destination.name}}</div>
+                      <small class="text-muted">{{destination.bookings}} bookings</small>
+                    </div>
+                  </div>
+                  <div class="text-end">
+                    <div class="fw-semibold">₹{{destination.revenue | number:'1.0-0'}}</div>
+                    <small class="text-success">+{{destination.growth}}%</small>
+                  </div>
+                </div>
+                <div class="progress progress-modern" style="margin-top: 0.5rem;">
+                  <div class="progress-bar" [style.width.%]="destination.percentage"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Booking Analytics -->
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="card-modern">
+            <div class="card-header-modern">
+              <h6 class="mb-0">Booking Status Distribution</h6>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div *ngFor="let status of bookingStatus" class="col-6 mb-3">
+                  <div class="text-center p-3 rounded" [style.background]="status.color + '15'">
+                    <div class="h4 mb-1" [style.color]="status.color">{{status.count}}</div>
+                    <div class="text-muted">{{status.label}}</div>
+                    <div class="progress progress-modern mt-2">
+                      <div class="progress-bar" [style.background]="status.color" [style.width.%]="status.percentage"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card-modern payment-analytics-card">
+            <div class="card-header-modern payment-analytics-header">
+              <h6 class="mb-0">Payment Analytics</h6>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-4 text-center">
+                  <div class="analytics-metric text-success">{{paymentAnalytics.successRate}}%</div>
+                  <div class="analytics-label">Success Rate</div>
+                </div>
+                <div class="col-4 text-center">
+                  <div class="analytics-metric text-warning">{{paymentAnalytics.pendingPayments}}</div>
+                  <div class="analytics-label">Pending</div>
+                </div>
+                <div class="col-4 text-center">
+                  <div class="analytics-metric text-danger">{{paymentAnalytics.failedPayments}}</div>
+                  <div class="analytics-label">Failed</div>
+                </div>
+              </div>
+              <hr>
+              <div class="row">
+                <div class="col-6">
+                  <small class="text-muted">Total Processed</small>
+                  <div class="h5 mb-0">₹{{paymentAnalytics.totalProcessed | number:'1.0-0'}}</div>
+                </div>
+                <div class="col-6">
+                  <small class="text-muted">Processing Fees</small>
+                  <div class="h5 mb-0">₹{{paymentAnalytics.processingFees | number:'1.0-0'}}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Activities -->
+      <div class="card-modern">
+        <div class="card-header-modern">
+          <h6 class="mb-0">Recent Activities</h6>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-modern">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Activity</th>
+                  <th>User</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let activity of recentActivities">
+                  <td>{{activity.timestamp | date:'short'}}</td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <i [class]="activity.icon + ' me-2'" [style.color]="activity.iconColor"></i>
+                      {{activity.description}}
+                    </div>
+                  </td>
+                  <td>{{activity.user}}</td>
+                  <td>₹{{activity.amount | number:'1.0-0'}}</td>
+                  <td>
+                    <span class="badge" [ngClass]="{
+                      'bg-success': activity.status === 'completed' || activity.status === 'confirmed',
+                      'bg-warning': activity.status === 'pending',
+                      'bg-danger': activity.status === 'failed' || activity.status === 'cancelled',
+                      'bg-info': activity.status === 'info'
+                    }">{{activity.status}}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      </div><!-- End of ngIf wrapper -->
+    </div>

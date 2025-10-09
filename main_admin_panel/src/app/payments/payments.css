@@ -1,0 +1,388 @@
+.payments-dashboard {
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+
+    .bg-gradient-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+      color: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    .payment-filter {
+      background: rgba(255, 255, 255, 0.9);
+      border: none;
+      border-radius: 20px;
+      color: #2c3e50;
+    }
+
+    .payment-stats-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 25px;
+      padding: 2rem;
+      text-align: center;
+      transition: all 0.4s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      min-height: 280px;
+    }
+
+    .payment-stats-card:hover {
+      transform: translateY(-15px) scale(1.02);
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+    }
+
+    .payment-stats-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      border-radius: 25px 25px 0 0;
+    }
+
+    .gradient-success::before { background: linear-gradient(90deg, #10b981, #059669); }
+    .gradient-warning::before { background: linear-gradient(90deg, #f59e0b, #d97706); }
+    .gradient-primary::before { background: linear-gradient(90deg, #3b82f6, #1d4ed8); }
+    .gradient-danger::before { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
+    .payment-icon {
+      font-size: 3.5rem;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(45deg, #667eea, #764ba2);
+        background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+    }
+
+    .payment-metric {
+      font-size: 2.8rem;
+      font-weight: 900;
+      margin-bottom: 0.8rem;
+      background: linear-gradient(45deg, #2c3e50, #34495e);
+        background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .payment-label {
+      font-size: 1.2rem;
+      color: #7f8c8d;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      letter-spacing: 0.5px;
+    }
+
+    .payment-change {
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 0.6rem 1.2rem;
+      border-radius: 25px;
+      display: inline-block;
+      margin-bottom: 1rem;
+    }
+
+    .payment-change.positive {
+      background: rgba(16, 185, 129, 0.15);
+      color: #059669;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .payment-change.negative {
+      background: rgba(239, 68, 68, 0.15);
+      color: #dc2626;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .payment-subtitle {
+      font-size: 0.9rem;
+      color: #95a5a6;
+      margin-bottom: 1rem;
+      font-style: italic;
+    }
+
+    .payment-progress {
+      width: 100%;
+      height: 8px;
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 1rem;
+    }
+
+    .payment-progress .progress-bar {
+      height: 100%;
+      border-radius: 10px;
+      transition: width 0.8s ease;
+    }
+
+    .progress-bar.success { background: linear-gradient(90deg, #10b981, #059669); }
+    .progress-bar.warning { background: linear-gradient(90deg, #f59e0b, #d97706); }
+    .progress-bar.danger { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
+    .payment-gateway-panel {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(15px);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .panel-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1.5rem 2rem;
+    }
+
+    .panel-body {
+      padding: 2rem;
+    }
+
+    .gateway-status {
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 15px;
+      padding: 1.5rem;
+      margin: 0.5rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: 2px solid transparent;
+    }
+
+    .gateway-status:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    }
+
+    .gateway-status.active {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.05);
+    }
+
+    .gateway-status.warning {
+      border-color: #f59e0b;
+      background: rgba(245, 158, 11, 0.05);
+    }
+
+    .gateway-status.inactive {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.05);
+    }
+
+    .gateway-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: #667eea;
+    }
+
+    .gateway-name {
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      color: #2c3e50;
+    }
+
+    .gateway-metric {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #34495e;
+      margin-bottom: 0.5rem;
+    }
+
+    .gateway-status-text {
+      font-size: 0.9rem;
+      padding: 0.3rem 0.8rem;
+      border-radius: 15px;
+      display: inline-block;
+      margin-bottom: 0.5rem;
+    }
+
+    .gateway-status.active .gateway-status-text {
+      background: rgba(16, 185, 129, 0.2);
+      color: #059669;
+    }
+
+    .gateway-status.warning .gateway-status-text {
+      background: rgba(245, 158, 11, 0.2);
+      color: #d97706;
+    }
+
+    .gateway-status.inactive .gateway-status-text {
+      background: rgba(239, 68, 68, 0.2);
+      color: #dc2626;
+    }
+
+    .gateway-uptime {
+      font-size: 0.8rem;
+      color: #7f8c8d;
+    }
+
+    .fade-in-up {
+      animation: fadeInUp 0.8s ease forwards;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .card-modern {
+      border: none;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .card-modern:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn {
+      border-radius: 25px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      border: none;
+      padding: 0.6rem 1.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: 0.85rem;
+    }
+
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-light {
+      background: rgba(255, 255, 255, 0.9);
+      color: #2c3e50;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+    }
+
+    .btn-light:hover {
+      background: white;
+      color: #667eea;
+      border-color: #667eea;
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #10b981, #059669);
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-info {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-warning {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+
+    .form-select {
+      border-radius: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.9);
+      transition: all 0.3s ease;
+    }
+
+    .form-select:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    .payment-table {
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .payment-table thead {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .payment-table thead th {
+      border: none;
+      padding: 1rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      letter-spacing: 0.5px;
+    }
+
+    .payment-table tbody tr {
+      transition: all 0.3s ease;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .payment-table tbody tr:hover {
+      background: rgba(102, 126, 234, 0.05);
+      transform: scale(1.01);
+    }
+
+    .payment-table tbody td {
+      padding: 1rem;
+      vertical-align: middle;
+      border: none;
+    }
+
+    .table-responsive {
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    @media (max-width: 768px) {
+      .payment-stats-card {
+        margin-bottom: 1.5rem;
+        min-height: 250px;
+        padding: 1.5rem;
+      }
+      
+      .payment-metric {
+        font-size: 2.2rem;
+      }
+      
+      .payment-icon {
+        font-size: 2.8rem;
+      }
+      
+      .gateway-status {
+        margin: 0.25rem;
+        padding: 1rem;
+      }
+      
+      .payments-dashboard {
+        padding: 15px;
+      }
+    }

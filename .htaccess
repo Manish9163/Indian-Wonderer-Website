@@ -1,0 +1,72 @@
+# Unified Application .htaccess
+# Routes all requests through bridge.php for unified frontend/admin/backend connection
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /fu/
+    
+    # CORS headers are now handled by individual PHP files (health.php, admin_login.php, etc.)
+    # This prevents duplicate headers and allows proper credential-based authentication
+    # NEVER use wildcard (*) with Access-Control-Allow-Credentials: true
+    
+    # Handle preflight OPTIONS requests
+    RewriteCond %{REQUEST_METHOD} OPTIONS
+    RewriteRule ^(.*)$ bridge.php [L]
+    
+    # Don't rewrite if file or directory exists (for static assets)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    
+    # Exclude already routed backend API calls
+    RewriteCond %{REQUEST_URI} !^/fu/backend/api/
+    
+    # Route everything through bridge.php
+    RewriteRule ^(.*)$ bridge.php [QSA,L]
+</IfModule>
+
+# Security Headers
+<IfModule mod_headers.c>
+    # Prevent clickjacking
+    Header always set X-Frame-Options "SAMEORIGIN"
+    
+    # XSS Protection
+    Header always set X-XSS-Protection "1; mode=block"
+    
+    # Prevent MIME sniffing
+    Header always set X-Content-Type-Options "nosniff"
+    
+    # Referrer Policy
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Enable compression for better performance
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+# Browser caching for static assets
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/avif "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType text/javascript "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType application/json "access plus 0 seconds"
+</IfModule>
+
+# PHP Settings
+<IfModule mod_php7.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_value max_execution_time 300
+    php_value max_input_time 300
+</IfModule>
+
+# Custom error pages
+ErrorDocument 404 /fu/bridge.php
+ErrorDocument 500 /fu/bridge.php

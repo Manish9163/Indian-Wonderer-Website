@@ -1,0 +1,28 @@
+RewriteEngine On
+
+# Handle CORS preflight requests - Let PHP handle them
+# RewriteCond %{REQUEST_METHOD} OPTIONS
+# RewriteRule ^.*$ - [R=200,L]
+
+# API routing
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^api/(.*)$ api/$1 [QSA,L]
+
+# CORS headers are handled individually in each PHP file for better control
+
+# Set content type for API responses
+<Files "*.php">
+    Header set Content-Type "application/json; charset=UTF-8"
+</Files>
+
+# Security headers
+Header always set X-Content-Type-Options nosniff
+Header always set X-Frame-Options DENY
+Header always set X-XSS-Protection "1; mode=block"
+
+# Cache control for API responses
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType application/json "access plus 0 seconds"
+</IfModule>

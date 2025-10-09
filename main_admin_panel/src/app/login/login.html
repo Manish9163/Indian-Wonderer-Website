@@ -1,0 +1,80 @@
+ <div class="login-container">
+      <div class="login-card">
+        <div class="login-header">
+          <h2>🗺️ Indian Wonderer</h2>
+          <p>Admin Panel Login</p>
+        </div>
+
+        <!-- Connection Status -->
+        <div class="connection-status" [ngClass]="connectionStatus">
+          <i [class]="connectionIcon"></i>
+          <span>{{ connectionMessage }}</span>
+        </div>
+
+        @if (errorMessage) {
+          <div class="alert alert-danger">
+            {{ errorMessage }}
+          </div>
+        }
+
+        <form (ngSubmit)="onSubmit()" class="login-form">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              [(ngModel)]="credentials.email"
+              class="form-control"
+              placeholder="admin@example.com"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              [(ngModel)]="credentials.password"
+              class="form-control"
+              placeholder="Enter your password"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            class="btn btn-primary btn-block"
+            [disabled]="isLoading"
+          >
+            @if (!isLoading) {
+              <span>Login</span>
+            }
+            @if (isLoading) {
+              <span>
+                <i class="fas fa-spinner fa-spin"></i> Logging in...
+              </span>
+            }
+          </button>
+        </form>
+
+        <div class="login-footer">
+          <p>Backend API: <strong>{{ apiUrl }}</strong></p>
+          <button class="btn btn-sm btn-link" (click)="checkConnection()">
+            <i class="fas fa-sync-alt"></i> Test Connection
+          </button>
+        </div>
+
+        <!-- Demo Credentials Info -->
+        <div class="demo-info">
+          <p><strong>Demo Credentials:</strong></p>
+          <p>Email: admin@example.com</p>
+          <p>Password: password</p>
+          <small class="text-muted">
+            (Create this admin user in the database if it doesn't exist)
+          </small>
+        </div>
+      </div>
+    </div>

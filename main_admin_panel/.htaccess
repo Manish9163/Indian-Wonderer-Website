@@ -1,0 +1,106 @@
+# Unified Routing Configuration for Indian Wonderer
+# Handles Angular Admin Panel, React Frontend, and PHP Backend
+
+RewriteEngine On
+
+# Security headers
+Header always set X-Content-Type-Options nosniff
+Header always set X-Frame-Options DENY
+Header always set X-XSS-Protection "1; mode=block"
+
+# Enable CORS for API endpoints - Handled in PHP files
+# <If "%{REQUEST_URI} =~ m#^/fu/backend/api/#">
+#     Header always set Access-Control-Allow-Origin "*"
+#     Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+#     Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+#     Header always set Access-Control-Max-Age "3600"
+# </If>
+
+# Handle OPTIONS requests for CORS preflight - disabled to let PHP handle it
+# RewriteCond %{REQUEST_METHOD} OPTIONS
+# RewriteCond %{REQUEST_URI} !^/fu/backend/api/
+# RewriteRule ^(.*)$ - [R=200,L]
+
+# Admin Panel Routes (Angular)
+# Redirect admin routes to Angular app
+RewriteCond %{REQUEST_URI} ^/fu/admin(/.*)?$
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^fu/admin(/.*)? /fu/main_admin_panel/src/index.html [L]
+
+# Frontend Routes (React)
+# Redirect frontend routes to React app
+RewriteCond %{REQUEST_URI} ^/fu/frontend(/.*)?$
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^fu/frontend(/.*)? /fu/frontend/public/index.html [L]
+
+# API Routes (PHP Backend)
+# Direct API calls to backend
+RewriteCond %{REQUEST_URI} ^/fu/backend/api/(.*)$
+RewriteRule ^fu/backend/api/(.*)$ /fu/backend/api/$1 [L]
+
+# Gateway Route
+RewriteCond %{REQUEST_URI} ^/fu/backend/gateway\.php.*$
+RewriteRule ^fu/backend/gateway\.php(.*)$ /fu/backend/gateway.php$1 [L]
+
+# Backend Routes
+RewriteCond %{REQUEST_URI} ^/fu/backend/(.*)$
+RewriteRule ^fu/backend/(.*)$ /fu/backend/$1 [L]
+
+# Root route - redirect to main router
+RewriteCond %{REQUEST_URI} ^/fu/?$
+RewriteRule ^fu/?$ /fu/index.php [L]
+
+# Static file handling
+# Allow direct access to static files
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule .* - [L]
+
+# Directory listing protection
+Options -Indexes
+
+# Protect sensitive files
+<Files ~ "^(\.env|\.git|config\.php|database\.php)">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Cache static assets
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType application/json "access plus 1 day"
+</IfModule>
+
+# Compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+</IfModule>
+
+# PHP Settings
+<IfModule mod_php7.c>
+    php_value upload_max_filesize 50M
+    php_value post_max_size 50M
+    php_value max_execution_time 300
+    php_value memory_limit 256M
+</IfModule>
+
+# Error pages
+ErrorDocument 404 /fu/index.php
+ErrorDocument 500 /fu/index.php

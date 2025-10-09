@@ -1,0 +1,594 @@
+<?php
+/**
+ * Middleware Manager
+ * Orchestrates all middleware components for unified frontend communication
+ */
+
+require_once 'AuthMiddleware.php';
+require_once 'CorsMiddleware.php';
+require_once 'RateLimitMiddleware.php';
+require_once 'RequestResponseMiddleware.php';
+
+class MiddlewareManager {
+    private $middlewares = [];
+    private $config;
+    
+    public function __construct($config = []) {
+        $this->config = array_merge([
+            'enable_cors' => true,
+            'enable_auth' => true,
+            'enable_rate_limit' => true,
+            'enable_request_response' => true,
+            'log_enabled' => true
+        ], $config);
+        
+        $this->initializeMiddlewares();
+    }
+    
+    /**
+     * Initialize middleware stack
+     */
+    private function initializeMiddlewares() {
+        // Order matters - CORS must be first to handle OPTIONS requests
+        if ($this->config['enable_cors']) {
+            $this->middlewares[] = new CorsMiddleware();
+        }
+        
+        if ($this->config['enable_request_response']) {
+            $this->middlewares[] = new RequestResponseMiddleware();
+        }
+        
+        if ($this->config['enable_rate_limit']) {
+            $this->middlewares[] = new RateLimitMiddleware();
+        }
+        
+        if ($this->config['enable_auth']) {
+            $this->middlewares[] = new AuthMiddleware();
+        }
+    }
+    
+    /**
+     * Process request through middleware stack
+     */
+    public function handle($request, $finalHandler) {
+        return $this->processMiddleware(0, $request, $finalHandler);
+    }
+    
+    /**
+     * Process middleware recursively
+     */
+    private function processMiddleware($index, $request, $finalHandler) {
+        // If we've processed all middleware, call the final handler
+        if ($index >= count($this->middlewares)) {
+            return $finalHandler($request);
+        }
+        
+        $middleware = $this->middlewares[$index];
+        
+        // Create next function for current middleware
+        $next = function($request) use ($index, $finalHandler) {
+            return $this->processMiddleware($index + 1, $request, $finalHandler);
+        };
+        
+        return $middleware->handle($request, $next);
+    }
+    
+    /**
+     * Route requests to appropriate API endpoints
+     */
+    public static function route($endpoint, $data = null) {
+        $manager = new self();
+        
+        $request = [
+            'endpoint' => $endpoint,
+            'data' => $data,
+            'method' => $_SERVER['REQUEST_METHOD'],
+            'headers' => getallheaders(),
+            'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown'
+        ];
+        
+        return $manager->handle($request, function($request) {
+            return MiddlewareManager::executeEndpoint($request);
+        });
+    }
+    
+    /**
+     * Execute the actual API endpoint
+     */
+    private static function executeEndpoint($request) {
+        $endpoint = $request['endpoint'];
+        $method = $request['method'];
+        
+        // Map endpoints to their comprehensive admin handlers
+        $routes = [
+            // Authentication endpoints
+            'auth/login' => function() use ($method) {
+                if ($method === 'POST') {
+                    return self::handleAuthLogin();
+                }
+                return self::methodNotAllowed();
+            },
+            
+            'auth/logout' => function() use ($method) {
+                if ($method === 'POST') {
+                    return self::handleAuthLogout();
+                }
+                return self::methodNotAllowed();
+            },
+            
+            'auth/verify' => function() use ($method) {
+                if ($method === 'GET') {
+                    return self::handleAuthVerify();
+                }
+                return self::methodNotAllowed();
+            },
+            
+            // Advanced Admin Tours Management
+            'admin/tours' => function() use ($method) {
+                return self::handleAdminTours();
+            },
+            
+            // Advanced Admin User Management
+            'admin/users' => function() use ($method) {
+                return self::handleAdminUsers();
+            },
+            
+            // Advanced Admin Booking Management
+            'admin/bookings' => function() use ($method) {
+                return self::handleAdminBookings();
+            },
+            
+            // Advanced Admin Dashboard
+            'admin/dashboard' => function() use ($method) {
+                return self::handleAdminDashboard();
+            },
+            
+            // Advanced Admin Analytics
+            'admin/analytics' => function() use ($method) {
+                return self::handleAdminAnalytics();
+            },
+            
+            // Public Tours (for frontend)
+            'tours' => function() use ($method) {
+                switch ($method) {
+                    case 'GET':
+                        return self::handleGetTours();
+                    default:
+                        return self::methodNotAllowed();
+                }
+            },
+            
+            // Public Bookings (for frontend)
+            'bookings' => function() use ($method) {
+                switch ($method) {
+                    case 'GET':
+                        return self::handleGetBookings();
+                    case 'POST':
+                        return self::handleCreateBooking();
+                    default:
+                        return self::methodNotAllowed();
+                }
+            },
+            
+            // User management (basic)
+            'users' => function() use ($method) {
+                switch ($method) {
+                    case 'GET':
+                        return self::handleGetUsers();
+                    case 'POST':
+                        return self::handleCreateUser();
+                    default:
+                        return self::methodNotAllowed();
+                }
+            },
+            
+            // Dashboard stats (basic)
+            'dashboard/stats' => function() use ($method) {
+                if ($method === 'GET') {
+                    return self::handleDashboardStats();
+                }
+                return self::methodNotAllowed();
+            },
+            
+            // Analytics (basic)
+            'analytics' => function() use ($method) {
+                if ($method === 'GET') {
+                    return self::handleAnalytics();
+                }
+                return self::methodNotAllowed();
+            },
+            
+            // Customers endpoints
+            'customers' => function() use ($method) {
+                switch ($method) {
+                    case 'GET':
+                        return self::handleGetCustomers();
+                    case 'POST':
+                        return self::handleCreateCustomer();
+                    default:
+                        return self::methodNotAllowed();
+                }
+            },
+            
+            // Itineraries endpoints
+            'itineraries' => function() use ($method) {
+                switch ($method) {
+                    case 'GET':
+                        return self::handleGetItineraries();
+                    case 'POST':
+                        return self::handleCreateItinerary();
+                    default:
+                        return self::methodNotAllowed();
+                }
+            },
+            
+            // Payments endpoints
+            'payments' => function() use ($method) {
+                switch ($method) {
+                    case 'GET':
+                        return self::handleGetPayments();
+                    case 'POST':
+                        return self::handleProcessPayment();
+                    default:
+                        return self::methodNotAllowed();
+                }
+            }
+        ];
+        
+        // Execute route handler
+        if (isset($routes[$endpoint])) {
+            try {
+                return $routes[$endpoint]();
+            } catch (Exception $e) {
+                return self::errorResponse('Internal server error: ' . $e->getMessage(), 500);
+            }
+        }
+        
+        return self::notFoundResponse();
+    }
+    
+    /**
+     * Authentication handlers
+     */
+    private static function handleAuthLogin() {
+        $input = RequestResponseMiddleware::getJsonInput();
+        
+        if (!$input || !isset($input['email']) || !isset($input['password'])) {
+            return self::errorResponse('Email and password are required', 400);
+        }
+        
+        // Include the auth API
+        require_once __DIR__ . '/../api/auth.php';
+        
+        // Simulate API call
+        $_POST = $input;
+        ob_start();
+        include __DIR__ . '/../api/auth.php';
+        $output = ob_get_clean();
+        
+        return json_decode($output, true) ?: ['success' => false, 'message' => 'Login failed'];
+    }
+    
+    private static function handleAuthLogout() {
+        return ['success' => true, 'message' => 'Logged out successfully'];
+    }
+    
+    private static function handleAuthVerify() {
+        // Verify JWT token from headers
+        $headers = getallheaders();
+        $token = $headers['Authorization'] ?? '';
+        
+        if (strpos($token, 'Bearer ') === 0) {
+            $token = substr($token, 7);
+            // Add JWT verification logic here
+            return ['success' => true, 'valid' => true];
+        }
+        
+        return ['success' => false, 'valid' => false];
+    }
+    
+    /**
+     * Tours handlers
+     */
+    private static function handleGetTours() {
+        require_once __DIR__ . '/../api/tours.php';
+        
+        ob_start();
+        include __DIR__ . '/../api/tours.php';
+        $output = ob_get_clean();
+        
+        return json_decode($output, true) ?: [];
+    }
+    
+    private static function handleCreateTour() {
+        $input = RequestResponseMiddleware::getJsonInput();
+        
+        if (!$input) {
+            return self::errorResponse('Tour data is required', 400);
+        }
+        
+        $_POST = $input;
+        require_once __DIR__ . '/../api/tours.php';
+        
+        ob_start();
+        include __DIR__ . '/../api/tours.php';
+        $output = ob_get_clean();
+        
+        return json_decode($output, true) ?: ['success' => false];
+    }
+    
+    /**
+     * Users handlers
+     */
+    private static function handleGetUsers() {
+        require_once __DIR__ . '/../api/users.php';
+        
+        ob_start();
+        include __DIR__ . '/../api/users.php';
+        $output = ob_get_clean();
+        
+        return json_decode($output, true) ?: [];
+    }
+    
+    private static function handleCreateUser() {
+        $input = RequestResponseMiddleware::getJsonInput();
+        
+        if (!$input) {
+            return self::errorResponse('User data is required', 400);
+        }
+        
+        $_POST = $input;
+        require_once __DIR__ . '/../api/users.php';
+        
+        ob_start();
+        include __DIR__ . '/../api/users.php';
+        $output = ob_get_clean();
+        
+        return json_decode($output, true) ?: ['success' => false];
+    }
+    
+    /**
+     * Bookings handlers
+     */
+    private static function handleGetBookings() {
+        require_once __DIR__ . '/../api/bookings.php';
+        
+        ob_start();
+        include __DIR__ . '/../api/bookings.php';
+        $output = ob_get_clean();
+        
+        return json_decode($output, true) ?: [];
+    }
+    
+    private static function handleCreateBooking() {
+        $input = RequestResponseMiddleware::getJsonInput();
+        
+        if (!$input) {
+            return self::errorResponse('Booking data is required', 400);
+        }
+        
+        $_POST = $input;
+        require_once __DIR__ . '/../api/bookings.php';
+        
+        ob_start();
+        include __DIR__ . '/../api/bookings.php';
+        $output = ob_get_clean();
+        
+        return json_decode($output, true) ?: ['success' => false];
+    }
+    
+    /**
+     * Dashboard handlers
+     */
+    private static function handleDashboardStats() {
+        require_once __DIR__ . '/../api/dashboard.php';
+        
+        ob_start();
+        include __DIR__ . '/../api/dashboard.php';
+        $output = ob_get_clean();
+        
+        return json_decode($output, true) ?: [];
+    }
+    
+    /**
+     * Analytics handlers
+     */
+    private static function handleAnalytics() {
+        require_once __DIR__ . '/../api/analytics.php';
+        
+        ob_start();
+        include __DIR__ . '/../api/analytics.php';
+        $output = ob_get_clean();
+        
+        return json_decode($output, true) ?: [];
+    }
+    
+    /**
+     * Customers handlers
+     */
+    private static function handleGetCustomers() {
+        require_once __DIR__ . '/../api/customers.php';
+        
+        ob_start();
+        include __DIR__ . '/../api/customers.php';
+        $output = ob_get_clean();
+        
+        return json_decode($output, true) ?: [];
+    }
+    
+    private static function handleCreateCustomer() {
+        $input = RequestResponseMiddleware::getJsonInput();
+        
+        if (!$input) {
+            return self::errorResponse('Customer data is required', 400);
+        }
+        
+        $_POST = $input;
+        require_once __DIR__ . '/../api/customers.php';
+        
+        ob_start();
+        include __DIR__ . '/../api/customers.php';
+        $output = ob_get_clean();
+        
+        return json_decode($output, true) ?: ['success' => false];
+    }
+    
+    /**
+     * Itineraries handlers
+     */
+    private static function handleGetItineraries() {
+        require_once __DIR__ . '/../api/itineraries.php';
+        
+        ob_start();
+        include __DIR__ . '/../api/itineraries.php';
+        $output = ob_get_clean();
+        
+        return json_decode($output, true) ?: [];
+    }
+    
+    private static function handleCreateItinerary() {
+        $input = RequestResponseMiddleware::getJsonInput();
+        
+        if (!$input) {
+            return self::errorResponse('Itinerary data is required', 400);
+        }
+        
+        $_POST = $input;
+        require_once __DIR__ . '/../api/itineraries.php';
+        
+        ob_start();
+        include __DIR__ . '/../api/itineraries.php';
+        $output = ob_get_clean();
+        
+        return json_decode($output, true) ?: ['success' => false];
+    }
+    
+    /**
+     * Admin API handlers using the new comprehensive APIs
+     */
+    private static function handleAdminTours() {
+        require_once __DIR__ . '/../api/admin_tours.php';
+        
+        // Capture output from the admin tours API
+        ob_start();
+        $api = new AdminToursAPI();
+        $api->handleRequest();
+        $output = ob_get_clean();
+        
+        return json_decode($output, true) ?: ['success' => false, 'message' => 'Admin tours API error'];
+    }
+    
+    private static function handleAdminUsers() {
+        require_once __DIR__ . '/../api/admin_users.php';
+        
+        ob_start();
+        $api = new AdminUserManagementAPI();
+        $api->handleRequest();
+        $output = ob_get_clean();
+        
+        return json_decode($output, true) ?: ['success' => false, 'message' => 'Admin users API error'];
+    }
+    
+    private static function handleAdminBookings() {
+        require_once __DIR__ . '/../api/admin_bookings.php';
+        
+        ob_start();
+        $api = new AdminBookingManagementAPI();
+        $api->handleRequest();
+        $output = ob_get_clean();
+        
+        return json_decode($output, true) ?: ['success' => false, 'message' => 'Admin bookings API error'];
+    }
+    
+    private static function handleAdminDashboard() {
+        require_once __DIR__ . '/../api/admin_dashboard.php';
+        
+        ob_start();
+        $api = new AdminDashboardAPI();
+        $api->handleRequest();
+        $output = ob_get_clean();
+        
+        return json_decode($output, true) ?: ['success' => false, 'message' => 'Admin dashboard API error'];
+    }
+    
+    private static function handleAdminAnalytics() {
+        require_once __DIR__ . '/../api/admin_analytics.php';
+        
+        ob_start();
+        $api = new AdvancedAnalyticsAPI();
+        $api->handleRequest();
+        $output = ob_get_clean();
+        
+        return json_decode($output, true) ?: ['success' => false, 'message' => 'Admin analytics API error'];
+    }
+    
+    /**
+     * Payments handlers
+     */
+    private static function handleGetPayments() {
+        require_once __DIR__ . '/../api/payments.php';
+        
+        ob_start();
+        include __DIR__ . '/../api/payments.php';
+        $output = ob_get_clean();
+        
+        return json_decode($output, true) ?: [];
+    }
+    
+    private static function handleProcessPayment() {
+        $input = RequestResponseMiddleware::getJsonInput();
+        
+        if (!$input) {
+            return self::errorResponse('Payment data is required', 400);
+        }
+        
+        $_POST = $input;
+        require_once __DIR__ . '/../api/payments.php';
+        
+        ob_start();
+        include __DIR__ . '/../api/payments.php';
+        $output = ob_get_clean();
+        
+        return json_decode($output, true) ?: ['success' => false];
+    }
+    
+    /**
+     * Helper methods
+     */
+    private static function methodNotAllowed() {
+        http_response_code(405);
+        return [
+            'success' => false,
+            'message' => 'Method not allowed',
+            'error_code' => 'METHOD_NOT_ALLOWED'
+        ];
+    }
+    
+    private static function notFoundResponse() {
+        http_response_code(404);
+        return [
+            'success' => false,
+            'message' => 'Endpoint not found',
+            'error_code' => 'NOT_FOUND'
+        ];
+    }
+    
+    private static function errorResponse($message, $code = 500) {
+        http_response_code($code);
+        return [
+            'success' => false,
+            'message' => $message,
+            'error_code' => 'ERROR_' . $code
+        ];
+    }
+    
+    /**
+     * Send JSON response
+     */
+    public static function sendResponse($data) {
+        header('Content-Type: application/json');
+        echo json_encode($data, JSON_PRETTY_PRINT);
+        exit;
+    }
+}
+?>

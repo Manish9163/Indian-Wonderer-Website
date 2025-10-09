@@ -1,0 +1,315 @@
+   <div class="dashboard-container">
+      <!-- Enhanced Dashboard Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-gradient-header rounded">
+        <div>
+          <h4 class="mb-1">🚀 Dashboard Overview</h4>
+          <small class="text-light">Real-time business intelligence and analytics</small>
+        </div>
+        <div class="d-flex gap-2">
+          <select class="form-select form-select-sm dashboard-filter" [(ngModel)]="selectedPeriod" (change)="updatePeriod()" style="width: auto;">
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+            <option value="quarter">This Quarter</option>
+            <option value="year">This Year</option>
+          </select>
+          <button class="btn btn-light btn-sm" (click)="refreshDashboard()">
+            <i class="fas fa-sync-alt" [class.fa-spin]="isRefreshing"></i> Refresh
+          </button>
+          <button class="btn btn-light btn-sm" (click)="exportDashboard()">
+            <i class="fas fa-download"></i> Export
+          </button>
+        </div>
+      </div>
+
+      <!-- Enhanced Statistics Cards -->
+      <div class="row g-4 mb-4">
+        <div class="col-md-3">
+          <div class="dashboard-stats-card gradient-primary fade-in-up" (click)="onToursCardClick()">
+            <div class="stats-icon">
+              <i class="fas fa-route"></i>
+            </div>
+            <div class="stats-metric">{{ stats.totalTours }}</div>
+            <div class="stats-label">Active Tours</div>
+            <div class="stats-change positive">
+              <i class="fas fa-arrow-up"></i>
+              +{{ stats.toursGrowth }}% this month
+            </div>
+            <div class="stats-subtitle">Currently available packages</div>
+            <div class="stats-progress">
+              <div class="progress-bar primary" [style.width]="'75%'"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="dashboard-stats-card gradient-success fade-in-up" (click)="onBookingsCardClick()">
+            <div class="stats-icon">
+              <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="stats-metric">{{ stats.activeBookings }}</div>
+            <div class="stats-label">Active Bookings</div>
+            <div class="stats-change positive">
+              <i class="fas fa-arrow-up"></i>
+              +{{ stats.bookingsGrowth }}% this month
+            </div>
+            <div class="stats-subtitle">Confirmed reservations</div>
+            <div class="stats-progress">
+              <div class="progress-bar success" [style.width]="'89%'"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="dashboard-stats-card gradient-info fade-in-up" (click)="onCustomersCardClick()">
+            <div class="stats-icon">
+              <i class="fas fa-users"></i>
+            </div>
+            <div class="stats-metric">{{ stats.totalCustomers | number }}</div>
+            <div class="stats-label">Total Customers</div>
+            <div class="stats-change positive">
+              <i class="fas fa-arrow-up"></i>
+              +{{ stats.customersGrowth }}% this month
+            </div>
+            <div class="stats-subtitle">Registered users</div>
+            <div class="stats-progress">
+              <div class="progress-bar info" [style.width]="'92%'"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="dashboard-stats-card gradient-warning fade-in-up" (click)="onRevenueCardClick()">
+            <div class="stats-icon">
+              <i class="fas fa-rupee-sign"></i>
+            </div>
+            <div class="stats-metric">{{ '₹' + (stats.monthlyRevenue | number) }}</div>
+            <div class="stats-label">Monthly Revenue</div>
+            <div class="stats-change positive">
+              <i class="fas fa-arrow-up"></i>
+              +{{ stats.revenueGrowth }}% this month
+            </div>
+            <div class="stats-subtitle">Total earnings</div>
+            <div class="stats-progress">
+              <div class="progress-bar warning" [style.width]="'96%'"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content Row -->
+      <div class="row g-4 mb-4">
+        <!-- Recent Bookings Section -->
+        <div class="col-lg-8">
+          <div class="card-modern fade-in-up">
+            <div class="panel-header">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h5 class="mb-1"><i class="fas fa-list"></i> Recent Bookings</h5>
+                  <small>Latest customer reservations and activities</small>
+                </div>
+                <div class="d-flex gap-2">
+                  <select class="form-select form-select-sm dashboard-filter" [(ngModel)]="selectedBookingStatus" (change)="filterBookings()" style="width: auto;">
+                    <option value="all">All Status</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="pending">Pending</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                  <button class="btn btn-light btn-sm" (click)="refreshBookings()">
+                    <i class="fas fa-sync-alt" [class.fa-spin]="isRefreshingBookings"></i> Refresh
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div class="panel-body">
+              <div class="table-responsive">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Customer</th>
+                      <th>Tour</th>
+                      <th>Date</th>
+                      <th>Status</th>
+                      <th>Amount</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let booking of filteredBookings">
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                            {{ booking.customer.charAt(0) }}
+                          </div>
+                          {{ booking.customer }}
+                        </div>
+                      </td>
+                      <td>
+                        <strong>{{ booking.tour }}</strong>
+                        <small class="text-muted d-block">{{ booking.destination || 'International' }}</small>
+                      </td>
+                      <td>{{ booking.date | date:'short' }}</td>
+                      <td>
+                        <span class="badge" 
+                              [ngClass]="{
+                                'bg-success': booking.status === 'confirmed',
+                                'bg-warning': booking.status === 'pending',
+                                'bg-danger': booking.status === 'cancelled',
+                                'bg-info': booking.status === 'processing'
+                              }">
+                          {{ booking.status | titlecase }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="fw-bold">{{ '₹' + booking.amount }}</span>
+                      </td>
+                      <td>
+                        <div class="btn-group btn-group-sm">
+                          <button class="btn btn-info" (click)="viewBookingDetails(booking.id)" title="View Details">
+                            <i class="fas fa-eye"></i>
+                          </button>
+                          <button class="btn btn-success" (click)="editBooking(booking.id)" title="Edit">
+                            <i class="fas fa-edit"></i>
+                          </button>
+                          <button class="btn btn-warning" 
+                                  (click)="cancelBooking(booking.id)" 
+                                  [disabled]="booking.status === 'cancelled'"
+                                  title="Cancel">
+                            <i class="fas fa-ban"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Popular Tours Section -->
+        <div class="col-lg-4">
+          <div class="card-modern fade-in-up">
+            <div class="panel-header">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h5 class="mb-1"><i class="fas fa-star"></i> Popular Tours</h5>
+                  <small>Top performing tour packages</small>
+                </div>
+                <button class="btn btn-light btn-sm" (click)="viewAllTours()">
+                  <i class="fas fa-external-link-alt"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="panel-body">
+              <div class="popular-tours-list">
+                <div class="popular-tour-item" *ngFor="let tour of popularTours; let i = index" (click)="viewTourDetails(tour.id)">
+                  <div class="tour-rank">{{ '#' + (i + 1) }}</div>
+                  <div class="tour-info">
+                    <h6 class="tour-name">{{ tour.name }}</h6>
+                    <div class="tour-stats">
+                      <span class="stat-item">
+                        <i class="fas fa-users"></i>
+                        {{ tour.bookings }} bookings
+                      </span>
+                      <span class="stat-item">
+                        <i class="fas fa-star"></i>
+                        {{ tour.rating }}
+                      </span>
+                    </div>
+                    <div class="tour-revenue">{{ '₹' + (tour.revenue | number) }}</div>
+                  </div>
+                  <div class="tour-progress">
+                    <div class="progress">
+                      <div class="progress-bar" 
+                           [style.width.%]="tour.percentage"
+                           [style.background-color]="tour.color">
+                      </div>
+                    </div>
+                    <span class="percentage">{{ tour.percentage }}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions Panel -->
+      <div class="card-modern fade-in-up">
+        <div class="panel-header">
+          <h5 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h5>
+        </div>
+        <div class="panel-body">
+          <div class="row">
+            <div class="col-md-3 mb-3">
+              <button class="quick-action-btn" (click)="createNewTour()">
+                <div class="action-icon">
+                  <i class="fas fa-plus-circle"></i>
+                </div>
+                <div class="action-text">
+                  <h6>Create New Tour</h6>
+                  <small>Add a new tour package</small>
+                </div>
+              </button>
+            </div>
+            <div class="col-md-3 mb-3">
+              <button class="quick-action-btn" (click)="manageBookings()">
+                <div class="action-icon">
+                  <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="action-text">
+                  <h6>Manage Bookings</h6>
+                  <small>View all reservations</small>
+                </div>
+              </button>
+            </div>
+            <div class="col-md-3 mb-3">
+              <button class="quick-action-btn" (click)="viewAnalytics()">
+                <div class="action-icon">
+                  <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="action-text">
+                  <h6>Analytics</h6>
+                  <small>Business insights</small>
+                </div>
+              </button>
+            </div>
+            <div class="col-md-3 mb-3">
+              <button class="quick-action-btn" (click)="manageCustomers()">
+                <div class="action-icon">
+                  <i class="fas fa-users"></i>
+                </div>
+                <div class="action-text">
+                  <h6>Customers</h6>
+                  <small>Manage user accounts</small>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Activity Monitor -->
+      <div class="card-modern fade-in-up" *ngIf="liveActivities.length > 0">
+        <div class="panel-header">
+          <h5 class="mb-0"><i class="fas fa-broadcast-tower pulse"></i> Live Activity Monitor</h5>
+        </div>
+        <div class="panel-body">
+          <div class="live-activities">
+            <div class="activity-item" *ngFor="let activity of liveActivities">
+              <div class="activity-icon">
+                <i [class]="activity.icon" [style.color]="activity.color"></i>
+              </div>
+              <div class="activity-content">
+                <strong>{{ activity.title }}</strong>
+                <span class="activity-description">{{ activity.description }}</span>
+                <small class="activity-time">{{ activity.timestamp | date:'short' }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
