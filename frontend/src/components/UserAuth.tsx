@@ -9,9 +9,15 @@ const API_BASE_URL = 'http://localhost/fu/backend/api';
 
 interface UserAuthProps {
   onAuthSuccess: (userData: any) => void;
+  showToast?: {
+    showSuccess: (title: string, message: string, duration?: number) => void;
+    showError: (title: string, message: string, duration?: number) => void;
+    showWarning: (title: string, message: string, duration?: number) => void;
+    showInfo: (title: string, message: string, duration?: number) => void;
+  };
 }
 
-const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess }) => {
+const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
   const [step, setStep] = useState<'auth' | 'otp'>('auth');
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [signupData, setSignupData] = useState({
@@ -92,6 +98,15 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess }) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Check for logout flag and show toast
+  useEffect(() => {
+    const justLoggedOut = localStorage.getItem('justLoggedOut');
+    if (justLoggedOut === 'true' && showToast) {
+      showToast.showInfo('Logged Out', 'You have been logged out successfully. See you soon!');
+      localStorage.removeItem('justLoggedOut');
+    }
+  }, [showToast]);
 
   // Handle mode change with flip animation
   const handleModeChange = (newMode: 'login' | 'signup') => {

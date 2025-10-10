@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Package, Filter, Search, Calendar, CreditCard, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Package, Filter, Search, CheckCircle, Clock, XCircle } from 'lucide-react';
 import ItineraryCard from './ItineraryCard';
 
 interface OrdersProps {

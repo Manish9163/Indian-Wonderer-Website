@@ -48,6 +48,9 @@ export class PaymentsComponent implements OnInit, OnDestroy {
   
   // Pending refunds list
   pendingRefundsList: any[] = [];
+  
+  // Completed refunds list
+  completedRefundsList: any[] = [];
 
   // Payment gateway statuses
   paymentGateways = [
@@ -112,17 +115,22 @@ export class PaymentsComponent implements OnInit, OnDestroy {
     this.loadPaymentData();
     this.startLiveMonitoring();
     
-    // Auto-refresh every 30 seconds
-    this.refreshSubscription = interval(30000)
-      .pipe(switchMap(() => this.apiService.getPayments()))
+    // Auto-refresh every 10 seconds for live monitoring
+    console.log('🔴 LIVE MONITORING: Payments will auto-refresh every 10 seconds');
+    this.refreshSubscription = interval(10000)
+      .pipe(switchMap(() => {
+        console.log('🔄 Auto-refreshing payments data...');
+        return this.apiService.getPayments();
+      }))
       .subscribe({
         next: (response) => {
-          console.log('Auto-refresh response:', response);
+          console.log('✅ Auto-refresh response received:', response);
           if (response.success) {
             this.processPaymentData(response.data);
+            console.log('✅ Payments data updated successfully');
           }
         },
-        error: (error) => console.error('Error refreshing payments:', error)
+        error: (error) => console.error('❌ Error refreshing payments:', error)
       });
   }
 
@@ -245,18 +253,78 @@ export class PaymentsComponent implements OnInit, OnDestroy {
   }
   
   loadRefundAnalytics() {
+    // Load analytics stats
     this.apiService.getAnalytics('dashboard', '30').subscribe({
       next: (response) => {
         if (response.success && response.data && response.data.refunds) {
           const refundData = response.data.refunds;
           this.paymentStats.pendingRefunds = refundData.stats.pending_refunds_count || 0;
           this.paymentStats.pendingRefundAmount = Math.round(refundData.stats.pending_refunds_amount || 0);
+          this.paymentStats.completedRefunds = refundData.stats.completed_refunds_count || 0;
+          this.paymentStats.completedRefundAmount = Math.round(refundData.stats.completed_refunds_amount || 0);
+          this.paymentStats.totalRefunds = refundData.stats.total_refunds || 0;
+          this.paymentStats.totalRefundAmount = Math.round(refundData.stats.total_refund_amount || 0);
           this.paymentStats.giftCardsIssued = refundData.giftcards.total_giftcards || 0;
           this.paymentStats.giftCardAmount = Math.round(refundData.giftcards.total_giftcard_amount || 0);
-          this.pendingRefundsList = refundData.pending_refunds || [];
+          
+          console.log('📊 Refund Stats Updated:', {
+            totalRefunds: this.paymentStats.totalRefunds,
+            totalAmount: this.paymentStats.totalRefundAmount,
+            pendingRefunds: this.paymentStats.pendingRefunds,
+            pendingAmount: this.paymentStats.pendingRefundAmount,
+            completedRefunds: this.paymentStats.completedRefunds,
+            completedAmount: this.paymentStats.completedRefundAmount,
+            giftCards: this.paymentStats.giftCardsIssued,
+            giftCardAmount: this.paymentStats.giftCardAmount
+          });
         }
       },
       error: (error) => console.error('Error loading refund analytics:', error)
+    });
+    
+    // Load detailed pending refunds list
+    this.apiService.getPendingRefunds().subscribe({
+      next: (response) => {
+        console.log('📋 Full API Response:', response);
+        if (response.success && response.data) {
+          this.pendingRefundsList = response.data.refunds || [];
+          console.log('📋 Pending Refunds List Loaded:', this.pendingRefundsList.length, 'items');
+          
+          // Log first refund in detail if available
+          if (this.pendingRefundsList.length > 0) {
+            console.log('🔍 First Refund Complete Object:', this.pendingRefundsList[0]);
+            console.log('🔍 First Refund Keys:', Object.keys(this.pendingRefundsList[0]));
+          }
+          
+          console.log('💰 Refund Details with Amount Check:', this.pendingRefundsList.map(r => ({
+            id: r.refund_id,
+            refund_amount: r.refund_amount,
+            amount: r.amount,
+            has_refund_amount: 'refund_amount' in r,
+            has_amount: 'amount' in r,
+            customer: `${r.first_name} ${r.last_name}`,
+            booking: r.booking_reference,
+            method: r.refund_method
+          })));
+        }
+      },
+      error: (error) => console.error('❌ Error loading pending refunds:', error)
+    });
+    
+    // Load detailed completed refunds list
+    this.apiService.getCompletedRefunds().subscribe({
+      next: (response) => {
+        console.log('✅ Completed Refunds API Response:', response);
+        if (response.success && response.data) {
+          this.completedRefundsList = response.data.refunds || [];
+          console.log('✅ Completed Refunds List Loaded:', this.completedRefundsList.length, 'items');
+          
+          if (this.completedRefundsList.length > 0) {
+            console.log('🔍 First Completed Refund:', this.completedRefundsList[0]);
+          }
+        }
+      },
+      error: (error) => console.error('❌ Error loading completed refunds:', error)
     });
   }
 
@@ -350,16 +418,32 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       // Check if it's a bank refund or gift card
       if (refund.refund_id && refund.refund_method === 'bank') {
         // Process bank refund
-        const confirmed = confirm(`Process refund of ₹${refund.refund_amount} for ${refund.first_name} ${refund.last_name}?\n\nBooking: ${refund.booking_reference}\nMethod: Bank Transfer\n\nThis will mark the refund as completed and notify the customer.`);
+        const refundAmount = refund.refund_amount || refund.amount || 0;
+        const confirmed = confirm(`Process refund of ₹${refundAmount.toFixed(2)} for ${refund.first_name} ${refund.last_name}?\n\nBooking: ${refund.booking_reference}\nMethod: Bank Transfer\n\nThis will mark the refund as completed and notify the customer.`);
         
         if (confirmed) {
           const notes = prompt('Enter any notes (optional):', 'Refund processed by admin') || 'Refund processed by admin';
           
+          console.log('🔄 Processing refund:', {
+            refund_id: refund.refund_id,
+            amount: refundAmount,
+            customer: `${refund.first_name} ${refund.last_name}`,
+            booking: refund.booking_reference,
+            notes: notes
+          });
+          
           this.apiService.completeRefund(refund.refund_id, notes).subscribe({
             next: (response: any) => {
               if (response.success) {
-                alert(`✅ Refund Processed Successfully!\n\nBooking: ${refund.booking_reference}\nCustomer: ${refund.first_name} ${refund.last_name}\nAmount: ₹${refund.refund_amount}\n\nThe customer has been notified via email.\nThe amount will be credited within 5-7 business days.`);
+                alert(`✅ Refund Processed Successfully!\n\nBooking: ${refund.booking_reference}\nCustomer: ${refund.first_name} ${refund.last_name}\nAmount: ₹${refundAmount.toFixed(2)}\n\nThe customer has been notified via email.\nThe amount will be credited within 5-7 business days.`);
+                
+                // Immediate refresh for live monitoring
+                console.log('🔄 Triggering immediate data refresh after refund processing...');
                 this.loadRefundAnalytics(); // Reload refund data
+                this.loadPaymentData(); // Reload all payment data
+                
+                // Also trigger a broadcast event for other components
+                window.dispatchEvent(new CustomEvent('refund-processed', { detail: response.data }));
               } else {
                 alert('❌ Failed to process refund: ' + response.message);
               }
@@ -383,7 +467,14 @@ export class PaymentsComponent implements OnInit, OnDestroy {
               if (response.success) {
                 const giftcard = response.data.giftcard;
                 alert(`✅ Gift Card Activated Successfully!\n\nCode: ${giftcard.code}\nAmount: ₹${giftcard.amount}\n\nThe customer has been notified via email with instructions on how to use the gift card.`);
+                
+                // Immediate refresh for live monitoring
+                console.log('🔄 Triggering immediate data refresh after gift card activation...');
                 this.loadRefundAnalytics(); // Reload refund data
+                this.loadPaymentData(); // Reload all payment data
+                
+                // Also trigger a broadcast event for other components
+                window.dispatchEvent(new CustomEvent('giftcard-activated', { detail: response.data }));
               } else {
                 alert('❌ Failed to activate gift card: ' + response.message);
               }

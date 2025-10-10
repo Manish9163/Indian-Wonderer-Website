@@ -1,4 +1,41 @@
     <div class="analytics-dashboard">
+      <!-- Live Monitoring Status Bar -->
+      <div class="live-monitoring-bar" [ngClass]="{'active': liveMonitoringEnabled, 'inactive': !liveMonitoringEnabled}">
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-3">
+            <div class="live-indicator">
+              <span class="pulse-dot" [class.active]="liveMonitoringEnabled"></span>
+              <span class="ms-2" style="font-weight: 600;">
+                {{ liveMonitoringEnabled ? '🔴 LIVE MONITORING ACTIVE' : '⚫ MONITORING PAUSED' }}
+              </span>
+            </div>
+            <div class="live-stats">
+              <span class="badge bg-dark">
+                <i class="fas fa-clock me-1"></i>Last Update: {{ lastUpdateTime || 'Initializing...' }}
+              </span>
+              <span class="badge bg-dark ms-2" *ngIf="isRefreshing">
+                <i class="fas fa-sync-alt fa-spin me-1"></i>Refreshing...
+              </span>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <div class="btn-group btn-group-sm">
+              <button class="btn" [class.btn-success]="refreshIntervalSeconds === 5" (click)="setRefreshInterval(5)">5s</button>
+              <button class="btn" [class.btn-success]="refreshIntervalSeconds === 10" (click)="setRefreshInterval(10)">10s</button>
+              <button class="btn" [class.btn-success]="refreshIntervalSeconds === 30" (click)="setRefreshInterval(30)">30s</button>
+              <button class="btn" [class.btn-success]="refreshIntervalSeconds === 60" (click)="setRefreshInterval(60)">1m</button>
+            </div>
+            <button class="btn btn-sm btn-light" (click)="manualRefresh()" [disabled]="isRefreshing" title="Manual Refresh">
+              <i class="fas fa-sync-alt" [class.fa-spin]="isRefreshing"></i>
+            </button>
+            <button class="btn btn-sm" [class.btn-danger]="liveMonitoringEnabled" [class.btn-secondary]="!liveMonitoringEnabled" (click)="toggleLiveMonitoring()">
+              <i class="fas" [class.fa-pause]="liveMonitoringEnabled" [class.fa-play]="!liveMonitoringEnabled"></i>
+              {{ liveMonitoringEnabled ? 'Pause' : 'Resume' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Loading Indicator -->
       <div *ngIf="isLoading" class="loading-container text-center py-5">
         <div class="spinner-grow text-light" role="status" style="width: 4rem; height: 4rem;">
@@ -140,13 +177,13 @@
       <!-- Refund & Financial Impact -->
       <div class="row mb-4" *ngIf="refundAnalytics.totalRefunds > 0">
         <div class="col-md-3 mb-3">
-          <div class="analytics-card fade-in-up" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); animation-delay: 0s;">
+          <div class="analytics-card fade-in-up" style="background: white; animation-delay: 0s;">
             <div class="analytics-icon">
               <i class="fas fa-undo"></i>
             </div>
             <div class="analytics-metric">{{refundAnalytics.pendingRefunds}}</div>
             <div class="analytics-label">Pending Refunds</div>
-            <div class="analytics-change" style="background: rgba(255,255,255,0.2); color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem;">
+            <div class="analytics-change" style="background: white; color: gray; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem;">
               <i class="fas fa-exclamation-triangle"></i>
               ₹{{refundAnalytics.pendingRefundAmount | number:'1.0-0'}} to process
             </div>
@@ -156,7 +193,7 @@
           </div>
         </div>
         <div class="col-md-3 mb-3">
-          <div class="analytics-card fade-in-up" style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); animation-delay: 0.1s;">
+          <div class="analytics-card fade-in-up" style="background: whitesmoke; animation-delay: 0.1s; cursor: pointer;" (click)="viewCompletedRefunds()">
             <div class="analytics-icon">
               <i class="fas fa-check-circle"></i>
             </div>
@@ -166,11 +203,13 @@
               <i class="fas fa-rupee-sign"></i>
               ₹{{refundAnalytics.completedRefundAmount | number:'1.0-0'}} refunded
             </div>
-            <div class="analytics-subtitle">{{refundAnalytics.refundRate | number:'1.1-1'}}% of revenue</div>
+            <div class="analytics-subtitle" style="cursor: pointer;">
+              <i class="fas fa-eye me-1"></i>View details
+            </div>
           </div>
         </div>
         <div class="col-md-3 mb-3">
-          <div class="analytics-card fade-in-up" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); animation-delay: 0.2s;">
+          <div class="analytics-card fade-in-up" style="background: whitesmoke; animation-delay: 0.2s; cursor: pointer;" (click)="viewGiftCardDetails()">
             <div class="analytics-icon">
               <i class="fas fa-gift"></i>
             </div>
@@ -180,11 +219,13 @@
               <i class="fas fa-rupee-sign"></i>
               ₹{{refundAnalytics.giftCardAmount | number:'1.0-0'}} credit
             </div>
-            <div class="analytics-subtitle">10% bonus included</div>
+            <div class="analytics-subtitle" style="cursor: pointer;">
+              <i class="fas fa-eye me-1"></i>View Details
+            </div>
           </div>
         </div>
         <div class="col-md-3 mb-3">
-          <div class="analytics-card fade-in-up" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); animation-delay: 0.3s;">
+          <div class="analytics-card fade-in-up" style="background: whitesmoke; animation-delay: 0.3s;">
             <div class="analytics-icon">
               <i class="fas fa-chart-line"></i>
             </div>
@@ -205,14 +246,14 @@
           <div class="card-modern performance-summary">
             <div class="card-header-modern d-flex justify-content-between align-items-center">
               <h6 class="mb-0">📈 Performance Summary</h6>
-              <button class="btn btn-sm btn-outline-primary" (click)="togglePerformanceView()">
+              <button class="btn btn-sm btn-outline-primary" style="color: whitesmoke;" (click)="togglePerformanceView()">
                 <i class="fas fa-{{showAdvancedMetrics ? 'eye-slash' : 'eye'}}"></i>
                 {{showAdvancedMetrics ? 'Simple' : 'Advanced'}} View
               </button>
             </div>
             <div class="card-body">
               <div class="row">
-                <div class="col-md-2 text-center" *ngFor="let metric of performanceMetrics">
+                <div class="col-md-2 text-center" style="color: black;" *ngFor="let metric of performanceMetrics">
                   <div class="performance-metric" (click)="showMetricDetails(metric)">
                     <div class="metric-value" [ngClass]="metric.status">{{metric.value}}</div>
                     <div class="metric-label">{{metric.label}}</div>
@@ -423,4 +464,316 @@
         </div>
       </div>
       </div><!-- End of ngIf wrapper -->
+
+      <!-- Refund Details Modal -->
+      <div class="modal-overlay" *ngIf="showRefundDetailsModal" (click)="closeRefundModal()">
+        <div class="modal-container" (click)="$event.stopPropagation()">
+          <div class="modal-header-custom">
+            <h3><i class="fas fa-undo-alt me-2"></i>Refund Details</h3>
+            <button class="btn-close-custom" (click)="closeRefundModal()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <!-- Loading State -->
+          <div *ngIf="isLoadingDetails" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Loading refund details...</p>
+          </div>
+
+          <!-- Refund List -->
+          <div *ngIf="!isLoadingDetails && !selectedRefund" class="modal-body-custom">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <div>
+                <h5>Total Refunds: {{detailedRefundsList.length}}</h5>
+                <p class="text-muted mb-0">Click on any refund to view full details</p>
+              </div>
+              <button class="btn btn-success btn-sm" (click)="exportRefundDetails()" *ngIf="detailedRefundsList.length > 0">
+                <i class="fas fa-file-csv me-1"></i> Export CSV
+              </button>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Booking Ref</th>
+                    <th>Customer</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let refund of detailedRefundsList" class="cursor-pointer">
+                    <td>#{{refund.refund_id}}</td>
+                    <td><strong>{{refund.booking_reference}}</strong></td>
+                    <td>
+                      <div>{{refund.first_name}} {{refund.last_name}}</div>
+                      <small class="text-muted">{{refund.email}}</small>
+                    </td>
+                    <td><strong>₹{{refund.refund_amount | number:'1.2-2'}}</strong></td>
+                    <td>
+                      <span class="badge" [ngClass]="{
+                        'bg-primary': refund.refund_method === 'bank',
+                        'bg-warning': refund.refund_method === 'giftcard'
+                      }">
+                        {{refund.refund_method === 'bank' ? 'Bank Transfer' : 'Gift Card'}}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge" [ngClass]="{
+                        'bg-warning': refund.refund_status === 'pending',
+                        'bg-success': refund.refund_status === 'completed',
+                        'bg-danger': refund.refund_status === 'rejected'
+                      }">
+                        {{refund.refund_status | uppercase}}
+                      </span>
+                    </td>
+                    <td>{{formatDate(refund.created_at)}}</td>
+                    <td>
+                      <button class="btn btn-sm btn-primary" (click)="viewRefundDetail(refund)" title="View Details">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div *ngIf="detailedRefundsList.length === 0" class="text-center py-5">
+              <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+              <p class="text-muted">No refund records found</p>
+            </div>
+          </div>
+
+          <!-- Single Refund Detail View -->
+          <div *ngIf="!isLoadingDetails && selectedRefund" class="modal-body-custom">
+            <button class="btn btn-sm btn-secondary mb-3" (click)="selectedRefund = null">
+              <i class="fas fa-arrow-left me-1"></i> Back to List
+            </button>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="detail-card">
+                  <h5><i class="fas fa-user me-2"></i>Customer Information</h5>
+                  <hr>
+                  <p><strong>Name:</strong> {{selectedRefund.first_name}} {{selectedRefund.last_name}}</p>
+                  <p><strong>Email:</strong> {{selectedRefund.email}}</p>
+                  <p><strong>Phone:</strong> {{selectedRefund.phone || 'Not provided'}}</p>
+                  <p><strong>Customer ID:</strong> #{{selectedRefund.customer_id}}</p>
+                </div>
+
+                <div class="detail-card mt-3">
+                  <h5><i class="fas fa-map-marked-alt me-2"></i>Booking Information</h5>
+                  <hr>
+                  <p><strong>Booking Reference:</strong> {{selectedRefund.booking_reference}}</p>
+                  <p><strong>Tour Name:</strong> {{selectedRefund.tour_name || 'N/A'}}</p>
+                  <p><strong>Start Date:</strong> {{formatDate(selectedRefund.tour_start_date)}}</p>
+                  <p><strong>End Date:</strong> {{formatDate(selectedRefund.tour_end_date)}}</p>
+                  <p><strong>Original Amount:</strong> ₹{{selectedRefund.total_amount || 'N/A'}}</p>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="detail-card">
+                  <h5><i class="fas fa-money-bill-wave me-2"></i>Refund Details</h5>
+                  <hr>
+                  <p><strong>Refund ID:</strong> #{{selectedRefund.refund_id}}</p>
+                  <p><strong>Amount:</strong> <span class="text-success fs-4">₹{{selectedRefund.refund_amount | number:'1.2-2'}}</span></p>
+                  <p><strong>Method:</strong> 
+                    <span class="badge" [ngClass]="{
+                      'bg-primary': selectedRefund.refund_method === 'bank',
+                      'bg-warning': selectedRefund.refund_method === 'giftcard'
+                    }">
+                      {{selectedRefund.refund_method === 'bank' ? 'Bank Transfer' : 'Gift Card'}}
+                    </span>
+                  </p>
+                  <p><strong>Status:</strong> 
+                    <span class="badge" [ngClass]="{
+                      'bg-warning': selectedRefund.refund_status === 'pending',
+                      'bg-success': selectedRefund.refund_status === 'completed',
+                      'bg-danger': selectedRefund.refund_status === 'rejected'
+                    }">
+                      {{selectedRefund.refund_status | uppercase}}
+                    </span>
+                  </p>
+                  <p><strong>Reason:</strong> {{selectedRefund.refund_reason || 'Not specified'}}</p>
+                </div>
+
+                <div class="detail-card mt-3">
+                  <h5><i class="fas fa-clock me-2"></i>Timeline</h5>
+                  <hr>
+                  <p><strong>Request Date:</strong> {{formatDate(selectedRefund.created_at)}}</p>
+                  <p *ngIf="selectedRefund.completed_at"><strong>Processed Date:</strong> {{formatDate(selectedRefund.completed_at)}}</p>
+                  <p *ngIf="selectedRefund.updated_at"><strong>Last Updated:</strong> {{formatDate(selectedRefund.updated_at)}}</p>
+                  <p *ngIf="selectedRefund.admin_notes"><strong>Admin Notes:</strong> {{selectedRefund.admin_notes}}</p>
+                </div>
+
+                <div class="detail-card mt-3" *ngIf="selectedRefund.giftcard_code">
+                  <h5><i class="fas fa-gift me-2"></i>Gift Card Information</h5>
+                  <hr>
+                  <p><strong>Code:</strong> <code class="fs-5">{{selectedRefund.giftcard_code}}</code></p>
+                  <p><strong>Balance:</strong> ₹{{selectedRefund.giftcard_balance | number:'1.2-2'}}</p>
+                  <p><strong>Expires:</strong> {{formatDate(selectedRefund.giftcard_expires)}}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 text-center">
+              <button class="btn btn-primary me-2" (click)="printRefundReport(selectedRefund)">
+                <i class="fas fa-print me-1"></i> Print Report
+              </button>
+              <button class="btn btn-secondary" (click)="closeRefundModal()">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gift Card Details Modal -->
+      <div class="modal-overlay" *ngIf="showGiftCardDetailsModal" (click)="closeGiftCardModal()">
+        <div class="modal-container" (click)="$event.stopPropagation()">
+          <div class="modal-header-custom">
+            <h3><i class="fas fa-gift me-2"></i>Gift Card Details</h3>
+            <button class="btn-close-custom" (click)="closeGiftCardModal()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <!-- Loading State -->
+          <div *ngIf="isLoadingDetails" class="text-center py-5">
+            <div class="spinner-border text-warning" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Loading gift card details...</p>
+          </div>
+
+          <!-- Gift Card List -->
+          <div *ngIf="!isLoadingDetails && !selectedGiftCard" class="modal-body-custom">
+            <div class="mb-4">
+              <h5>Total Gift Cards: {{detailedGiftCardsList.length}}</h5>
+              <p class="text-muted mb-0">Active gift cards issued through refund program</p>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Gift Card Code</th>
+                    <th>Customer</th>
+                    <th>Amount</th>
+                    <th>Balance</th>
+                    <th>Status</th>
+                    <th>Expires</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let giftCard of detailedGiftCardsList">
+                    <td><code>{{giftCard.giftcard_code}}</code></td>
+                    <td>
+                      <div>{{giftCard.first_name}} {{giftCard.last_name}}</div>
+                      <small class="text-muted">{{giftCard.email}}</small>
+                      <small class="d-block text-muted">{{giftCard.phone}}</small>
+                    </td>
+                    <td>₹{{giftCard.giftcard_amount | number:'1.2-2'}}</td>
+                    <td><strong>₹{{giftCard.giftcard_balance | number:'1.2-2'}}</strong></td>
+                    <td>
+                      <span class="badge" [ngClass]="{
+                        'bg-success': giftCard.giftcard_status === 'active' || giftCard.display_status === 'Valid',
+                        'bg-secondary': giftCard.giftcard_status === 'used',
+                        'bg-danger': giftCard.display_status === 'Expired'
+                      }">
+                        {{giftCard.display_status || giftCard.giftcard_status | uppercase}}
+                      </span>
+                    </td>
+                    <td>{{formatDate(giftCard.giftcard_expires)}}</td>
+                    <td>
+                      <button class="btn btn-sm btn-warning" (click)="viewGiftCardDetail(giftCard)" title="View Details">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div *ngIf="detailedGiftCardsList.length === 0" class="text-center py-5">
+              <i class="fas fa-gift fa-3x text-muted mb-3"></i>
+              <p class="text-muted">No gift cards found</p>
+            </div>
+          </div>
+
+          <!-- Single Gift Card Detail View -->
+          <div *ngIf="!isLoadingDetails && selectedGiftCard" class="modal-body-custom">
+            <button class="btn btn-sm btn-secondary mb-3" (click)="selectedGiftCard = null">
+              <i class="fas fa-arrow-left me-1"></i> Back to List
+            </button>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="detail-card gift-card-design">
+                  <div class="gift-card-header">
+                    <h4><i class="fas fa-gift me-2"></i>Gift Card</h4>
+                  </div>
+                  <div class="gift-card-code">
+                    <p class="text-muted mb-1">Code</p>
+                    <h2 class="mb-0"><code>{{selectedGiftCard.giftcard_code}}</code></h2>
+                  </div>
+                  <div class="gift-card-amount">
+                    <p class="text-muted mb-1">Balance</p>
+                    <h3 class="text-success">₹{{selectedGiftCard.giftcard_balance | number:'1.2-2'}}</h3>
+                  </div>
+                  <div class="gift-card-footer">
+                    <p class="mb-0">Expires: {{formatDate(selectedGiftCard.giftcard_expires)}}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="detail-card">
+                  <h5><i class="fas fa-user me-2"></i>Customer Information</h5>
+                  <hr>
+                  <p><strong>Name:</strong> {{selectedGiftCard.first_name}} {{selectedGiftCard.last_name}}</p>
+                  <p><strong>Email:</strong> {{selectedGiftCard.email}}</p>
+                  <p><strong>Phone:</strong> {{selectedGiftCard.phone}}</p>
+                </div>
+
+                <div class="detail-card mt-3">
+                  <h5><i class="fas fa-info-circle me-2"></i>Gift Card Details</h5>
+                  <hr>
+                  <p><strong>Original Amount:</strong> ₹{{selectedGiftCard.giftcard_amount | number:'1.2-2'}}</p>
+                  <p><strong>Current Balance:</strong> <span class="text-success">₹{{selectedGiftCard.giftcard_balance | number:'1.2-2'}}</span></p>
+                  <p><strong>Issue Date:</strong> {{formatDate(selectedGiftCard.giftcard_created)}}</p>
+                  <p><strong>Expiry Date:</strong> {{formatDate(selectedGiftCard.giftcard_expires)}}</p>
+                  <p><strong>Status:</strong> 
+                    <span class="badge" [ngClass]="{
+                      'bg-success': selectedGiftCard.giftcard_status === 'active' || selectedGiftCard.display_status === 'Valid',
+                      'bg-secondary': selectedGiftCard.giftcard_status === 'used',
+                      'bg-danger': selectedGiftCard.display_status === 'Expired'
+                    }">
+                      {{selectedGiftCard.display_status || selectedGiftCard.giftcard_status | uppercase}}
+                    </span>
+                  </p>
+                  <p *ngIf="selectedGiftCard.giftcard_used"><strong>Used On:</strong> {{formatDate(selectedGiftCard.giftcard_used)}}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 text-center">
+              <button class="btn btn-secondary" (click)="closeGiftCardModal()">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>

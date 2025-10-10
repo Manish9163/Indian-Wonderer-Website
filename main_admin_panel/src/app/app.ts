@@ -9,5 +9,4 @@ import { RouterOutlet } from '@angular/router';
   styleUrl: './app.css'
 })
 export class AppComponent {
-  // App root component - layout is handled by LayoutComponent
 }

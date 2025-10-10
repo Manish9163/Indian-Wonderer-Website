@@ -5,6 +5,96 @@
       position: relative;
     }
 
+    /* Live Monitoring Status Bar */
+    .live-monitoring-bar {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 15px;
+      padding: 15px 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    .live-monitoring-bar.active {
+      border-color: #00ff00;
+      box-shadow: 0 8px 32px rgba(0, 255, 0, 0.3);
+      animation: pulse-border 2s infinite;
+    }
+
+    .live-monitoring-bar.inactive {
+      border-color: #666;
+      opacity: 0.8;
+    }
+
+    @keyframes pulse-border {
+      0%, 100% {
+        box-shadow: 0 8px 32px rgba(0, 255, 0, 0.3);
+      }
+      50% {
+        box-shadow: 0 8px 32px rgba(0, 255, 0, 0.6);
+      }
+    }
+
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      color: white;
+      font-size: 14px;
+    }
+
+    .pulse-dot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      background: #666;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+
+    .pulse-dot.active {
+      background: #00ff00;
+      animation: pulse-dot 1.5s infinite;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.2);
+        opacity: 0.7;
+      }
+    }
+
+    .live-stats .badge {
+      font-size: 12px;
+      padding: 6px 12px;
+      font-weight: 500;
+    }
+
+    .live-monitoring-bar .btn-group .btn {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      font-size: 12px;
+      padding: 4px 12px;
+    }
+
+    .live-monitoring-bar .btn-group .btn-success {
+      background: rgba(46, 204, 113, 0.8);
+      border-color: #2ecc71;
+      font-weight: 600;
+    }
+
+    .live-monitoring-bar .btn-light {
+      background: rgba(255, 255, 255, 0.9);
+      color: #333;
+    }
+
     /* Professional Admin Panel Header */
     .admin-header-card {
       background: rgba(255, 255, 255, 0.1);
@@ -421,6 +511,213 @@
       color: white;
     }
 
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal-container {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 20px;
+      max-width: 90%;
+      max-height: 90vh;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      animation: slideUp 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal-header-custom {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px 30px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+    }
+
+    .modal-header-custom h3 {
+      margin: 0;
+      font-weight: 700;
+      font-size: 1.5rem;
+    }
+
+    .btn-close-custom {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-close-custom:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: rotate(90deg);
+    }
+
+    .modal-body-custom {
+      background: white;
+      padding: 30px;
+      max-height: calc(90vh - 80px);
+      overflow-y: auto;
+    }
+
+    .detail-card {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .detail-card h5 {
+      color: #2c3e50;
+      margin-bottom: 15px;
+      font-weight: 700;
+    }
+
+    .detail-card p {
+      margin-bottom: 10px;
+      color: #34495e;
+      font-size: 14px;
+    }
+
+    .detail-card hr {
+      border-color: rgba(0, 0, 0, 0.1);
+      margin: 15px 0;
+    }
+
+    .cursor-pointer {
+      cursor: pointer;
+    }
+
+    .cursor-pointer:hover {
+      background: rgba(0, 0, 0, 0.02);
+    }
+
+    /* Gift Card Design */
+    .gift-card-design {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(245, 87, 108, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .gift-card-design::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+      animation: rotate 20s linear infinite;
+    }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .gift-card-header {
+      position: relative;
+      z-index: 1;
+      margin-bottom: 20px;
+    }
+
+    .gift-card-code {
+      position: relative;
+      z-index: 1;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(10px);
+      border: 2px dashed rgba(255, 255, 255, 0.5);
+    }
+
+    .gift-card-code code {
+      color: white;
+      background: transparent;
+      font-size: 1.8rem;
+      letter-spacing: 3px;
+      font-weight: 700;
+    }
+
+    .gift-card-amount {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .gift-card-amount h3 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin: 0;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .gift-card-footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      opacity: 0.9;
+    }
+
+    /* Scrollbar Styling */
+    .modal-body-custom::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .modal-body-custom::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    .modal-body-custom::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 4px;
+    }
+
+    .modal-body-custom::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    }
+
     @media (max-width: 768px) {
       .analytics-card {
         margin-bottom: 1rem;
@@ -437,5 +734,18 @@
       
       .chart-container {
         height: 300px;
+      }
+
+      .modal-container {
+        max-width: 95%;
+        max-height: 95vh;
+      }
+
+      .modal-body-custom {
+        padding: 15px;
+      }
+
+      .gift-card-code code {
+        font-size: 1.2rem;
       }
     }

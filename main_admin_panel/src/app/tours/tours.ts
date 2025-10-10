@@ -8,24 +8,20 @@ import { ApiService } from '../services/api.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './tours.html',
-  styleUrls: ['./tours.css'] 
+  styleUrls: [] 
 })
 export class ToursComponent implements OnInit {
-  // State
   isLoading: boolean = true;
   isSaving: boolean = false;
   errorMessage: string = '';
   successMessage: string = '';
   
-  // Data
   tours: any[] = [];
   filteredTours: any[] = [];
   
-  // Filters
   searchTerm: string = '';
   selectedCategory: string = 'all';
   
-  // Stats
   stats = {
     totalTours: 0,
     activeTours: 0,
@@ -33,7 +29,6 @@ export class ToursComponent implements OnInit {
     avgRating: 0
   };
   
-  // Modal & Form
   showModal: boolean = false;
   editingTour: any = null;
   tourForm: any = {
@@ -92,13 +87,10 @@ export class ToursComponent implements OnInit {
     });
   }
 
-  /**
-   * Filter tours by search term and category
-   */
+
   filterTours(): void {
     let filtered = this.tours;
     
-    // Filter by search term
     if (this.searchTerm) {
       const term = this.searchTerm.toLowerCase();
       filtered = filtered.filter(tour =>
@@ -108,7 +100,6 @@ export class ToursComponent implements OnInit {
       );
     }
     
-    // Filter by category
     if (this.selectedCategory && this.selectedCategory !== 'all') {
       filtered = filtered.filter(tour => tour.category === this.selectedCategory);
     }
@@ -117,9 +108,7 @@ export class ToursComponent implements OnInit {
     console.log(`🔍 Filtered: ${this.filteredTours.length} / ${this.tours.length} tours`);
   }
 
-  /**
-   * Open modal to add new tour
-   */
+
   openAddModal(): void {
     this.editingTour = null;
     this.tourForm = {
@@ -136,9 +125,6 @@ export class ToursComponent implements OnInit {
     console.log('➕ Opening add tour modal');
   }
 
-  /**
-   * Open modal to edit existing tour
-   */
   openEditModal(tour: any): void {
     this.editingTour = { ...tour };
     this.tourForm = {
@@ -155,9 +141,6 @@ export class ToursComponent implements OnInit {
     console.log('✏️ Opening edit tour modal for:', tour.title);
   }
 
-  /**
-   * Close modal and reset form
-   */
   closeModal(): void {
     this.showModal = false;
     this.editingTour = null;
@@ -173,11 +156,8 @@ export class ToursComponent implements OnInit {
     };
   }
 
-  /**
-   * Save tour (create or update)
-   */
+
   saveTour(): void {
-    // Validation
     if (!this.tourForm.title || !this.tourForm.description || !this.tourForm.destination) {
       alert('Please fill in all required fields (Title, Description, Destination)');
       return;
@@ -191,7 +171,6 @@ export class ToursComponent implements OnInit {
     this.isSaving = true;
     
     if (this.editingTour) {
-      // Update existing tour
       console.log('📝 Updating tour:', this.editingTour.id);
       
       this.apiService.updateTour(this.editingTour.id, this.tourForm).subscribe({
@@ -200,7 +179,7 @@ export class ToursComponent implements OnInit {
           this.isSaving = false;
           this.closeModal();
           this.showSuccessMessage('Tour updated successfully!');
-          this.loadTours(); // Reload data
+          this.loadTours(); 
         },
         error: (error) => {
           console.error('❌ Error updating tour:', error);
@@ -209,7 +188,6 @@ export class ToursComponent implements OnInit {
         }
       });
     } else {
-      // Create new tour
       console.log('➕ Creating new tour:', this.tourForm.title);
       
       this.apiService.createTour(this.tourForm).subscribe({
@@ -218,7 +196,7 @@ export class ToursComponent implements OnInit {
           this.isSaving = false;
           this.closeModal();
           this.showSuccessMessage('Tour created successfully!');
-          this.loadTours(); // Reload data
+          this.loadTours();
         },
         error: (error) => {
           console.error('❌ Error creating tour:', error);
@@ -229,9 +207,7 @@ export class ToursComponent implements OnInit {
     }
   }
 
-  /**
-   * Confirm and delete tour
-   */
+
   confirmDelete(tour: any): void {
     const confirmed = confirm(`Are you sure you want to delete "${tour.title}"?\n\nThis action cannot be undone.`);
     
@@ -240,9 +216,6 @@ export class ToursComponent implements OnInit {
     }
   }
 
-  /**
-   * Delete tour from database
-   */
   deleteTour(tourId: number, tour?: any): void {
     console.log('🗑️ Deleting tour:', tourId);
     
@@ -250,14 +223,12 @@ export class ToursComponent implements OnInit {
       next: (response) => {
         console.log('✅ Tour deleted:', response);
         this.showSuccessMessage('Tour deleted successfully!');
-        this.loadTours(); // Reload data
+        this.loadTours(); 
       },
       error: (error) => {
         console.error('❌ Error deleting tour:', error);
         
-        // Check if it's a foreign key constraint error
         if (error.message && error.message.includes('bookings')) {
-          // Offer alternative action
           const deactivate = confirm(
             `Cannot delete "${tour?.title || 'this tour'}" because it has existing bookings.\n\n` +
             `Would you like to DEACTIVATE it instead?\n\n` +
@@ -274,9 +245,7 @@ export class ToursComponent implements OnInit {
     });
   }
 
-  /**
-   * Deactivate tour instead of deleting
-   */
+
   deactivateTour(tour: any): void {
     console.log('🔒 Deactivating tour:', tour.id);
     
@@ -289,7 +258,7 @@ export class ToursComponent implements OnInit {
       next: (response) => {
         console.log('✅ Tour deactivated:', response);
         this.showSuccessMessage('Tour deactivated successfully!');
-        this.loadTours(); // Reload data
+        this.loadTours(); 
       },
       error: (error) => {
         console.error('❌ Error deactivating tour:', error);
@@ -298,16 +267,11 @@ export class ToursComponent implements OnInit {
     });
   }
 
-  /**
-   * View tour details
-   */
+
   viewTour(tour: any): void {
     alert(`Tour Details:\n\nTitle: ${tour.title}\nDestination: ${tour.destination}\nPrice: ₹${tour.price}\nDuration: ${tour.duration_days} days\nCategory: ${tour.category}\nBookings: ${tour.booking_count || 0}\nRating: ${tour.avg_rating || 0} ⭐`);
   }
 
-  /**
-   * Show success message
-   */
   showSuccessMessage(message: string): void {
     this.successMessage = message;
     setTimeout(() => {

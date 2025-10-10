@@ -10,21 +10,17 @@ export class ThemeService {
   public isDarkMode$ = this.isDarkModeSubject.asObservable();
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {
-    // Initialize theme from localStorage or settings
     this.initializeTheme();
   }
 
   private initializeTheme() {
-    // Only access localStorage in browser environment
     if (isPlatformBrowser(this.platformId)) {
-      // Check for saved admin settings first
       const savedSettings = localStorage.getItem('adminSettings');
       if (savedSettings) {
         const settings = JSON.parse(savedSettings);
         const isDark = settings.theme === 'dark';
         this.setDarkMode(isDark);
       } else {
-        // Fallback to old theme storage
         const savedTheme = localStorage.getItem('theme');
         const isDark = savedTheme === 'dark';
         this.setDarkMode(isDark);
@@ -35,7 +31,6 @@ export class ThemeService {
   setDarkMode(isDark: boolean) {
     this.isDarkModeSubject.next(isDark);
     
-    // Only manipulate DOM in browser environment
     if (isPlatformBrowser(this.platformId)) {
       if (isDark) {
         document.documentElement.setAttribute('data-theme', 'dark');
@@ -49,12 +44,9 @@ export class ThemeService {
     const currentMode = this.isDarkModeSubject.value;
     this.setDarkMode(!currentMode);
     
-    // Only access localStorage in browser environment
     if (isPlatformBrowser(this.platformId)) {
-      // Update localStorage theme
       localStorage.setItem('theme', !currentMode ? 'dark' : 'light');
       
-      // Update admin settings if they exist
       const savedSettings = localStorage.getItem('adminSettings');
       if (savedSettings) {
         const settings = JSON.parse(savedSettings);

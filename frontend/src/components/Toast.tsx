@@ -120,38 +120,68 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove
   if (toasts.length === 0) {
     return null;
   }
-  
+
+  const getGradient = (type: ToastType) => {
+    switch (type) {
+      case 'success':
+        return 'bg-gradient-to-r from-green-500 to-emerald-600';
+      case 'error':
+        return 'bg-gradient-to-r from-red-500 to-pink-600';
+      case 'warning':
+        return 'bg-gradient-to-r from-orange-500 to-amber-600';
+      case 'info':
+        return 'bg-gradient-to-r from-blue-500 to-cyan-600';
+      default:
+        return 'bg-gradient-to-r from-purple-500 to-pink-600';
+    }
+  };
+
+  const getIcon = (type: ToastType) => {
+    switch (type) {
+      case 'success':
+        return <CheckCircle className="w-6 h-6 text-white animate-scale-in" />;
+      case 'error':
+        return <XCircle className="w-6 h-6 text-white animate-scale-in" />;
+      case 'warning':
+        return <AlertCircle className="w-6 h-6 text-white animate-scale-in" />;
+      case 'info':
+        return <Info className="w-6 h-6 text-white animate-scale-in" />;
+      default:
+        return <Info className="w-6 h-6 text-white animate-scale-in" />;
+    }
+  };
   
   return (
     <div 
-      className="fixed top-4 right-4 z-[99999] max-w-md"
+      className="fixed top-4 right-4 z-[99999] max-w-md space-y-3"
       style={{ position: 'fixed', top: '16px', right: '16px', zIndex: 99999 }}
     >
       {toasts.map((toast) => (
         <div 
           key={toast.id} 
-          className="mb-3 bg-green-500 text-white p-4 rounded-lg shadow-xl border-2 border-white"
-          style={{ 
-            backgroundColor: '#10B981', 
-            color: 'white', 
-            padding: '16px', 
-            marginBottom: '12px',
-            borderRadius: '8px',
-            boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
-            border: '2px solid white',
-            minWidth: '300px'
-          }}
+          className={`
+            ${getGradient(toast.type)} 
+            text-white p-4 rounded-xl shadow-2xl 
+            border border-white/20 backdrop-blur-lg
+            animate-slide-in-right
+            transition-all duration-300 hover:scale-[1.02]
+            min-w-[320px]
+          `}
         >
-          <div className="flex items-start justify-between">
-            <div>
-              <h4 className="font-bold text-lg">{toast.title}</h4>
-              <p className="text-sm mt-1">{toast.message}</p>
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 mt-0.5">
+              {getIcon(toast.type)}
+            </div>
+            <div className="flex-1 pr-2">
+              <h4 className="font-bold text-base mb-1">{toast.title}</h4>
+              <p className="text-sm opacity-95 leading-relaxed">{toast.message}</p>
             </div>
             <button
               onClick={() => onRemove(toast.id)}
-              className="ml-3 text-white hover:text-gray-200 text-xl font-bold"
+              className="flex-shrink-0 text-white hover:text-gray-200 hover:bg-white/10 rounded-lg p-1.5 transition-colors"
+              aria-label="Close notification"
             >
-              ×
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -170,7 +200,7 @@ export const useToast = () => {
     const newToast: ToastData = {
       ...toast,
       id,
-      duration: toast.duration || 4000
+      duration: toast.duration || 3000
     };
     
     

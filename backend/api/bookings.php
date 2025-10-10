@@ -390,8 +390,18 @@ function createBooking($conn) {
         $input['guests'] = $input['number_of_travelers'] ?? 1;
     }
     
-    $query = "INSERT INTO bookings (user_id, tour_id, booking_date, travel_date, number_of_travelers, total_amount, status, payment_status, special_requirements, booking_reference, guide_id) 
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    // Get tour duration to calculate end_date
+    $durationQuery = "SELECT duration_days FROM tours WHERE id = ?";
+    $durationStmt = $conn->prepare($durationQuery);
+    $durationStmt->execute([$input['tour_id']]);
+    $tour = $durationStmt->fetch(PDO::FETCH_ASSOC);
+    $duration_days = $tour['duration_days'] ?? 1;
+    
+    // Calculate tour end date
+    $tour_end_date = date('Y-m-d', strtotime($input['travel_date'] . " +{$duration_days} days"));
+    
+    $query = "INSERT INTO bookings (user_id, tour_id, booking_date, travel_date, tour_end_date, number_of_travelers, total_amount, status, payment_status, special_requirements, booking_reference, guide_id) 
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
     $booking_reference = 'BK' . date('Ymd') . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
     
@@ -402,6 +412,7 @@ function createBooking($conn) {
             $input['tour_id'],
             $input['booking_date'],
             $input['travel_date'],
+            $tour_end_date,
             $input['guests'],
             $input['total_amount'],
             $input['status'] ?? 'pending',

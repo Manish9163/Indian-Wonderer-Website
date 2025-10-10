@@ -55,6 +55,28 @@
   }
 }
 
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 @keyframes pulse-glow {
   0%, 100% {
     box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
@@ -156,6 +178,14 @@
 
 .animate-shake {
   animation: shake 0.5s ease-in-out;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.4s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out;
 }
 
 .animate-flip-to-login {
@@ -670,6 +700,35 @@ code {
   filter: brightness(1.1);
 }
 
+/* Custom Scrollbar Styles */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 10px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #9333ea, #ec4899);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #7e22ce, #db2777);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* Smooth Scrolling */
+.overflow-y-auto {
+  scroll-behavior: smooth;
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
   .glass-morphism,
@@ -684,5 +743,10 @@ code {
   
   .btn-premium {
     padding: 10px 20px;
+  }
+  
+  /* Thinner scrollbar on mobile */
+  .overflow-y-auto::-webkit-scrollbar {
+    width: 6px;
   }
 }

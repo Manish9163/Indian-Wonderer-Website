@@ -352,7 +352,7 @@
                   </td>
                   <td>{{refund.tour_name}}</td>
                   <td>
-                    <span class="fw-bold text-warning">₹{{refund.refund_amount | number}}</span>
+                    <span class="fw-bold text-warning">₹{{(refund.refund_amount || refund.amount || 0) | number:'1.2-2'}}</span>
                   </td>
                   <td>
                     <span class="badge bg-info">{{refund.refund_method}}</span>
@@ -369,6 +369,54 @@
                         <i class="fas fa-eye"></i>
                       </button>
                     </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Completed Refunds Section -->
+      <div class="card-modern fade-in-up mb-4" id="completedRefundsSection" *ngIf="completedRefundsList.length > 0">
+        <div class="panel-header bg-success">
+          <h5 class="mb-0">
+            <i class="fas fa-check-circle"></i> Completed Refunds
+            <span class="badge bg-light text-dark ms-2">{{completedRefundsList.length}}</span>
+          </h5>
+        </div>
+        <div class="panel-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Booking Ref</th>
+                  <th>Customer</th>
+                  <th>Tour</th>
+                  <th>Refund Amount</th>
+                  <th>Method</th>
+                  <th>Completed At</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let refund of completedRefundsList">
+                  <td>
+                    <span class="fw-bold font-monospace">{{refund.booking_reference}}</span>
+                  </td>
+                  <td>
+                    <div>{{refund.first_name}} {{refund.last_name}}</div>
+                    <small class="text-muted">{{refund.email}}</small>
+                    <small class="text-muted d-block" *ngIf="refund.phone">{{refund.phone}}</small>
+                  </td>
+                  <td>{{refund.tour_name}}</td>
+                  <td>
+                    <span class="fw-bold text-success">₹{{(refund.refund_amount || refund.amount || 0) | number:'1.2-2'}}</span>
+                  </td>
+                  <td>
+                    <span class="badge bg-info">{{refund.refund_method}}</span>
+                  </td>
+                  <td>
+                    <small>{{refund.completed_at | date:'short'}}</small>
                   </td>
                 </tr>
               </tbody>

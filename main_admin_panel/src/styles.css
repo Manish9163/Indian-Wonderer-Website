@@ -850,42 +850,27 @@ body {
   }
 }
 
-/* ============================================
-   GLOBAL MODAL Z-INDEX FIX
-   Ensure all modals appear above sidebar (z-index: 1000)
-   ============================================ */
-
-/* Modal backdrop */
 .modal {
   z-index: 9999 !important;
 }
 
-/* Modal dialog */
 .modal-dialog {
   z-index: 10000 !important;
 }
 
-/* Modal content */
 .modal-content {
   z-index: 10001 !important;
 }
 
-/* Ensure modal backdrop covers sidebar */
 .modal-backdrop {
   z-index: 9998 !important;
 }
 
-/* ============================================
-   NOTIFICATION DROPDOWN Z-INDEX FIX
-   Ensure notifications appear above everything
-   ============================================ */
 
-/* Notification container - highest z-index */
 .notification-container {
   z-index: 100000 !important;
 }
 
-/* Notification dropdown panel */
 .notification-dropdown {
   position: fixed !important;
   z-index: 99999 !important;
@@ -893,7 +878,6 @@ body {
   right: 20px !important;
 }
 
-/* Ensure notification dropdown is always visible */
 .notification-dropdown.glass {
   display: block !important;
   visibility: visible !important;

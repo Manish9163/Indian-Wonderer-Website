@@ -15,11 +15,15 @@ import ChatBot from "./components/ChatBot";
 import UserProfile from "./components/UserProfile";
 import TourBooking from "./components/TourBooking";
 import AgentApplication from "./components/AgentApplication";
+import { ToastContainer, useToast } from "./components/Toast";
 
 import { Tour, transformTourData } from "./types/data";
 import apiService from "./services/api.service";
 
 const App = () => {
+  // Toast notifications
+  const { toasts, removeToast, showSuccess, showError, showWarning, showInfo } = useToast();
+
   // Authentication state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userDetails, setUserDetails] = useState(null);
@@ -411,19 +415,19 @@ const App = () => {
 
       if (!userId) {
         console.error('❌ Missing user ID - user not logged in');
-        alert('Error: You must be logged in to complete booking. Please login and try again.');
+        showError('Authentication Required', 'You must be logged in to complete booking. Please login and try again.');
         return;
       }
 
       if (!tourData) {
         console.error('❌ Missing selected tour');
-        alert('Error: No tour selected. Please select a tour and try again.');
+        showError('Tour Not Selected', 'No tour selected. Please select a tour and try again.');
         return;
       }
 
       if (!bookingData) {
         console.error('❌ Missing booking data');
-        alert('Error: Booking information missing. Please fill the booking form again.');
+        showError('Booking Data Missing', 'Booking information missing. Please fill the booking form again.');
         return;
       }
 
@@ -491,7 +495,10 @@ const App = () => {
         setShowPaymentModal(false);
         
         // Show success feedback
-        alert(`✅ Booking confirmed! Reference: ${response.data.booking_reference || response.data.id}`);
+        showSuccess(
+          'Booking Confirmed! 🎉', 
+          `Your tour has been booked successfully. Reference: ${response.data.booking_reference || response.data.id}`
+        );
         
         // Show playlist popup after payment with proper destination mapping
         setShowPlaylist(true);
@@ -515,11 +522,11 @@ const App = () => {
         }, 3000);
       } else {
         console.error('❌ Booking creation failed:', response.message);
-        alert('Booking failed: ' + response.message);
+        showError('Booking Failed', response.message || 'Unable to create booking. Please try again.');
       }
     } catch (error: any) {
       console.error('❌ Error creating booking:', error);
-      alert('Error creating booking: ' + (error.message || 'Unknown error'));
+      showError('Booking Error', error.message || 'An unexpected error occurred. Please try again.');
     }
   };
   // Close playlist popup
@@ -562,6 +569,10 @@ const App = () => {
       apiService.setAuthToken(userData.token);
     }
     localStorage.setItem('userData', JSON.stringify(userData));
+    
+    // Show welcome toast
+    const userName = userData.name || userData.first_name || 'there';
+    showSuccess('Welcome Back! 👋', `Great to see you again, ${userName}!`);
   };
 
   // Handle logout
@@ -585,6 +596,9 @@ const App = () => {
     localStorage.removeItem('userData');
     localStorage.removeItem('myItineraries'); // Clear cached itineraries
     apiService.setAuthToken(null);
+    
+    // Set flag to show logout toast on login page
+    localStorage.setItem('justLoggedOut', 'true');
   };
 
   // Listen for playlist popup events from child components
@@ -649,7 +663,15 @@ const App = () => {
   if (!isAuthenticated) {
     return (
       <div>
-        <UserAuth onAuthSuccess={handleAuthSuccess} />
+        <UserAuth 
+          onAuthSuccess={handleAuthSuccess} 
+          showToast={{ showSuccess, showError, showWarning, showInfo }}
+        />
+        <ToastContainer 
+          toasts={toasts} 
+          onRemove={removeToast} 
+          darkMode={false} 
+        />
       </div>
     );
   }
@@ -788,6 +810,13 @@ const App = () => {
 
       {/* ChatBot */}
       <ChatBot darkMode={darkMode} />
+
+      {/* Toast Notifications */}
+      <ToastContainer 
+        toasts={toasts} 
+        onRemove={removeToast} 
+        darkMode={darkMode} 
+      />
 
     </div>
   );

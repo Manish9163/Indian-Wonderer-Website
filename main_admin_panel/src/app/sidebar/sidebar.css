@@ -127,7 +127,6 @@
   text-shadow: 0 0 8px rgba(0, 212, 255, 0.6);
 }
 
-/* Custom Scrollbar */
 .sidebar::-webkit-scrollbar {
   width: 4px;
 }
@@ -152,7 +151,6 @@
   }
 }
 
-/* ===== DARK MODE SUPPORT ===== */
 [data-theme="dark"] .sidebar {
   background: linear-gradient(180deg, #0d1117 0%, #161b22 100%);
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);

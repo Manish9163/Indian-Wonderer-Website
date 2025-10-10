@@ -20,6 +20,12 @@ export class GuidesComponent implements OnInit {
   editingGuide: any = null;
   showPendingModal: boolean = false;
   pendingApplications: any[] = [];
+  
+  // Live Tracking Modal
+  showLiveTrackingModal: boolean = false;
+  trackingGuideId: number | null = null;
+  trackingGuideName: string = '';
+  trackingBookingId: number | null = null;
   // Methods for modal and application actions
   closeEditModal() { 
     this.showEditModal = false;
@@ -535,9 +541,16 @@ export class GuidesComponent implements OnInit {
                 avgRating: response.data.stats.averageRating || 0,
                 totalBookings: 0 // Not provided by API yet
               };
+              
+              // Update guideAnalytics for the stats cards
+              this.guideAnalytics.totalGuides = response.data.stats.totalGuides || 0;
+              this.guideAnalytics.activeGuides = response.data.stats.availableGuides || 0;
+              this.guideAnalytics.averageRating = response.data.stats.averageRating || 0;
+              this.guideAnalytics.totalEarnings = response.data.stats.totalEarnings || 0;
             }
             
             console.log(`✅ Loaded ${this.guides.length} guides`);
+            console.log('📊 Stats:', this.guideAnalytics);
             
             // Calculate pending applications count
             this.guideAnalytics.pendingApplications = this.guides.filter(
@@ -680,6 +693,24 @@ export class GuidesComponent implements OnInit {
     if (guide) {
       this.viewGuideDetails(guide);
     }
+  }
+
+  // Live Tracking Methods
+  trackGuideLive(guide: any): void {
+    console.log('📍 Opening live tracking for guide:', guide.name);
+    this.trackingGuideId = guide.id;
+    this.trackingGuideName = guide.name;
+    // Try to get active booking for this guide
+    this.trackingBookingId = guide.currentBookingId || 1; // Fallback to 1 for demo
+    this.showLiveTrackingModal = true;
+  }
+
+  closeLiveTrackingModal(): void {
+    console.log('📍 Closing live tracking modal');
+    this.showLiveTrackingModal = false;
+    this.trackingGuideId = null;
+    this.trackingGuideName = '';
+    this.trackingBookingId = null;
   }
 
   deleteGuide(guide: any): void {

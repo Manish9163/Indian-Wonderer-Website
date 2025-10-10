@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import Chart from 'chart.js/auto';
@@ -11,7 +11,7 @@ import { ApiService } from '../services/api.service';
   templateUrl: './analytics.html',
   styleUrls: ['./analytics.css']
 })
-export class AnalyticsComponent implements OnInit {
+export class AnalyticsComponent implements OnInit, OnDestroy {
   revenueTimeframe = '30d';
   selectedTimeRange: string = 'month';
   chartType: string = 'line';
@@ -19,6 +19,13 @@ export class AnalyticsComponent implements OnInit {
   showAdvancedMetrics: boolean = false;
   isLoading: boolean = true;
   errorMessage: string = '';
+  
+  // Live monitoring properties
+  liveMonitoringEnabled: boolean = true;
+  autoRefreshInterval: any = null;
+  refreshIntervalSeconds: number = 10; // Refresh every 10 seconds
+  lastUpdateTime: string = '';
+  isRefreshing: boolean = false;
   
   // Enhanced analytics properties
   peakRevenue: number = 0;
@@ -67,10 +74,159 @@ export class AnalyticsComponent implements OnInit {
 
   recentActivities: any[] = [];
 
+  // Detailed refund/gift card data
+  showRefundDetailsModal: boolean = false;
+  showGiftCardDetailsModal: boolean = false;
+  detailedRefundsList: any[] = [];
+  detailedGiftCardsList: any[] = [];
+  selectedRefund: any = null;
+  selectedGiftCard: any = null;
+  isLoadingDetails: boolean = false;
+
   constructor(private apiService: ApiService) {}
 
   ngOnInit() {
     this.loadAnalyticsData();
+    this.startLiveMonitoring();
+    this.setupEventListeners();
+  }
+
+  ngOnDestroy() {
+    this.stopLiveMonitoring();
+    this.removeEventListeners();
+  }
+
+  /**
+   * Setup event listeners for cross-component updates
+   */
+  setupEventListeners() {
+    // Listen for refund processing events
+    window.addEventListener('refund-processed', this.handleRefundEvent.bind(this));
+    window.addEventListener('giftcard-activated', this.handleGiftCardEvent.bind(this));
+    
+    console.log('📡 Event listeners setup for cross-component live updates');
+  }
+
+  /**
+   * Remove event listeners
+   */
+  removeEventListeners() {
+    window.removeEventListener('refund-processed', this.handleRefundEvent.bind(this));
+    window.removeEventListener('giftcard-activated', this.handleGiftCardEvent.bind(this));
+  }
+
+  /**
+   * Handle refund processed event
+   */
+  handleRefundEvent(event: any) {
+    console.log('🔔 Refund processed event received:', event.detail);
+    this.refreshAnalytics();
+  }
+
+  /**
+   * Handle gift card activated event
+   */
+  handleGiftCardEvent(event: any) {
+    console.log('🔔 Gift card activated event received:', event.detail);
+    this.refreshAnalytics();
+  }
+
+  /**
+   * Start live monitoring with auto-refresh
+   */
+  startLiveMonitoring() {
+    if (this.liveMonitoringEnabled && !this.autoRefreshInterval) {
+      console.log(`🔴 Live Monitoring Started - Refreshing every ${this.refreshIntervalSeconds} seconds`);
+      
+      // Initial update
+      this.updateLastRefreshTime();
+      
+      // Set up auto-refresh interval
+      this.autoRefreshInterval = setInterval(() => {
+        if (this.liveMonitoringEnabled && !this.isRefreshing) {
+          this.refreshAnalytics();
+        }
+      }, this.refreshIntervalSeconds * 1000);
+    }
+  }
+
+  /**
+   * Stop live monitoring
+   */
+  stopLiveMonitoring() {
+    if (this.autoRefreshInterval) {
+      clearInterval(this.autoRefreshInterval);
+      this.autoRefreshInterval = null;
+      console.log('🔴 Live Monitoring Stopped');
+    }
+  }
+
+  /**
+   * Toggle live monitoring on/off
+   */
+  toggleLiveMonitoring() {
+    this.liveMonitoringEnabled = !this.liveMonitoringEnabled;
+    
+    if (this.liveMonitoringEnabled) {
+      this.startLiveMonitoring();
+    } else {
+      this.stopLiveMonitoring();
+    }
+  }
+
+  /**
+   * Refresh analytics data (live update)
+   */
+  refreshAnalytics() {
+    this.isRefreshing = true;
+    console.log('🔄 Auto-refreshing analytics data...');
+
+    this.apiService.getAnalytics().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.processAnalyticsData(response.data);
+          this.updateLastRefreshTime();
+          console.log('✅ Analytics refreshed successfully');
+        }
+        this.isRefreshing = false;
+      },
+      error: (error) => {
+        console.error('❌ Error refreshing analytics:', error);
+        this.isRefreshing = false;
+      }
+    });
+  }
+
+  /**
+   * Manual refresh button
+   */
+  manualRefresh() {
+    if (!this.isRefreshing) {
+      this.refreshAnalytics();
+    }
+  }
+
+  /**
+   * Update last refresh time display
+   */
+  updateLastRefreshTime() {
+    const now = new Date();
+    this.lastUpdateTime = now.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit' 
+    });
+  }
+
+  /**
+   * Change refresh interval
+   */
+  setRefreshInterval(seconds: number) {
+    this.refreshIntervalSeconds = seconds;
+    if (this.liveMonitoringEnabled) {
+      this.stopLiveMonitoring();
+      this.startLiveMonitoring();
+    }
   }
 
   /**
@@ -596,10 +752,6 @@ export class AnalyticsComponent implements OnInit {
     alert('Analytics report exported successfully!');
   }
 
-  refreshAnalytics() {
-    this.loadAnalyticsData();
-  }
-
   generateDetailedReport() {
     const reportWindow = window.open('', '_blank', 'width=1000,height=1200');
     if (reportWindow) {
@@ -832,19 +984,269 @@ export class AnalyticsComponent implements OnInit {
   }
 
   /**
-   * View pending refunds - navigates to payments panel
+   * View pending refunds with full details
    */
   viewPendingRefunds() {
-    // Store action in localStorage to trigger scroll in payments panel
-    localStorage.setItem('scrollToPendingRefunds', 'true');
+    this.isLoadingDetails = true;
+    this.showRefundDetailsModal = true;
     
-    // Navigate to payments section (assuming router navigation)
-    alert(`${this.refundAnalytics.pendingRefunds} pending refunds (₹${this.refundAnalytics.pendingRefundAmount.toFixed(0)}).\n\nNavigating to Payments panel...`);
+    console.log('📋 Loading detailed refund information...');
     
-    // In a real app, you would navigate:
-    // this.router.navigate(['/payments'], { fragment: 'pendingRefundsSection' });
+    // Fetch all refunds from API (pending and completed)
+    this.apiService.getAllRefunds().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.detailedRefundsList = response.data.refunds || [];
+          console.log('✅ Loaded refund details:', this.detailedRefundsList);
+          console.log('Total refunds:', this.detailedRefundsList.length);
+          console.log('Refund amounts:', this.detailedRefundsList.map((r: any) => ({
+            id: r.refund_id, 
+            amount: r.refund_amount,
+            method: r.refund_method,
+            status: r.refund_status
+          })));
+        } else {
+          this.detailedRefundsList = [];
+          alert('No refund data available');
+        }
+        this.isLoadingDetails = false;
+      },
+      error: (error) => {
+        console.error('❌ Error loading refund details:', error);
+        alert('Failed to load refund details. Please try again.');
+        this.isLoadingDetails = false;
+        this.showRefundDetailsModal = false;
+      }
+    });
+  }
+
+  /**
+   * View specific refund details
+   */
+  viewRefundDetail(refund: any) {
+    this.selectedRefund = refund;
+    console.log('👁️ Viewing refund detail:', refund);
+  }
+
+  /**
+   * Close refund details modal
+   */
+  closeRefundModal() {
+    this.showRefundDetailsModal = false;
+    this.selectedRefund = null;
+    this.detailedRefundsList = [];
+  }
+
+  /**
+   * View completed refunds details
+   */
+  viewCompletedRefunds() {
+    this.isLoadingDetails = true;
+    this.showRefundDetailsModal = true;
     
-    // For now, just show info
-    console.log('Navigate to payments panel with pending refunds');
+    console.log('✅ Loading completed refunds information...');
+    
+    // Fetch completed refunds with customer details
+    this.apiService.getCompletedRefunds().subscribe({
+      next: (response) => {
+        if (response.success && response.data && response.data.refunds) {
+          this.detailedRefundsList = response.data.refunds || [];
+          
+          console.log('✅ Loaded completed refund details:', this.detailedRefundsList.length, 'refunds');
+          console.log('Completed Refund Data:', this.detailedRefundsList);
+          
+          if (this.detailedRefundsList.length === 0) {
+            console.warn('⚠️ No completed refunds found in database');
+          }
+        } else {
+          this.detailedRefundsList = [];
+          console.warn('⚠️ No completed refund data in response');
+        }
+        this.isLoadingDetails = false;
+      },
+      error: (error) => {
+        console.error('❌ Error loading completed refund details:', error);
+        alert('Failed to load completed refund details. Please try again.');
+        this.isLoadingDetails = false;
+        this.showRefundDetailsModal = false;
+      }
+    });
+  }
+
+  /**
+   * View gift card details
+   */
+  viewGiftCardDetails() {
+    this.isLoadingDetails = true;
+    this.showGiftCardDetailsModal = true;
+    
+    console.log('🎁 Loading gift card information...');
+    
+    // Fetch actual gift cards with customer details
+    this.apiService.getAllGiftCards().subscribe({
+      next: (response) => {
+        if (response.success && response.data && response.data.giftcards) {
+          this.detailedGiftCardsList = response.data.giftcards || [];
+          
+          console.log('✅ Loaded gift card details:', this.detailedGiftCardsList.length, 'cards');
+          console.log('Gift Card Data:', this.detailedGiftCardsList);
+          
+          if (this.detailedGiftCardsList.length === 0) {
+            console.warn('⚠️ No gift cards found in database');
+          }
+        } else {
+          this.detailedGiftCardsList = [];
+          console.warn('⚠️ No gift card data in response');
+        }
+        this.isLoadingDetails = false;
+      },
+      error: (error) => {
+        console.error('❌ Error loading gift card details:', error);
+        alert('Failed to load gift card details. Please try again.');
+        this.isLoadingDetails = false;
+        this.showGiftCardDetailsModal = false;
+      }
+    });
+  }
+
+  /**
+   * View specific gift card details
+   */
+  viewGiftCardDetail(giftCard: any) {
+    this.selectedGiftCard = giftCard;
+    console.log('👁️ Viewing gift card detail:', giftCard);
+  }
+
+  /**
+   * Close gift card details modal
+   */
+  closeGiftCardModal() {
+    this.showGiftCardDetailsModal = false;
+    this.selectedGiftCard = null;
+    this.detailedGiftCardsList = [];
+  }
+
+  /**
+   * Export refund details to CSV
+   */
+  exportRefundDetails() {
+    const csvHeader = 'Refund ID,Booking Reference,Customer Name,Email,Phone,Amount,Method,Status,Request Date,Processed Date\n';
+    const csvRows = this.detailedRefundsList.map(r => 
+      `${r.refund_id},"${r.booking_reference}","${r.first_name} ${r.last_name}","${r.email}","${r.phone || 'N/A'}",${r.refund_amount},"${r.refund_method}","${r.refund_status}","${r.created_at}","${r.completed_at || 'Pending'}"`
+    ).join('\n');
+    
+    const csvContent = csvHeader + csvRows;
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `refund_details_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    alert('✅ Refund details exported successfully!');
+  }
+
+  /**
+   * Print refund report
+   */
+  printRefundReport(refund: any) {
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Refund Details - ${refund.booking_reference}</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 40px; line-height: 1.6; }
+              .header { text-align: center; border-bottom: 3px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+              .section { margin: 20px 0; }
+              .label { font-weight: bold; color: #666; }
+              .value { color: #333; margin-left: 10px; }
+              .status { display: inline-block; padding: 5px 15px; border-radius: 5px; font-weight: bold; }
+              .status-pending { background: #fff3cd; color: #856404; }
+              .status-completed { background: #d4edda; color: #155724; }
+              .footer { margin-top: 40px; padding-top: 20px; border-top: 2px solid #ddd; text-align: center; color: #666; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>Refund Details Report</h1>
+              <p>Indian Wonderer Tours</p>
+            </div>
+            
+            <div class="section">
+              <h2>Booking Information</h2>
+              <p><span class="label">Booking Reference:</span><span class="value">${refund.booking_reference}</span></p>
+              <p><span class="label">Tour Name:</span><span class="value">${refund.tour_name || 'N/A'}</span></p>
+              <p><span class="label">Travel Dates:</span><span class="value">${refund.tour_start_date || 'N/A'} to ${refund.tour_end_date || 'N/A'}</span></p>
+            </div>
+            
+            <div class="section">
+              <h2>Customer Information</h2>
+              <p><span class="label">Name:</span><span class="value">${refund.first_name} ${refund.last_name}</span></p>
+              <p><span class="label">Email:</span><span class="value">${refund.email}</span></p>
+              <p><span class="label">Phone:</span><span class="value">${refund.phone || 'N/A'}</span></p>
+            </div>
+            
+            <div class="section">
+              <h2>Refund Details</h2>
+              <p><span class="label">Refund ID:</span><span class="value">#${refund.refund_id}</span></p>
+              <p><span class="label">Amount:</span><span class="value">₹${refund.refund_amount.toFixed(2)}</span></p>
+              <p><span class="label">Method:</span><span class="value">${refund.refund_method === 'bank' ? 'Bank Transfer' : 'Gift Card'}</span></p>
+              <p><span class="label">Status:</span><span class="value"><span class="status status-${refund.refund_status}">${refund.refund_status.toUpperCase()}</span></span></p>
+              <p><span class="label">Reason:</span><span class="value">${refund.refund_reason || 'Not specified'}</span></p>
+            </div>
+            
+            <div class="section">
+              <h2>Timeline</h2>
+              <p><span class="label">Request Date:</span><span class="value">${new Date(refund.created_at).toLocaleString()}</span></p>
+              ${refund.completed_at ? `<p><span class="label">Processed Date:</span><span class="value">${new Date(refund.completed_at).toLocaleString()}</span></p>` : ''}
+              ${refund.admin_notes ? `<p><span class="label">Admin Notes:</span><span class="value">${refund.admin_notes}</span></p>` : ''}
+            </div>
+            
+            <div class="footer">
+              <p>Generated on ${new Date().toLocaleString()}</p>
+              <p>Indian Wonderer Tours - Admin Panel</p>
+            </div>
+            
+            <script>
+              window.onload = function() { window.print(); }
+            </script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
+  }
+
+  /**
+   * Get status badge class
+   */
+  getStatusClass(status: string): string {
+    const statusMap: any = {
+      'pending': 'warning',
+      'completed': 'success',
+      'rejected': 'danger',
+      'processing': 'info'
+    };
+    return statusMap[status?.toLowerCase()] || 'secondary';
+  }
+
+  /**
+   * Format date for display
+   */
+  formatDate(dateString: string): string {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   }
 }

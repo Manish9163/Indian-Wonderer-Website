@@ -1,8 +1,16 @@
 <?php
 // Simple Admin Guides API
-header('Access-Control-Allow-Origin: *');
+// Handle CORS properly for credentials
+$allowed_origins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:4200', 'http://127.0.0.1:4200'];
+$origin = $_SERVER['HTTP_ORIGIN'] ?? 'http://localhost:4200';
+if (in_array($origin, $allowed_origins)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+} else {
+    header('Access-Control-Allow-Origin: http://localhost:4200');
+}
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Allow-Credentials: true');
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -156,6 +164,13 @@ try {
                     FROM guides");
                 $stats = $statsStmt->fetch(PDO::FETCH_ASSOC);
                 
+                // Calculate total earnings across all guides from guide_earnings table
+                $earningsStmt = $pdo->query("SELECT 
+                    COALESCE(SUM(amount), 0) as total_earnings
+                    FROM guide_earnings
+                    WHERE status IN ('earned', 'paid')");
+                $earnings = $earningsStmt->fetch(PDO::FETCH_ASSOC);
+                
                 echo json_encode([
                     'success' => true,
                     'data' => [
@@ -167,7 +182,8 @@ try {
                             'inactiveGuides' => (int)$stats['inactive'],
                             'approvedGuides' => (int)$stats['approved'],
                             'pendingGuides' => (int)$stats['pending'],
-                            'averageRating' => round((float)$stats['avg_rating'], 2)
+                            'averageRating' => round((float)$stats['avg_rating'], 2),
+                            'totalEarnings' => (float)$earnings['total_earnings']
                         ]
                     ],
                     'generated_at' => date('Y-m-d H:i:s')

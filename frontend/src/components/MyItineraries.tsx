@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Calendar } from 'lucide-react';
 import ItineraryCard from './ItineraryCard';
 import PaymentReceipt from './PaymentRecipt';
+import LiveTracking from './LiveTracking';
 
 // Destination playlist keys
 const DESTINATION_PLAYLISTS: Record<string, {spotify: string; youtube: string}> = {
@@ -28,6 +29,8 @@ interface MyItinerariesProps {
 const MyItineraries: React.FC<MyItinerariesProps> = ({ darkMode, myItineraries, setActiveTab, expandedItinerary, setExpandedItinerary,userDetails}) => {
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [selectedItinerary, setSelectedItinerary] = useState<any>(null);
+  const [showLiveTracking, setShowLiveTracking] = useState(false);
+  const [trackingBookingId, setTrackingBookingId] = useState<number | null>(null);
 
   // Debug: Log received props
   console.log('🎯 MyItineraries component rendered with:', {
@@ -35,6 +38,49 @@ const MyItineraries: React.FC<MyItinerariesProps> = ({ darkMode, myItineraries, 
     myItineraries: myItineraries,
     userDetails: userDetails
   });
+
+  // Handler to open live tracking modal
+  const handleTrackGuide = (itinerary: any) => {
+    // Try multiple ways to get booking ID, fallback to 1 for demo
+    const bookingId = itinerary.bookingData?.id || 
+                     itinerary.booking_id || 
+                     itinerary.id || 
+                     1; // Fallback ID for demo
+    
+    console.log('📍 Opening live tracking for booking:', bookingId);
+    console.log('📍 Itinerary data:', itinerary);
+    setTrackingBookingId(bookingId);
+    setShowLiveTracking(true);
+  };
+
+  // Check if tracking should be available (during tour period only)
+  const isTrackingAvailable = (itinerary: any) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to midnight for date-only comparison
+    
+    // Get travel dates from booking data
+    const travelDate = itinerary.bookingData?.travel_date || itinerary.travel_date;
+    const tourEndDate = itinerary.bookingData?.tour_end_date || itinerary.tour_end_date;
+    
+    if (!travelDate) return false;
+    
+    const startDate = new Date(travelDate);
+    startDate.setHours(0, 0, 0, 0);
+    
+    // If no end date, calculate from duration
+    let endDate: Date;
+    if (tourEndDate) {
+      endDate = new Date(tourEndDate);
+    } else {
+      const duration = itinerary.tour?.duration_days || itinerary.duration_days || 1;
+      endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + parseInt(duration.toString()));
+    }
+    endDate.setHours(23, 59, 59, 999); // End of day
+    
+    // Check if today is within the tour period
+    return today >= startDate && today <= endDate;
+  };
 
   // Function to map tour data to valid playlist destination
   const getPlaylistDestination = (tour: any) => {
@@ -140,15 +186,32 @@ const MyItineraries: React.FC<MyItinerariesProps> = ({ darkMode, myItineraries, 
                   userDetails={userDetails}
                   onShowReceipt={handleShowReceipt}
                 />
-                <button
-                  className="absolute top-4 right-4 bg-green-600 text-white px-3 py-2 rounded-lg shadow hover:bg-green-700 z-10"
-                  onClick={() => {
-                    const validDest = getPlaylistDestination(itinerary.tour);
-                    window.dispatchEvent(new CustomEvent('showPlaylist', { detail: { destination: validDest } }));
-                  }}
-                >
-                  🎶 Play Travel Playlist
-                </button>
+                
+                {/* Action Buttons */}
+                <div className="absolute top-4 right-4 flex flex-col space-y-2 z-10">
+                  {/* Track Guide Button - Only show during tour period (start date to end date) */}
+                  {isTrackingAvailable(itinerary) && (
+                    <button
+                      className="bg-blue-600 text-white px-3 py-2 rounded-lg shadow hover:bg-blue-700 flex items-center space-x-2 transition-all duration-300"
+                      onClick={() => handleTrackGuide(itinerary)}
+                    >
+                      <span>📍</span>
+                      <span className="font-semibold">Track Guide LIVE</span>
+                      <span className="inline-flex h-2 w-2 rounded-full bg-blue-300 animate-pulse"></span>
+                    </button>
+                  )}
+                  
+                  {/* Playlist Button */}
+                  <button
+                    className="bg-green-600 text-white px-3 py-2 rounded-lg shadow hover:bg-green-700"
+                    onClick={() => {
+                      const validDest = getPlaylistDestination(itinerary.tour);
+                      window.dispatchEvent(new CustomEvent('showPlaylist', { detail: { destination: validDest } }));
+                    }}
+                  >
+                    🎶 Play Travel Playlist
+                  </button>
+                </div>
               </div>
             ))}       
           </div>
@@ -162,6 +225,19 @@ const MyItineraries: React.FC<MyItinerariesProps> = ({ darkMode, myItineraries, 
           onClose={handleCloseReceipt}
           itinerary={selectedItinerary}
           userDetails={userDetails}
+        />
+      )}
+
+      {/* Live Tracking Modal */}
+      {showLiveTracking && trackingBookingId && (
+        <LiveTracking
+          bookingId={trackingBookingId}
+          onClose={() => {
+            console.log('📍 Closing live tracking');
+            setShowLiveTracking(false);
+            setTrackingBookingId(null);
+          }}
+          darkMode={darkMode}
         />
       )}
     </>

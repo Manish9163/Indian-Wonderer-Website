@@ -56,10 +56,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
   };
 
   ngOnInit() {
-    // Load current settings from service
     this.settings = this.settingsService.getCurrentSettings();
     
-    // Subscribe to settings changes (in case they change from elsewhere)
     this.subscriptions.add(
       this.settingsService.settings$.subscribe(settings => {
         this.settings = settings;
@@ -68,40 +66,33 @@ export class SettingsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    // Unsubscribe from all subscriptions to prevent memory leaks
     this.subscriptions.unsubscribe();
   }
 
   setAccentColor(color: string) {
     this.settings.accentColor = color;
-    // Update through service to broadcast to all components
     this.settingsService.updateSetting('accentColor', color);
     this.settingsService.applyAccentColor(color);
     this.showNotification(`Accent color changed to ${color}! 🎨`, 'success');
   }
 
   onThemeChange() {
-    // Apply theme through services
     const isDark = this.settings.theme === 'dark';
     this.themeService.setDarkMode(isDark);
-    // Update through settings service to broadcast
     this.settingsService.updateSetting('theme', this.settings.theme);
     this.showNotification(`Theme changed to ${this.settings.theme}! 🎭`, 'success');
   }
 
   saveSettings() {
-    // Save all settings through service (broadcasts to all subscribers)
     this.settingsService.updateAllSettings(this.settings);
     this.showNotification('Settings saved successfully! 🎉', 'success');
   }
   
-  // Auto-save on individual setting changes
   onSettingChange(key: keyof AdminSettings, value: any) {
     this.settingsService.updateSetting(key, value);
   }
 
   resetSettings() {
-    // Reset to default values
     if (confirm('Are you sure you want to reset all settings to defaults? This action cannot be undone.')) {
       this.settingsService.resetToDefaults();
       this.settings = this.settingsService.getCurrentSettings();

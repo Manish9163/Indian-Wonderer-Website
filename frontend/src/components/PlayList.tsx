@@ -5,8 +5,8 @@ const REDIRECT_URI = "http://localhost:3000/callback";
 const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize";
 const RESPONSE_TYPE = "token";
 
-// destination playlists
-const DESTINATION_PLAYLISTS: Record<string, { spotify: string; youtube: string }> = {
+// Fallback playlists (in case API fails)
+const FALLBACK_PLAYLISTS: Record<string, { spotify: string; youtube: string }> = {
   goa: { spotify: "Goa Party Travel Songs", youtube: "Goa Party Songs Playlist" },
   shimla: { spotify: "LoFi Chill Roadtrip", youtube: "Shimla LoFi Chill Songs" },
   rajasthan: { spotify: "Rajasthani Folk Songs", youtube: "Rajasthani Folk Songs Playlist" },
@@ -28,6 +28,41 @@ export default function DestinationPlaylist({ destination, darkMode = false }: D
   const [token, setToken] = useState<string | null>(null);
   const [tracks, setTracks] = useState<any[]>([]);
   const [useYouTube, setUseYouTube] = useState<boolean>(false);
+  const [playlists, setPlaylists] = useState<Record<string, { spotify: string; youtube: string }>>(FALLBACK_PLAYLISTS);
+  const [playlistsLoading, setPlaylistsLoading] = useState(true);
+
+  // Fetch playlists from database
+  useEffect(() => {
+    const fetchPlaylists = async () => {
+      try {
+        const response = await fetch('http://localhost/fu/backend/api/admin_playlists.php?active=true');
+        const data = await response.json();
+        
+        if (data.success && data.playlists) {
+          // Transform API response to match frontend format
+          const playlistMap: Record<string, { spotify: string; youtube: string }> = {};
+          Object.entries(data.playlists).forEach(([key, value]: [string, any]) => {
+            playlistMap[key] = {
+              spotify: value.spotify,
+              youtube: value.youtube
+            };
+          });
+          setPlaylists(playlistMap);
+          console.log('✅ Loaded playlists from database:', Object.keys(playlistMap).length);
+        } else {
+          console.log('⚠️ Using fallback playlists');
+          setPlaylists(FALLBACK_PLAYLISTS);
+        }
+      } catch (error) {
+        console.error('❌ Failed to load playlists:', error);
+        setPlaylists(FALLBACK_PLAYLISTS);
+      } finally {
+        setPlaylistsLoading(false);
+      }
+    };
+    
+    fetchPlaylists();
+  }, []);
 
   // Always call hooks at the top level
   useEffect(() => {
@@ -53,7 +88,7 @@ export default function DestinationPlaylist({ destination, darkMode = false }: D
   // 🔹 Fetch Spotify playlist
   const getSpotifyPlaylist = async () => {
     if (!token || !destination) return;
-    const query = DESTINATION_PLAYLISTS[destination]?.spotify;
+    const query = playlists[destination]?.spotify;
     if (!query) return;
     const response = await fetch(
       `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=playlist&limit=5`,
@@ -239,7 +274,7 @@ export default function DestinationPlaylist({ destination, darkMode = false }: D
                     height="100%"
                     className="rounded-2xl"
                     src={`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(
-                      DESTINATION_PLAYLISTS[destination].youtube
+                      playlists[destination]?.youtube || 'Travel Music'
                     )}`}
                     title="YouTube playlist"
                     allow="autoplay; encrypted-media"

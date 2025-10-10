@@ -12,14 +12,17 @@ import { ApiService } from '../services/api.service';
   styleUrls: ['./dashboard.css']
 })
 export class DashboardComponent implements OnInit {
+  // Router injection
   private router = inject(Router);
   private apiService = inject(ApiService);
   
+  // Enhanced properties
   selectedPeriod: string = 'month';
   selectedBookingStatus: string = 'all';
   isRefreshing: boolean = false;
   isRefreshingBookings: boolean = false;
 
+  // Enhanced stats with growth metrics
   stats = {
     totalTours: 0,
     activeBookings: 0,
@@ -31,6 +34,7 @@ export class DashboardComponent implements OnInit {
     revenueGrowth: 0
   };
 
+  // Enhanced bookings data
   recentBookings = [
     { 
       id: 'BK001',
@@ -72,6 +76,7 @@ export class DashboardComponent implements OnInit {
 
   filteredBookings = [...this.recentBookings];
 
+  // Enhanced popular tours
   popularTours = [
     { 
       id: 'TR001',
@@ -111,6 +116,7 @@ export class DashboardComponent implements OnInit {
     }
   ];
 
+  // Live activities
   liveActivities: any[] = [];
 
   ngOnInit() {
@@ -119,6 +125,7 @@ export class DashboardComponent implements OnInit {
     this.filterBookings();
   }
 
+  // Load real data from backend
   loadDashboardData() {
     this.isRefreshing = true;
     
@@ -143,6 +150,7 @@ export class DashboardComponent implements OnInit {
             revenueGrowth: Math.floor(Math.random() * 25) + 10
           };
           
+          // Update recent bookings
           if (data.recentBookings && Array.isArray(data.recentBookings)) {
             this.recentBookings = data.recentBookings.slice(0, 5).map((booking: any) => ({
               id: booking.booking_reference || booking.id,
@@ -155,6 +163,7 @@ export class DashboardComponent implements OnInit {
             }));
           }
           
+          // Update popular tours
           if (data.popularTours && Array.isArray(data.popularTours)) {
             this.popularTours = data.popularTours.slice(0, 4).map((tour: any, index: number) => ({
               id: tour.id,
@@ -182,6 +191,7 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  // Dashboard management methods
   updatePeriod() {
     console.log(`Updating dashboard for period: ${this.selectedPeriod}`);
     this.refreshDashboard();
@@ -192,7 +202,8 @@ export class DashboardComponent implements OnInit {
     this.isRefreshing = true;
     
     setTimeout(() => {
-      const variation = () => (Math.random() - 0.5) ;
+      // Simulate data update
+      const variation = () => (Math.random() - 0.5) * 0.1;
       
       this.stats = {
         ...this.stats,
@@ -222,6 +233,7 @@ export class DashboardComponent implements OnInit {
     alert('Dashboard report exported successfully!');
   }
 
+  // Booking management methods
   filterBookings() {
     if (this.selectedBookingStatus === 'all') {
       this.filteredBookings = [...this.recentBookings];
@@ -237,6 +249,7 @@ export class DashboardComponent implements OnInit {
     this.isRefreshingBookings = true;
     
     setTimeout(() => {
+      // Simulate fresh data
       const newBookings = [
         { 
           id: 'BK005',
@@ -292,6 +305,7 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  // Tour management methods
   viewAllTours() {
     console.log('Redirecting to tours management...');
     alert('Redirecting to Tours Management section...');
@@ -306,9 +320,11 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  // Quick action methods
   createNewTour() {
     console.log('Creating new tour...');
     try {
+      // Navigate to tours page
       this.router.navigate(['/tours']).then(
         (success) => console.log('Navigation to tours successful:', success),
         (error) => console.error('Navigation to tours failed:', error)
@@ -323,6 +339,7 @@ export class DashboardComponent implements OnInit {
   manageBookings() {
     console.log('Managing bookings...');
     try {
+      // Navigate to bookings page
       this.router.navigate(['/bookings']).then(
         (success) => console.log('Navigation to bookings successful:', success),
         (error) => console.error('Navigation to bookings failed:', error)
@@ -337,6 +354,7 @@ export class DashboardComponent implements OnInit {
   viewAnalytics() {
     console.log('Viewing analytics...');
     try {
+      // Navigate to analytics page
       this.router.navigate(['/analytics']).then(
         (success) => console.log('Navigation to analytics successful:', success),
         (error) => console.error('Navigation to analytics failed:', error)
@@ -351,6 +369,7 @@ export class DashboardComponent implements OnInit {
   manageCustomers() {
     console.log('Managing customers...');
     try {
+      // Navigate to customers page
       this.router.navigate(['/customers']).then(
         (success) => console.log('Navigation to customers successful:', success),
         (error) => console.error('Navigation to customers failed:', error)
@@ -362,6 +381,7 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  // Card click handlers
   onToursCardClick() {
     console.log('Tours card clicked');
     alert(`Tour Statistics:\n\nActive Tours: ${this.stats.totalTours}\nGrowth: +${this.stats.toursGrowth}%\nTop Performer: ${this.popularTours[0].name}`);
@@ -382,22 +402,27 @@ export class DashboardComponent implements OnInit {
     alert(`Revenue Statistics:\n\nMonthly Revenue: ₹${this.stats.monthlyRevenue}\nGrowth: +${this.stats.revenueGrowth}%\nTop Revenue Source: ${this.popularTours[0].name}`);
   }
 
+  // Live activity monitor - Fetch real activities from database
   startLiveActivityMonitor() {
     console.log('Starting live activity monitor...');
     
+    // Load initial activities
     this.loadLiveActivities();
     
+    // Refresh activities every 10 seconds
     setInterval(() => {
       this.loadLiveActivities();
     }, 10000);
   }
 
   loadLiveActivities() {
+    // Fetch real-time activities from the database
     this.apiService.getDashboardStats().subscribe({
       next: (response) => {
         if (response && response.success && response.data) {
           const data = response.data;
           
+          // Process recent bookings into live activities
           if (data.recentBookings && Array.isArray(data.recentBookings)) {
             data.recentBookings.slice(0, 3).forEach((booking: any) => {
               const activity = {
@@ -408,6 +433,7 @@ export class DashboardComponent implements OnInit {
                 timestamp: new Date(booking.created_at || Date.now())
               };
               
+              // Check if this activity already exists
               const exists = this.liveActivities.some(a => 
                 a.description === activity.description && 
                 Math.abs(new Date(a.timestamp).getTime() - activity.timestamp.getTime()) < 60000
@@ -419,6 +445,7 @@ export class DashboardComponent implements OnInit {
             });
           }
           
+          // Add customer registration activities
           const stats = data.stats || {};
           if (stats.totalCustomers && stats.totalCustomers > 0) {
             const customerActivity = {
@@ -429,6 +456,7 @@ export class DashboardComponent implements OnInit {
               timestamp: new Date()
             };
             
+            // Update or add customer count activity
             const customerIndex = this.liveActivities.findIndex(a => a.title === 'Active Customers');
             if (customerIndex >= 0) {
               this.liveActivities[customerIndex] = customerActivity;
@@ -437,6 +465,7 @@ export class DashboardComponent implements OnInit {
             }
           }
           
+          // Add revenue activity
           if (stats.totalRevenue && stats.totalRevenue > 0) {
             const revenueActivity = {
               icon: 'fas fa-rupee-sign',
@@ -446,6 +475,7 @@ export class DashboardComponent implements OnInit {
               timestamp: new Date()
             };
             
+            // Update or add revenue activity
             const revenueIndex = this.liveActivities.findIndex(a => a.title === 'Revenue Update');
             if (revenueIndex >= 0) {
               this.liveActivities[revenueIndex] = revenueActivity;
@@ -454,6 +484,7 @@ export class DashboardComponent implements OnInit {
             }
           }
           
+          // Keep only last 5 activities
           if (this.liveActivities.length > 5) {
             this.liveActivities = this.liveActivities.slice(0, 5);
           }
@@ -465,6 +496,7 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  // Utility methods
   generateDashboardReport(data: any): string {
     return `<!DOCTYPE html><html><head><title>Dashboard Report</title><style>body{font-family:Arial,sans-serif;max-width:800px;margin:0 auto;padding:20px}.header{text-align:center;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:30px;border-radius:10px}.metric{background:#f8f9fa;padding:20px;margin:10px 0;border-radius:8px;border-left:4px solid #667eea}.metric-value{font-size:24px;font-weight:bold;color:#2c3e50}.metric-label{color:#7f8c8d;margin-top:5px}</style></head><body><div class="header"><h1>🚀 Dashboard Report</h1><p>Generated on: ${data.generatedOn}</p><p>Report Period: ${data.period}</p></div><div class="metric"><div class="metric-value">${data.stats.totalTours}</div><div class="metric-label">Total Tours</div></div><div class="metric"><div class="metric-value">${data.stats.activeBookings}</div><div class="metric-label">Active Bookings</div></div><div class="metric"><div class="metric-value">${data.stats.totalCustomers}</div><div class="metric-label">Total Customers</div></div><div class="metric"><div class="metric-value">₹${data.stats.monthlyRevenue}</div><div class="metric-label">Monthly Revenue</div></div><div class="metric"><div class="metric-value">${data.topTour}</div><div class="metric-label">Top Performing Tour</div></div></body></html>`;
   }

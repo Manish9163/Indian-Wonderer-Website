@@ -196,10 +196,15 @@
                             <i class="fas fa-comment"></i> Message
                         </button>
                     </div>
-                    <div class="btn-group w-100">
+                    <div class="btn-group w-100 mb-2">
+                        <button class="btn btn-outline-primary btn-sm" (click)="trackGuideLive(report)">
+                            <i class="fas fa-map-marked-alt"></i> Track Live
+                        </button>
                         <button class="btn btn-outline-secondary btn-sm" (click)="viewLocation(report)">
                             <i class="fas fa-map-marker-alt"></i> Location
                         </button>
+                    </div>
+                    <div class="btn-group w-100">
                         <button class="btn btn-outline-danger btn-sm" (click)="reportGuide(report)">
                             <i class="fas fa-flag"></i> Report
                         </button>
@@ -1196,6 +1201,121 @@
                         (click)="confirmBookingAssignment()">
                     <i class="fas fa-check me-2"></i>Assign Booking
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Live Tracking Modal -->
+<div class="modal fade show" *ngIf="showLiveTrackingModal" style="display: block; background: rgba(0,0,0,0.7);" tabindex="-1">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content" style="background: #f8f9fa;">
+            <!-- Header -->
+            <div class="modal-header bg-primary text-white">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-map-marked-alt me-3" style="font-size: 24px;"></i>
+                    <div>
+                        <h4 class="modal-title mb-0">🗺️ Live Tracking: {{ trackingGuideName }}</h4>
+                        <small>Real-time location monitoring for safety & security</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" (click)="closeLiveTrackingModal()"></button>
+            </div>
+            
+            <!-- Body -->
+            <div class="modal-body p-4" style="height: calc(100vh - 140px); overflow-y: auto;">
+                <div class="text-center p-5">
+                    <i class="fas fa-map-marked-alt text-primary mb-4" style="font-size: 64px;"></i>
+                    <h3 class="text-dark mb-3">🗺️ Live Tracking Feature</h3>
+                    <p class="text-muted mb-4" style="max-width: 600px; margin: 0 auto;">
+                        Real-time guide location tracking will be available in production!<br>
+                        Admin can monitor guide locations for safety and security purposes.
+                    </p>
+                    
+                    <div class="row justify-content-center">
+                        <div class="col-md-10">
+                            <div class="card shadow-sm mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">✨ What You'll Get:</h5>
+                                    <div class="row text-start mt-3">
+                                        <div class="col-md-6 mb-3">
+                                            <div class="d-flex align-items-start">
+                                                <i class="fas fa-map-marker-alt text-danger me-3 mt-1" style="font-size: 20px;"></i>
+                                                <div>
+                                                    <strong>Real-time Location</strong>
+                                                    <p class="text-muted small mb-0">Track guide's exact position on Google Maps with live updates</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="d-flex align-items-start">
+                                                <i class="fas fa-route text-primary me-3 mt-1" style="font-size: 20px;"></i>
+                                                <div>
+                                                    <strong>Journey Trail</strong>
+                                                    <p class="text-muted small mb-0">See the complete path the guide has traveled</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="d-flex align-items-start">
+                                                <i class="fas fa-shield-alt text-success me-3 mt-1" style="font-size: 20px;"></i>
+                                                <div>
+                                                    <strong>Safety Monitoring</strong>
+                                                    <p class="text-muted small mb-0">Ensure customer and guide safety during tours</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="d-flex align-items-start">
+                                                <i class="fas fa-tachometer-alt text-warning me-3 mt-1" style="font-size: 20px;"></i>
+                                                <div>
+                                                    <strong>Live Metrics</strong>
+                                                    <p class="text-muted small mb-0">Speed, distance, GPS accuracy, and battery status</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="d-flex align-items-start">
+                                                <i class="fas fa-exclamation-triangle text-danger me-3 mt-1" style="font-size: 20px;"></i>
+                                                <div>
+                                                    <strong>Emergency Alerts</strong>
+                                                    <p class="text-muted small mb-0">Receive SOS notifications instantly</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="d-flex align-items-start">
+                                                <i class="fas fa-history text-info me-3 mt-1" style="font-size: 20px;"></i>
+                                                <div>
+                                                    <strong>Session History</strong>
+                                                    <p class="text-muted small mb-0">Review complete tour history and playback</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Note:</strong> This feature requires Google Maps API key and will be fully functional in production deployment.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="modal-footer bg-light">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <div class="text-muted small">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Tracking Guide ID: #{{ trackingGuideId }} | Booking ID: #{{ trackingBookingId }}
+                    </div>
+                    <button type="button" class="btn btn-secondary" (click)="closeLiveTrackingModal()">
+                        <i class="fas fa-times me-2"></i>Close Tracking
+                    </button>
+                </div>
             </div>
         </div>
     </div>

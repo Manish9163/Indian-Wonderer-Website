@@ -1,53 +1,39 @@
 <?php
-/**
- * Unified Application Router
- * Connects Angular Admin Panel, React Frontend, and PHP Backend
- */
+
 
 header('Content-Type: text/html; charset=UTF-8');
 
-// Get the request path
 $requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $basePath = '/fu/';
 
-// Remove base path
 $route = str_replace($basePath, '', $requestPath);
 $route = trim($route, '/');
 
-// Route handling
 switch (true) {
-    // Admin Panel (Angular) Routes
     case (empty($route) || $route === 'admin' || strpos($route, 'admin') === 0):
         serveAdminPanel($route);
         break;
         
-    // Frontend (React) Routes  
     case (strpos($route, 'app') === 0 || strpos($route, 'frontend') === 0):
         serveFrontend($route);
         break;
         
-    // API Routes (PHP Backend)
     case (strpos($route, 'backend') === 0 || strpos($route, 'api') === 0):
         serveBackend($route);
         break;
         
-    // Default to admin panel
     default:
         serveAdminPanel('');
         break;
 }
 
-/**
- * Serve Angular Admin Panel
- */
+
 function serveAdminPanel($route) {
     $adminIndexPath = __DIR__ . '/main_admin_panel/src/index.html';
     
     if (file_exists($adminIndexPath)) {
-        // Read the admin panel HTML
         $content = file_get_contents($adminIndexPath);
         
-        // Inject base path configuration
         $baseConfig = "
         <script>
             window.APP_CONFIG = {
@@ -60,30 +46,23 @@ function serveAdminPanel($route) {
             };
         </script>";
         
-        // Insert before closing head tag
         $content = str_replace('</head>', $baseConfig . '</head>', $content);
         
-        // Update base href
         $content = str_replace('<base href="/">', '<base href="/fu/admin/">', $content);
         
         echo $content;
     } else {
-        // Fallback admin interface
         echo getAdminFallback();
     }
 }
 
-/**
- * Serve React Frontend
- */
+
 function serveFrontend($route) {
     $frontendIndexPath = __DIR__ . '/frontend/public/index.html';
     
     if (file_exists($frontendIndexPath)) {
-        // Read the frontend HTML
         $content = file_get_contents($frontendIndexPath);
         
-        // Inject configuration
         $frontendConfig = "
         <script>
             window.REACT_APP_CONFIG = {
@@ -95,30 +74,22 @@ function serveFrontend($route) {
             };
         </script>";
         
-        // Insert before closing head tag
         $content = str_replace('</head>', $frontendConfig . '</head>', $content);
         
         echo $content;
     } else {
-        // Fallback frontend interface
         echo getFrontendFallback();
     }
 }
 
-/**
- * Serve PHP Backend
- */
+
 function serveBackend($route) {
-    // Clean the route for backend
     $backendRoute = str_replace(['backend/', 'api/'], '', $route);
     
-    // Include the gateway
     require_once __DIR__ . '/backend/gateway.php';
 }
 
-/**
- * Admin Panel Fallback
- */
+
 function getAdminFallback() {
     return '
     <!DOCTYPE html>
@@ -196,9 +167,7 @@ function getAdminFallback() {
     </html>';
 }
 
-/**
- * Frontend Fallback
- */
+
 function getFrontendFallback() {
     return '
     <!DOCTYPE html>

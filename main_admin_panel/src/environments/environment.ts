@@ -1,7 +1,4 @@
-/**
- * Environment Configuration for Angular Admin Panel
- * This file is loaded at runtime and can be injected by PHP bridge
- */
+
 
 export interface Environment {
   production: boolean;
@@ -16,7 +13,6 @@ export interface Environment {
   };
 }
 
-// Check if configuration was injected by PHP bridge
 declare const window: Window & {
   APP_CONFIG?: {
     API_BASE_URL: string;
@@ -27,7 +23,6 @@ declare const window: Window & {
   };
 };
 
-// Get configuration from window or use defaults
 function getEnvironmentConfig(): Environment {
   if (typeof window !== 'undefined' && window.APP_CONFIG) {
     return {
@@ -44,7 +39,6 @@ function getEnvironmentConfig(): Environment {
     };
   }
 
-  // Fallback to default configuration for development
   return {
     production: false,
     apiUrl: 'http://localhost/fu/backend/api',

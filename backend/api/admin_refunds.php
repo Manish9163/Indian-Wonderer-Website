@@ -67,6 +67,12 @@ class AdminRefundAPI {
                     return $this->completeGiftCard();
                 case 'get_pending':
                     return $this->getPendingRefunds();
+                case 'get_completed':
+                    return $this->getCompletedRefunds();
+                case 'get_all':
+                    return $this->getAllRefunds();
+                case 'get_gift_cards':
+                    return $this->getAllGiftCards();
                 case 'get_details':
                     return $this->getRefundDetails();
                 default:
@@ -267,17 +273,37 @@ class AdminRefundAPI {
                     r.id as refund_id,
                     r.amount as refund_amount,
                     r.method as refund_method,
-                    r.initiated_at,
+                    r.status as refund_status,
+                    r.notes as admin_notes,
+                    r.transaction_id,
+                    r.initiated_at as created_at,
+                    r.completed_at,
                     b.id as booking_id,
                     b.booking_reference,
+                    b.total_amount,
+                    b.booking_date,
+                    b.travel_date,
+                    b.number_of_travelers,
+                    b.status as booking_status,
+                    u.id as customer_id,
                     u.first_name,
                     u.last_name,
                     u.email,
-                    t.title as tour_name
+                    u.phone,
+                    t.title as tour_name,
+                    t.destination,
+                    t.duration_days,
+                    gc.id as giftcard_id,
+                    gc.code as giftcard_code,
+                    gc.balance as giftcard_balance,
+                    gc.amount as giftcard_amount,
+                    gc.expiry_date as giftcard_expires,
+                    gc.status as giftcard_status
                 FROM refunds r
                 JOIN bookings b ON r.booking_id = b.id
                 JOIN users u ON b.user_id = u.id
                 LEFT JOIN tours t ON b.tour_id = t.id
+                LEFT JOIN gift_cards gc ON gc.user_id = u.id AND r.method = 'giftcard'
                 WHERE r.status = 'pending'
                 ORDER BY r.initiated_at DESC
                 LIMIT 100
@@ -293,6 +319,156 @@ class AdminRefundAPI {
         } catch (Exception $e) {
             error_log("Get Pending Refunds Error: " . $e->getMessage());
             return $this->sendError($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Get completed refunds with full customer details
+     */
+    private function getCompletedRefunds() {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    r.id as refund_id,
+                    r.amount as refund_amount,
+                    r.method as refund_method,
+                    r.status as refund_status,
+                    r.notes as admin_notes,
+                    r.transaction_id,
+                    r.initiated_at as created_at,
+                    r.completed_at,
+                    b.id as booking_id,
+                    b.booking_reference,
+                    b.total_amount,
+                    b.booking_date,
+                    b.travel_date,
+                    b.number_of_travelers,
+                    b.status as booking_status,
+                    u.id as customer_id,
+                    u.first_name,
+                    u.last_name,
+                    u.email,
+                    u.phone,
+                    t.title as tour_name,
+                    t.destination,
+                    t.duration_days,
+                    gc.id as giftcard_id,
+                    gc.code as giftcard_code,
+                    gc.balance as giftcard_balance,
+                    gc.amount as giftcard_amount,
+                    gc.expiry_date as giftcard_expires,
+                    gc.status as giftcard_status
+                FROM refunds r
+                JOIN bookings b ON r.booking_id = b.id
+                JOIN users u ON b.user_id = u.id
+                LEFT JOIN tours t ON b.tour_id = t.id
+                LEFT JOIN gift_cards gc ON gc.user_id = u.id AND r.method = 'giftcard'
+                WHERE r.status = 'completed'
+                ORDER BY r.completed_at DESC
+                LIMIT 100
+            ");
+            $stmt->execute();
+            $refunds = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            return $this->sendSuccess([
+                'refunds' => $refunds,
+                'count' => count($refunds),
+                'message' => 'Completed refunds retrieved successfully'
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("Get Completed Refunds Error: " . $e->getMessage());
+            return $this->sendError($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Get all refunds (pending and completed)
+     */
+    private function getAllRefunds() {
+        try {
+            // First check if tables exist
+            $tables = ['refunds', 'bookings', 'users', 'tours', 'gift_cards'];
+            foreach ($tables as $table) {
+                $stmt = $this->pdo->query("SHOW TABLES LIKE '$table'");
+                if ($stmt->rowCount() === 0) {
+                    throw new Exception("Table '$table' does not exist");
+                }
+            }
+            
+            // Query with correct column names
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    r.id as refund_id,
+                    r.amount as refund_amount,
+                    r.method as refund_method,
+                    r.status as refund_status,
+                    r.notes as admin_notes,
+                    r.transaction_id,
+                    r.initiated_at as created_at,
+                    r.completed_at,
+                    b.id as booking_id,
+                    b.booking_reference,
+                    b.total_amount,
+                    b.booking_date,
+                    b.travel_date,
+                    b.number_of_travelers,
+                    b.status as booking_status,
+                    u.id as customer_id,
+                    u.first_name,
+                    u.last_name,
+                    u.email,
+                    u.phone,
+                    t.title as tour_name,
+                    t.destination,
+                    t.duration_days
+                FROM refunds r
+                JOIN bookings b ON r.booking_id = b.id
+                JOIN users u ON b.user_id = u.id
+                LEFT JOIN tours t ON b.tour_id = t.id
+                ORDER BY r.initiated_at DESC
+                LIMIT 200
+            ");
+            $stmt->execute();
+            $refunds = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Add gift card details for giftcard refunds
+            foreach ($refunds as &$refund) {
+                // Get gift card details if method is giftcard
+                if ($refund['refund_method'] === 'giftcard') {
+                    try {
+                        $gcStmt = $this->pdo->prepare("
+                            SELECT id, code, balance, amount, expiry_date, status
+                            FROM gift_cards 
+                            WHERE user_id = ? AND status = 'active'
+                            ORDER BY created_at DESC
+                            LIMIT 1
+                        ");
+                        $gcStmt->execute([$refund['customer_id']]);
+                        $gc = $gcStmt->fetch(PDO::FETCH_ASSOC);
+                        if ($gc) {
+                            $refund['giftcard_id'] = $gc['id'];
+                            $refund['giftcard_code'] = $gc['code'];
+                            $refund['giftcard_balance'] = $gc['balance'];
+                            $refund['giftcard_amount'] = $gc['amount'];
+                            $refund['giftcard_expires'] = $gc['expiry_date'];
+                            $refund['giftcard_status'] = $gc['status'];
+                        }
+                    } catch (Exception $e) {
+                        // Gift card details optional
+                    }
+                }
+            }
+            
+            return $this->sendSuccess([
+                'refunds' => $refunds,
+                'count' => count($refunds)
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("Get All Refunds Error: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            return $this->sendError("Database error: " . $e->getMessage(), 500);
         }
     }
     
@@ -461,6 +637,69 @@ class AdminRefundAPI {
         } catch (Exception $e) {
             error_log("Send Gift Card Email Error: " . $e->getMessage());
             // Don't throw - email failure shouldn't block processing
+        }
+    }
+    
+    /**
+     * Get all gift cards with customer details
+     */
+    private function getAllGiftCards() {
+        try {
+            // First, auto-expire any gift cards past their expiry date
+            $expireStmt = $this->pdo->prepare("
+                UPDATE gift_cards 
+                SET status = 'expired'
+                WHERE status = 'active' 
+                AND expiry_date < CURDATE()
+            ");
+            $expireStmt->execute();
+            $expiredCount = $expireStmt->rowCount();
+            
+            if ($expiredCount > 0) {
+                error_log("Auto-expired {$expiredCount} gift card(s)");
+            }
+            
+            // Now fetch all gift cards with current status
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    gc.id as giftcard_id,
+                    gc.code as giftcard_code,
+                    gc.amount as giftcard_amount,
+                    gc.balance as giftcard_balance,
+                    gc.status as giftcard_status,
+                    gc.expiry_date as giftcard_expires,
+                    gc.created_at as giftcard_created,
+                    gc.used_at as giftcard_used,
+                    u.id as customer_id,
+                    u.first_name,
+                    u.last_name,
+                    u.email,
+                    u.phone,
+                    CASE 
+                        WHEN gc.status = 'expired' THEN 'Expired'
+                        WHEN gc.status = 'active' AND gc.expiry_date >= CURDATE() THEN 'Valid'
+                        WHEN gc.status = 'active' AND gc.expiry_date < CURDATE() THEN 'Expired'
+                        WHEN gc.status = 'used' THEN 'Used'
+                        WHEN gc.status = 'cancelled' THEN 'Cancelled'
+                        ELSE gc.status
+                    END as display_status
+                FROM gift_cards gc
+                JOIN users u ON gc.user_id = u.id
+                ORDER BY gc.created_at DESC
+                LIMIT 200
+            ");
+            $stmt->execute();
+            $giftcards = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            return $this->sendSuccess([
+                'giftcards' => $giftcards,
+                'count' => count($giftcards)
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("Get All Gift Cards Error: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            return $this->sendError("Database error: " . $e->getMessage(), 500);
         }
     }
     

@@ -244,7 +244,7 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
       <div className={`${
         darkMode ? 'bg-gray-900/95 text-white border-gray-700' : 'bg-white/95 text-gray-900 border-gray-200'
-      } rounded-3xl w-full max-w-6xl max-h-[90vh] overflow-hidden shadow-2xl border backdrop-blur-lg glass transform transition-all duration-500 animate-slideIn`}>
+      } rounded-3xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl border backdrop-blur-lg glass transform transition-all duration-500 animate-slideIn`}>
         
         {/* Compact Header with Gradient */}
         <div className="relative overflow-hidden">
@@ -333,8 +333,21 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
         </div>
 
         {/* Compact Agents Grid */}
-        <div className="flex-1 overflow-y-auto p-4 pb-24">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="flex-1 overflow-y-auto p-4 pb-24 min-h-0 relative">
+          {/* Scroll Indicator */}
+          {filteredAgents.length > 4 && (
+            <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-transparent to-transparent pointer-events-none z-10">
+              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-center animate-bounce">
+                <div className={`text-xs font-medium px-3 py-1 rounded-full ${
+                  darkMode ? 'bg-gray-800 text-gray-300' : 'bg-white/90 text-gray-600'
+                } shadow-lg border border-purple-200`}>
+                  ⬇ Scroll to see {filteredAgents.length} guides ⬇
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-max">
             {filteredAgents.map((agent, index) => (
               <div
                 key={agent.id}

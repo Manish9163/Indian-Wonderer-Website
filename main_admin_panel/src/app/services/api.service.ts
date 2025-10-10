@@ -110,25 +110,29 @@ export class ApiService {
       url += `?application_status=${applicationStatus}`;
     }
     return this.http.get(url, {
-      headers: this.getHeaders()
+      headers: this.getHeaders(),
+      withCredentials: true
     }).pipe(catchError(this.handleError));
   }
 
   createGuide(guide: any): Observable<any> {
     return this.http.post(`${this.baseUrl}/admin_guides_simple.php`, guide, {
-      headers: this.getHeaders()
+      headers: this.getHeaders(),
+      withCredentials: true
     }).pipe(catchError(this.handleError));
   }
 
   updateGuide(id: number, guide: any): Observable<any> {
     return this.http.put(`${this.baseUrl}/admin_guides_simple.php?id=${id}`, guide, {
-      headers: this.getHeaders()
+      headers: this.getHeaders(),
+      withCredentials: true
     }).pipe(catchError(this.handleError));
   }
 
   deleteGuide(id: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/admin_guides_simple.php?id=${id}`, {
-      headers: this.getHeaders()
+      headers: this.getHeaders(),
+      withCredentials: true
     }).pipe(catchError(this.handleError));
   }
 
@@ -335,6 +339,27 @@ export class ApiService {
 
   getPendingRefunds(): Observable<any> {
     return this.http.get(`${this.baseUrl}/admin_refunds.php?action=get_pending`, {
+      headers: this.getHeaders(),
+      withCredentials: true
+    }).pipe(catchError(this.handleError));
+  }
+
+  getCompletedRefunds(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin_refunds.php?action=get_completed`, {
+      headers: this.getHeaders(),
+      withCredentials: true
+    }).pipe(catchError(this.handleError));
+  }
+
+  getAllRefunds(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin_refunds.php?action=get_all`, {
+      headers: this.getHeaders(),
+      withCredentials: true
+    }).pipe(catchError(this.handleError));
+  }
+
+  getAllGiftCards(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin_refunds.php?action=get_gift_cards`, {
       headers: this.getHeaders(),
       withCredentials: true
     }).pipe(catchError(this.handleError));

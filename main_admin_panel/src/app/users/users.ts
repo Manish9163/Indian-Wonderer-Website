@@ -20,13 +20,11 @@ import { ApiService } from '../services/api.service';
         </div>
       </div>
       
-      <!-- Loading State -->
       <div *ngIf="isLoading" class="text-center py-5 mt-4">
         <div class="spinner-border text-primary" role="status"></div>
         <p class="mt-3 text-muted">Loading users...</p>
       </div>
       
-      <!-- Users Count -->
       <div *ngIf="!isLoading" class="row mt-4">
         <div class="col-md-3">
           <div class="glass-card stat-card p-4">
@@ -214,7 +212,6 @@ export class UsersComponent implements OnInit {
 
   exportUsers(): void {
     console.log('Exporting users...');
-    // Export functionality
   }
 
   refreshUsers(): void {

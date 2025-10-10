@@ -1,6 +1,7 @@
 
 <div class="admin-container">
   
+  <!-- Loading State -->
   <div *ngIf="isLoading" class="loading-container">
     <div class="spinner-grow text-light" style="width: 4rem; height: 4rem;"></div>
     <h3 class="mt-4 text-white">
@@ -12,6 +13,7 @@
     </div>
   </div>
 
+  <!-- Error State -->
   <div *ngIf="errorMessage && !isLoading" class="alert alert-danger alert-dismissible fade show m-3">
     <i class="fas fa-exclamation-triangle me-2"></i>
     <strong>Error:</strong> {{errorMessage}}
@@ -23,6 +25,7 @@
     </div>
   </div>
 
+  <!-- Main Content -->
   <div *ngIf="!isLoading" class="fade-in-up">
     
     <!-- Page Header -->
@@ -51,6 +54,17 @@
           </button>
         </div>
       </div>
+    </div>
+
+    <!-- Database Status -->
+    <div class="connection-status">
+      <div>
+        <i class="fas fa-check-circle me-2"></i>
+        <strong>Database Connected</strong> - Displaying {{filteredCustomers.length}} customers
+      </div>
+      <span class="badge bg-success">
+        <i class="fas fa-clock me-1"></i>{{getCurrentTime()}}
+      </span>
     </div>
 
     <!-- Stats Cards -->

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, AlertTriangle, DollarSign, Gift, CreditCard } from 'lucide-react';
+import { X, AlertTriangle, Gift, CreditCard } from 'lucide-react';
 
 interface CancellationModalProps {
   darkMode: boolean;

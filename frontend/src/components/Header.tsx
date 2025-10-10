@@ -1,5 +1,5 @@
 import React from 'react'
-import { MapPin, Sun, Moon, Phone, User, LogOut, ChevronDown, Compass, Heart, Calendar, Sparkles, Globe, Settings, Package } from "lucide-react"
+import { MapPin, Sun, Moon, User, LogOut, ChevronDown, Compass, Heart, Calendar, Package } from "lucide-react"
 import * as avatars from '@dicebear/avatars';
 import * as style from '@dicebear/avatars-avataaars-sprites';
 
@@ -79,19 +79,6 @@ const Header: React.FC<HeaderProps> = ({
               </div>
             </button>
             <button
-              onClick={() => setActiveTab('booking')}
-              className={`group px-6 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 ${
-                activeTab === 'booking'
-                  ? 'bg-gradient-to-r from-green-500 to-blue-600 text-white shadow-lg shadow-green-500/25'
-                  : `${darkMode ? 'hover:bg-gray-700/50 text-gray-300' : 'hover:bg-gray-100 text-gray-700'} hover:shadow-md`
-              }`}
-            >
-              <div className="flex items-center space-x-2">
-                <Globe size={18} className={`${activeTab === 'booking' ? 'animate-pulse' : 'group-hover:animate-pulse'}`} />
-                <span>Book Tours</span>
-              </div>
-            </button>
-            <button
               onClick={() => setActiveTab('agent-application')}
               className={`group px-6 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 ${
                 activeTab === 'agent-application'
@@ -122,24 +109,6 @@ const Header: React.FC<HeaderProps> = ({
                 </span>
               )}
             </button>
-            <button
-              onClick={() => setActiveTab('orders')}
-              className={`group px-6 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 relative ${
-                activeTab === 'orders'
-                  ? 'bg-gradient-to-r from-indigo-500 to-blue-600 text-white shadow-lg shadow-indigo-500/25'
-                  : `${darkMode ? 'hover:bg-gray-700/50 text-gray-300' : 'hover:bg-gray-100 text-gray-700'} hover:shadow-md`
-              }`}
-            >
-              <div className="flex items-center space-x-2">
-                <Package size={18} className={`${activeTab === 'orders' ? 'animate-pulse' : 'group-hover:animate-pulse'}`} />
-                <span>My Orders</span>
-              </div>
-              {myItineraries.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-gradient-to-r from-indigo-500 to-blue-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center animate-pulse shadow-lg">
-                  {myItineraries.length}
-                </span>
-              )}
-            </button>
           </nav>
 
           <div className="flex items-center space-x-3">
@@ -153,16 +122,6 @@ const Header: React.FC<HeaderProps> = ({
             >
               {darkMode ? <Sun size={20} className="animate-spin" /> : <Moon size={20} className="animate-pulse" />}
             </button>
-            
-            <div className={`flex items-center space-x-2 px-4 py-2 rounded-xl backdrop-blur-sm border ${
-              darkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-white/50 border-gray-200/50'
-            }`}>
-              <div className="relative">
-                <Phone size={16} className="text-green-500 animate-pulse" />
-                <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
-              </div>
-              <span className="text-sm font-medium hidden sm:block">+91 98765 43210</span>
-            </div>
 
             {/* User Menu */}
             {userDetails && (
@@ -290,6 +249,28 @@ const Header: React.FC<HeaderProps> = ({
                         <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
                           {myItineraries.length}
                         </span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setActiveTab('orders');
+                          setShowUserMenu(false);
+                        }}
+                        className={`w-full text-left p-4 rounded-xl transition-all duration-300 transform hover:scale-105 ${
+                          darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-100'
+                        } flex items-center space-x-3 group`}
+                      >
+                        <div className="p-2 rounded-lg bg-gradient-to-r from-indigo-500 to-blue-500 text-white shadow-md group-hover:shadow-lg transition-all">
+                          <Package size={16} />
+                        </div>
+                        <div className="flex-1">
+                          <span className="font-medium">My Orders</span>
+                          <p className="text-xs text-gray-500">View all your bookings</p>
+                        </div>
+                        {myItineraries.length > 0 && (
+                          <span className="bg-indigo-500 text-white text-xs px-2 py-1 rounded-full">
+                            {myItineraries.length}
+                          </span>
+                        )}
                       </button>
                       <button
                         onClick={handleLogout}

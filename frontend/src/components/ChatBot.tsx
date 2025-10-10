@@ -26,6 +26,13 @@ type LearningData = {
   commonKeywords: { [key: string]: number };
 };
 
+type ConversationContext = {
+  topic?: string;
+  previousQueries: string[];
+  userIntent?: 'booking' | 'inquiry' | 'support' | 'complaint' | 'urgent';
+  sentiment?: 'positive' | 'neutral' | 'negative';
+};
+
 type ChatBotProps = {
   darkMode: boolean;
 };
@@ -35,6 +42,11 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [showFAQs, setShowFAQs] = useState(true);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingSuggestions, setTypingSuggestions] = useState<string[]>([]);
+  const [conversationContext, setConversationContext] = useState<ConversationContext>({
+    previousQueries: []
+  });
   const [learningData, setLearningData] = useState<LearningData>({
     userQueries: {},
     unhelpfulResponses: [],
@@ -42,6 +54,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
     commonKeywords: {}
   });
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const responseCache = useRef<Map<string, string>>(new Map());
 
   const faqs: FAQ[] = [
     {
@@ -228,6 +241,80 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
     timestamp: new Date()
   };
 
+  // ============= AI-POWERED HELPER FUNCTIONS =============
+  
+  // Intent Detection
+  const detectIntent = (query: string): ConversationContext['userIntent'] => {
+    const lowercaseQuery = query.toLowerCase();
+    const urgentWords = ['urgent', 'emergency', 'asap', 'immediately', 'problem', 'issue', 'stuck', 'help now'];
+    const bookingWords = ['book', 'reserve', 'booking', 'reservation', 'schedule', 'availability'];
+    const complaintWords = ['complaint', 'issue', 'problem', 'bad', 'terrible', 'disappointed', 'angry', 'worst'];
+    const supportWords = ['help', 'support', 'contact', 'call', 'email', 'speak to'];
+    
+    if (urgentWords.some(w => lowercaseQuery.includes(w))) return 'urgent';
+    if (complaintWords.some(w => lowercaseQuery.includes(w))) return 'complaint';
+    if (bookingWords.some(w => lowercaseQuery.includes(w))) return 'booking';
+    if (supportWords.some(w => lowercaseQuery.includes(w))) return 'support';
+    return 'inquiry';
+  };
+
+  // Sentiment Analysis
+  const analyzeSentiment = (text: string): 'positive' | 'neutral' | 'negative' => {
+    const textLower = text.toLowerCase();
+    const positiveWords = ['great', 'excellent', 'amazing', 'wonderful', 'love', 'happy', 'perfect', 'awesome', 'fantastic', 'best'];
+    const negativeWords = ['bad', 'terrible', 'awful', 'worst', 'hate', 'angry', 'disappointed', 'frustrat', 'poor', 'horrible'];
+    
+    const positiveCount = positiveWords.filter(w => textLower.includes(w)).length;
+    const negativeCount = negativeWords.filter(w => textLower.includes(w)).length;
+    
+    if (negativeCount > positiveCount) return 'negative';
+    if (positiveCount > negativeCount) return 'positive';
+    return 'neutral';
+  };
+
+  // Get Cached Response
+  const getCachedResponse = (query: string): string | null => {
+    const normalized = query.toLowerCase().trim();
+    return responseCache.current.get(normalized) || null;
+  };
+
+  // Cache Response
+  const cacheResponse = (query: string, response: string) => {
+    const normalized = query.toLowerCase().trim();
+    responseCache.current.set(normalized, response);
+    // Limit cache size to 100 entries
+    if (responseCache.current.size > 100) {
+      const firstKey = responseCache.current.keys().next().value;
+      if (firstKey) responseCache.current.delete(firstKey);
+    }
+  };
+
+  // Simulate Typing
+  const simulateTyping = async (response: string) => {
+    setIsTyping(true);
+    const typingTime = Math.min(response.length * 15, 1500); // Max 1.5 seconds
+    await new Promise(resolve => setTimeout(resolve, typingTime));
+    setIsTyping(false);
+    return response;
+  };
+
+  // Get Typing Suggestions
+  const getTypingSuggestions = (input: string): string[] => {
+    if (input.length < 2) return [];
+    
+    const allQueries = [
+      ...Object.keys(learningData.userQueries),
+      ...faqs.map(f => f.question)
+    ];
+    
+    const suggestions = allQueries
+      .filter(q => q.toLowerCase().includes(input.toLowerCase()))
+      .sort((a, b) => (learningData.userQueries[b] || 0) - (learningData.userQueries[a] || 0))
+      .slice(0, 3);
+    
+    return suggestions;
+  };
+
   // Load learning data from localStorage
   useEffect(() => {
     const savedLearningData = localStorage.getItem('chatbot-learning-data');
@@ -261,36 +348,67 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
 
+    const currentQuery = inputMessage;
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: inputMessage,
+      text: currentQuery,
       sender: 'user',
       timestamp: new Date()
     };
 
+    // AI: Detect intent and sentiment
+    const intent = detectIntent(currentQuery);
+    const sentiment = analyzeSentiment(currentQuery);
+
+    // Update conversation context
+    setConversationContext(prev => ({
+      ...prev,
+      previousQueries: [...prev.previousQueries, currentQuery].slice(-5), // Keep last 5
+      userIntent: intent,
+      sentiment: sentiment
+    }));
+
     // Learn from user query
-    learnFromUserQuery(inputMessage);
+    learnFromUserQuery(currentQuery);
 
     setMessages(prev => [...prev, userMessage]);
-    const currentQuery = inputMessage;
     setInputMessage('');
+    setTypingSuggestions([]);
     setShowFAQs(false);
 
-    // Generate response with learning
-    setTimeout(() => {
-      const response = generateResponse(currentQuery);
+    // Check cache first for instant response
+    const cached = getCachedResponse(currentQuery);
+    if (cached) {
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: response,
+        text: cached,
         sender: 'bot',
         timestamp: new Date(),
         userQuery: currentQuery
       };
       setMessages(prev => [...prev, botMessage]);
-    }, 1000);
+      return;
+    }
+
+    // Generate response with realistic typing delay
+    const response = generateResponse(currentQuery, intent, sentiment);
+    await simulateTyping(response);
+    
+    const botMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      text: response,
+      sender: 'bot',
+      timestamp: new Date(),
+      userQuery: currentQuery
+    };
+    
+    setMessages(prev => [...prev, botMessage]);
+    
+    // Cache the response
+    cacheResponse(currentQuery, response);
   };
 
   const learnFromUserQuery = (query: string) => {
@@ -330,8 +448,22 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
     }
   };
 
-  const generateResponse = (input: string): string => {
+  const generateResponse = (
+    input: string, 
+    intent?: ConversationContext['userIntent'], 
+    sentiment?: ConversationContext['sentiment']
+  ): string => {
     const lowercaseInput = input.toLowerCase();
+    
+    // AI: Priority handling for urgent/negative sentiment
+    if (intent === 'urgent' || sentiment === 'negative') {
+      return `🚨 I understand this is ${intent === 'urgent' ? 'urgent' : 'frustrating'}. Let me connect you with our priority support team immediately. Call: +91-9876543210 or WhatsApp us for instant help. We're here to resolve this! 💪`;
+    }
+
+    // AI: Personalized greeting for positive sentiment
+    if (sentiment === 'positive' && conversationContext.previousQueries.length > 0) {
+      // User is happy, continue conversation warmly
+    }
     
     // Check if this query has been asked before and was marked unhelpful
     const similarUnhelpfulResponse = learningData.unhelpfulResponses.find(ur => 
@@ -642,11 +774,53 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
 
         {/* Input */}
         <div className={`p-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+          {/* AI: Typing Suggestions */}
+          {typingSuggestions.length > 0 && (
+            <div className="mb-2 space-y-1">
+              {typingSuggestions.map((suggestion, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    setInputMessage(suggestion);
+                    setTypingSuggestions([]);
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-sm ${
+                    darkMode 
+                      ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' 
+                      : 'bg-gray-50 hover:bg-gray-100 text-gray-700'
+                  } transition-colors`}
+                >
+                  💡 {suggestion}
+                </button>
+              ))}
+            </div>
+          )}
+          
+          {/* AI: Typing Indicator */}
+          {isTyping && (
+            <div className="flex items-center space-x-2 mb-2 text-sm text-gray-500">
+              <div className="flex space-x-1">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              </div>
+              <span>TravelBuddy is typing...</span>
+            </div>
+          )}
+          
           <div className="flex space-x-2">
             <input
               type="text"
               value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
+              onChange={(e) => {
+                setInputMessage(e.target.value);
+                // AI: Update typing suggestions
+                if (e.target.value.length >= 2) {
+                  setTypingSuggestions(getTypingSuggestions(e.target.value));
+                } else {
+                  setTypingSuggestions([]);
+                }
+              }}
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
               placeholder="Type your question..."
               className={`flex-1 px-3 py-2 rounded-lg border ${
@@ -657,11 +831,26 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
             />
             <button
               onClick={handleSendMessage}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-2 rounded-lg hover:opacity-90 transition-opacity"
+              disabled={isTyping}
+              className={`bg-gradient-to-r from-blue-600 to-purple-600 text-white p-2 rounded-lg transition-opacity ${
+                isTyping ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'
+              }`}
             >
               <Send size={16} />
             </button>
           </div>
+          
+          {/* AI: Context Indicator */}
+          {conversationContext.userIntent && (
+            <div className="mt-2 text-xs text-gray-500 flex items-center space-x-2">
+              <span>
+                {conversationContext.userIntent === 'urgent' && '🚨 Priority Support Mode'}
+                {conversationContext.userIntent === 'booking' && '📅 Booking Assistant'}
+                {conversationContext.userIntent === 'complaint' && '⚠️ Issue Resolution Mode'}
+                {conversationContext.userIntent === 'support' && '🤝 Support Mode'}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>
