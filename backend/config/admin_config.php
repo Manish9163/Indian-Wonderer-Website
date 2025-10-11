@@ -1,17 +1,11 @@
 <?php
-/**
- * Production Admin Configuration
- * Environment-specific settings for production deployment
- */
 
 class AdminConfig {
     
-    // Environment settings
-    const ENVIRONMENT = 'production'; // development, staging, production
+    const ENVIRONMENT = 'production';
     const DEBUG_MODE = false;
-    const LOG_LEVEL = 'info'; // debug, info, warning, error
+    const LOG_LEVEL = 'info'; 
     
-    // Security settings
     const JWT_SECRET = 'your_production_jwt_secret_key_here'; // Change this in production
     const JWT_EXPIRY = 3600; // 1 hour
     const REFRESH_TOKEN_EXPIRY = 2592000; // 30 days
@@ -19,17 +13,15 @@ class AdminConfig {
     const RATE_LIMIT_WINDOW = 900; // 15 minutes
     const SESSION_TIMEOUT = 3600; // 1 hour
     
-    // Database settings
     const DB_HOST = 'localhost';
     const DB_NAME = 'indian_wonderer_base';
     const DB_USER = 'root';
     const DB_PASS = '';
     const DB_CHARSET = 'utf8mb4';
     
-    // Admin settings
     const ADMIN_EMAIL = 'admin@indianwonderer.com';
     const SUPER_ADMIN_ROLE = 'admin';
-    const DEFAULT_ADMIN_PASSWORD = 'Admin@123!'; // Change immediately after setup
+    const DEFAULT_ADMIN_PASSWORD = 'Admin@123';
     
     // Application settings
     const APP_NAME = 'Indian Wonderer Admin';
@@ -81,7 +73,7 @@ class AdminConfig {
     const MEMORY_THRESHOLD = 80; // percent
     
     // Business settings
-    const DEFAULT_CURRENCY = 'USD';
+    const DEFAULT_CURRENCY = 'INR';
     const SUPPORTED_CURRENCIES = ['USD', 'INR', 'EUR', 'GBP'];
     const TAX_RATE = 0.18; // 18% GST for India
     const COMMISSION_RATE = 0.10; // 10% commission

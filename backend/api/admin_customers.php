@@ -1,6 +1,4 @@
 <?php
-// Admin Customers API - Get customer statistics and data
-// This endpoint provides comprehensive customer data for the admin panel
 
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -21,13 +19,9 @@ class AdminCustomerAPI {
         $database = new Database();
         $this->pdo = $database->getConnection();
     }
-    
-    /**
-     * Get all customers with statistics
-     */
+
     public function getCustomers() {
         try {
-            // Get all customers with their booking and spending statistics
             $query = "SELECT 
                         u.id,
                         u.username as name,
@@ -55,7 +49,6 @@ class AdminCustomerAPI {
             $stmt->execute();
             $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Format the data for frontend
             $formattedCustomers = [];
             foreach ($customers as $customer) {
                 $formattedCustomers[] = [
@@ -73,7 +66,6 @@ class AdminCustomerAPI {
                 ];
             }
             
-            // Calculate statistics
             $totalCustomers = count($formattedCustomers);
             $activeCustomers = count(array_filter($formattedCustomers, function($c) {
                 return $c['status'] === 'active';
@@ -82,7 +74,6 @@ class AdminCustomerAPI {
                 return $c['type'] === 'premium';
             }));
             
-            // Get customers joined this month
             $currentMonth = date('Y-m');
             $newThisMonth = count(array_filter($formattedCustomers, function($c) use ($currentMonth) {
                 return strpos($c['joinDate'], $currentMonth) === 0;
@@ -110,9 +101,7 @@ class AdminCustomerAPI {
         }
     }
     
-    /**
-     * Get single customer details
-     */
+
     public function getCustomer($customerId) {
         try {
             $query = "SELECT 
@@ -142,7 +131,6 @@ class AdminCustomerAPI {
                 ];
             }
             
-            // Get customer's recent bookings
             $bookingsQuery = "SELECT 
                                 b.id,
                                 b.booking_reference,
@@ -189,10 +177,7 @@ class AdminCustomerAPI {
             ];
         }
     }
-    
-    /**
-     * Update customer status (activate/deactivate)
-     */
+
     public function updateCustomerStatus($customerId, $status) {
         try {
             $isActive = $status === 'active' ? 1 : 0;
@@ -214,12 +199,9 @@ class AdminCustomerAPI {
         }
     }
     
-    /**
-     * Create new customer
-     */
+
     public function createCustomer($data) {
         try {
-            // Validate required fields
             if (empty($data['name']) || empty($data['email']) || empty($data['phone'])) {
                 return [
                     'success' => false,
@@ -227,7 +209,6 @@ class AdminCustomerAPI {
                 ];
             }
             
-            // Check if email already exists
             $checkQuery = "SELECT id FROM users WHERE email = ?";
             $checkStmt = $this->pdo->prepare($checkQuery);
             $checkStmt->execute([$data['email']]);
@@ -239,11 +220,9 @@ class AdminCustomerAPI {
                 ];
             }
             
-            // Generate default password if not provided
             $password = !empty($data['password']) ? $data['password'] : 'Welcome@123';
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
             
-            // Insert new customer
             $query = "INSERT INTO users (username, email, password, phone, role, is_active, created_at, updated_at) 
                       VALUES (?, ?, ?, ?, 'customer', 1, NOW(), NOW())";
             
@@ -262,7 +241,7 @@ class AdminCustomerAPI {
                 'message' => 'Customer created successfully',
                 'data' => [
                     'id' => (int)$newCustomerId,
-                    'defaultPassword' => $password // Return so admin can tell customer
+                    'defaultPassword' => $password 
                 ]
             ];
             
@@ -273,10 +252,7 @@ class AdminCustomerAPI {
             ];
         }
     }
-    
-    /**
-     * Delete customer and all related records
-     */
+
     public function deleteCustomer($customerId) {
         try {
             if (!$customerId) {
@@ -286,56 +262,42 @@ class AdminCustomerAPI {
                 ];
             }
             
-            // Start transaction to ensure all-or-nothing deletion
             $this->pdo->beginTransaction();
             
             try {
-                // Get all bookings for this customer
                 $bookingQuery = "SELECT id FROM bookings WHERE user_id = ?";
                 $bookingStmt = $this->pdo->prepare($bookingQuery);
                 $bookingStmt->execute([$customerId]);
                 $bookings = $bookingStmt->fetchAll(PDO::FETCH_COLUMN);
                 
-                // Delete related records for each booking
                 if (!empty($bookings)) {
                     $bookingIds = implode(',', array_map('intval', $bookings));
                     
-                    // Delete tour guide assignments
                     $this->pdo->exec("DELETE FROM tour_guide_assignments WHERE booking_id IN ($bookingIds)");
                     
-                    // Delete payments
                     $this->pdo->exec("DELETE FROM payments WHERE booking_id IN ($bookingIds)");
                 }
                 
-                // Delete bookings
                 $stmt = $this->pdo->prepare("DELETE FROM bookings WHERE user_id = ?");
                 $stmt->execute([$customerId]);
                 
-                // Delete activity logs
                 $stmt = $this->pdo->prepare("DELETE FROM activity_logs WHERE user_id = ?");
                 $stmt->execute([$customerId]);
                 
-                // Delete any reviews or ratings (if tables exist)
                 try {
                     $stmt = $this->pdo->prepare("DELETE FROM reviews WHERE user_id = ?");
                     $stmt->execute([$customerId]);
                 } catch (PDOException $e) {
-                    // Table might not exist, continue
                 }
-                
-                // Delete any notifications (if table exists)
                 try {
                     $stmt = $this->pdo->prepare("DELETE FROM notifications WHERE user_id = ?");
                     $stmt->execute([$customerId]);
                 } catch (PDOException $e) {
-                    // Table might not exist, continue
                 }
                 
-                // Finally, delete the customer/user
                 $stmt = $this->pdo->prepare("DELETE FROM users WHERE id = ? AND role = 'customer'");
                 $stmt->execute([$customerId]);
                 
-                // Check if customer was actually deleted
                 if ($stmt->rowCount() === 0) {
                     $this->pdo->rollBack();
                     return [
@@ -344,7 +306,6 @@ class AdminCustomerAPI {
                     ];
                 }
                 
-                // Commit transaction
                 $this->pdo->commit();
                 
                 return [
@@ -353,7 +314,6 @@ class AdminCustomerAPI {
                 ];
                 
             } catch (PDOException $e) {
-                // Rollback on error
                 $this->pdo->rollBack();
                 throw $e;
             }
@@ -367,11 +327,9 @@ class AdminCustomerAPI {
     }
 }
 
-// Handle the request
 $api = new AdminCustomerAPI();
 $method = $_SERVER['REQUEST_METHOD'];
 
-// Get customer ID from query string if present
 $customerId = isset($_GET['id']) ? (int)$_GET['id'] : null;
 
 try {

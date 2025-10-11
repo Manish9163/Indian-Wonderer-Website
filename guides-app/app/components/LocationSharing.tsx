@@ -114,10 +114,11 @@ export default function LocationSharing({ bookingId, guideId, tourName, isActive
       return;
     }
 
+    // Increased timeout and added maximumAge for better reliability
     const options = {
       enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 0,
+      timeout: 30000, // Increased to 30 seconds
+      maximumAge: 5000, // Allow cached position up to 5 seconds old
     };
 
     const watchId = navigator.geolocation.watchPosition(
@@ -148,7 +149,47 @@ export default function LocationSharing({ bookingId, guideId, tourName, isActive
       (error) => {
         // eslint-disable-next-line no-console
         console.error('Location error:', error);
-        setError(getErrorMessage(error.code));
+        
+        // Handle timeout errors more gracefully
+        if (error.code === 3) {
+          // Timeout - try with lower accuracy
+          setError('Getting precise location... Using approximate location.');
+          
+          // Fallback to lower accuracy
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const locationData: LocationData = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                accuracy: position.coords.accuracy,
+                speed: position.coords.speed,
+                heading: position.coords.heading,
+                altitude: position.coords.altitude,
+                battery_level: batteryLevel,
+              };
+              
+              setLocation(locationData);
+              setError(null);
+              sendLocationUpdate(locationData);
+              
+              if (onLocationUpdate) {
+                onLocationUpdate(locationData);
+              }
+            },
+            (fallbackError) => {
+              // eslint-disable-next-line no-console
+              console.error('Fallback location error:', fallbackError);
+              setError(getErrorMessage(fallbackError.code));
+            },
+            {
+              enableHighAccuracy: false, // Use lower accuracy for fallback
+              timeout: 15000,
+              maximumAge: 10000,
+            }
+          );
+        } else {
+          setError(getErrorMessage(error.code));
+        }
       },
       options
     );
@@ -205,13 +246,13 @@ export default function LocationSharing({ bookingId, guideId, tourName, isActive
   const getErrorMessage = (code: number): string => {
     switch (code) {
       case 1:
-        return 'Location permission denied. Please enable location access.';
+        return 'Location permission denied. Please enable location access in your browser settings.';
       case 2:
-        return 'Location information unavailable.';
+        return 'Location information unavailable. Check if location services are enabled on your device.';
       case 3:
-        return 'Location request timed out.';
+        return 'Location request timed out. Trying with approximate location... Make sure you have a clear GPS signal.';
       default:
-        return 'An unknown error occurred.';
+        return 'An unknown error occurred while getting location.';
     }
   };
 

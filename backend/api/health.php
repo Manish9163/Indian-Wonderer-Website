@@ -1,10 +1,5 @@
 <?php
-/**
- * Health Check Endpoint
- * Simple endpoint to verify API connectivity without authentication
- */
 
-// Handle CORS for React frontend and Angular admin panel
 $allowed_origins = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
@@ -26,13 +21,11 @@ header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 header("Access-Control-Allow-Credentials: true");
 
-// Handle preflight OPTIONS request
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-// Only allow GET requests
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
     echo json_encode([
@@ -42,7 +35,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit();
 }
 
-// Database connection check
 try {
     require_once '../config/database.php';
     $database = new Database();
@@ -56,7 +48,6 @@ try {
     $dbStatus = 'error: ' . $e->getMessage();
 }
 
-// Return health status
 $response = [
     'success' => true,
     'message' => 'API is healthy',

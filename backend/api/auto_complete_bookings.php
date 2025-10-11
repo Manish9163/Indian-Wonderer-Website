@@ -1,5 +1,4 @@
 <?php
-// Auto-complete expired bookings API
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
@@ -16,7 +15,6 @@ $database = new Database();
 $pdo = $database->getConnection();
 
 try {
-    // Find all bookings with assignments where the travel end date has passed
     $stmt = $pdo->query("
         SELECT 
             b.id as booking_id,
@@ -47,20 +45,16 @@ try {
     $completedCount = 0;
     $completedDetails = [];
     
-    // Begin transaction
     $pdo->beginTransaction();
     
     foreach ($expiredBookings as $booking) {
         try {
-            // Update booking status to completed
             $updateBooking = $pdo->prepare("UPDATE bookings SET status = 'completed', updated_at = NOW() WHERE id = ?");
             $updateBooking->execute([$booking['booking_id']]);
             
-            // Update tour guide assignment status to completed
             $updateAssignment = $pdo->prepare("UPDATE tour_guide_assignments SET status = 'completed', notes = CONCAT(COALESCE(notes, ''), '\nAuto-completed on ', NOW()) WHERE id = ?");
             $updateAssignment->execute([$booking['assignment_id']]);
             
-            // Check if guide has any other active assignments
             $checkActiveStmt = $pdo->prepare("
                 SELECT COUNT(*) as active_count 
                 FROM tour_guide_assignments tga
@@ -72,7 +66,6 @@ try {
             $checkActiveStmt->execute([$booking['guide_id']]);
             $activeCheck = $checkActiveStmt->fetch(PDO::FETCH_ASSOC);
             
-            // If no other active assignments, set guide back to available
             if ($activeCheck['active_count'] == 0) {
                 $updateGuide = $pdo->prepare("UPDATE guides SET status = 'available' WHERE id = ?");
                 $updateGuide->execute([$booking['guide_id']]);
@@ -90,12 +83,10 @@ try {
             ];
             
         } catch (Exception $e) {
-            // Log error but continue with other bookings
             error_log("Error completing booking {$booking['booking_id']}: " . $e->getMessage());
         }
     }
     
-    // Commit transaction
     $pdo->commit();
     
     echo json_encode([

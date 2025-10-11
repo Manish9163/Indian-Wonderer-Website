@@ -1,8 +1,5 @@
 <?php
-/**
- * Customer Dashboard API
- * Provides dashboard statistics and recent activities for customers
- */
+
 
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
@@ -22,18 +19,14 @@ $pdo = $database->getConnection();
 $action = $_GET['action'] ?? 'stats';
 $userId = $_GET['user_id'] ?? null;
 
-// Get user ID from JWT token if available
 $headers = getallheaders();
 $authHeader = $headers['Authorization'] ?? '';
 if (preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
-    // TODO: Decode JWT token to get user_id
-    // For now, we'll use the passed user_id or session
 }
 
 try {
     switch ($action) {
         case 'stats':
-            // Get customer dashboard statistics
             $stats = [];
             
             if ($userId) {
@@ -68,12 +61,12 @@ try {
                 $stmt->execute([$userId]);
                 $stats['upcomingTrips'] = (int)$stmt->fetch()['count'];
                 
-                // Saved itineraries
+                // itineraries
                 $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM itineraries WHERE created_by = ?");
                 $stmt->execute([$userId]);
                 $stats['savedItineraries'] = (int)$stmt->fetch()['count'];
             } else {
-                // Guest user or no user ID - return zeros
+                // Guest user or no user ID 
                 $stats = [
                     'totalBookings' => 0,
                     'pendingBookings' => 0,
@@ -92,11 +85,11 @@ try {
             break;
             
         case 'recent':
-            // Get recent activities for the customer
+            //  recent activities 
             $activities = [];
             
             if ($userId) {
-                // Get recent bookings
+                //  recent bookings
                 $stmt = $pdo->prepare("
                     SELECT 
                         b.id,
@@ -116,7 +109,7 @@ try {
                 $stmt->execute([$userId]);
                 $bookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 
-                // Get recent payments
+                //  recent payments
                 $stmt = $pdo->prepare("
                     SELECT 
                         p.id,

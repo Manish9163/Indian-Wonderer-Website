@@ -85,6 +85,10 @@ interface ItineraryCardProps {
   setExpandedItinerary: (id: string | null) => void;
   userDetails: any;
   onShowReceipt?: (itinerary: Itinerary) => void;
+  showSuccess?: (title: string, message: string, duration?: number) => void;
+  showError?: (title: string, message: string, duration?: number) => void;
+  showWarning?: (title: string, message: string, duration?: number) => void;
+  showInfo?: (title: string, message: string, duration?: number) => void;
 }
 
 const ItineraryCard: React.FC<ItineraryCardProps> = ({ 
@@ -93,7 +97,11 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
   expandedItinerary, 
   setExpandedItinerary,
   userDetails,
-  onShowReceipt
+  onShowReceipt,
+  showSuccess,
+  showError,
+  showWarning,
+  showInfo
 }) => {
   const [showCancellationModal, setShowCancellationModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -118,24 +126,101 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
         })
       });
 
-      const data = await response.json();
+      // First, get the response text
+      const responseText = await response.text();
+      console.log('Raw response:', responseText);
+
+      // Check if response is not OK
+      if (!response.ok) {
+        console.log('Response not OK, status:', response.status);
+        // Try to parse as JSON first
+        try {
+          const errorData = JSON.parse(responseText);
+          console.error('Error response:', errorData);
+          
+          // Check for specific error types
+          if (response.status === 401 || errorData.message?.includes('Authorization')) {
+            if (showWarning) {
+              showWarning('Session Expired', 'Your session has expired. Please log out and log in again to continue.', 6000);
+            } else {
+              alert('Your session has expired. Please log out and log in again to continue.');
+            }
+          } else {
+            if (showError) {
+              showError('Cancellation Failed', errorData.message || 'Unknown error occurred', 5000);
+            } else {
+              alert('Failed to cancel booking: ' + (errorData.message || 'Unknown error'));
+            }
+          }
+        } catch {
+          // If not JSON, show HTML error
+          console.error('Server returned HTML error:', responseText);
+          if (showError) {
+            showError('Server Error', 'The booking cancellation failed. Please check if the database tables exist and try again.', 5000);
+          } else {
+            alert('Server error: The booking cancellation failed. Please check if the database tables exist and try again.');
+          }
+        }
+        return;
+      }
+
+      // Parse successful response
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Failed to parse response as JSON:', responseText);
+        
+        // Check if the response contains success indicators even if JSON parsing failed
+        if (responseText.includes('"success":true') || responseText.includes('Booking cancelled successfully')) {
+          if (showSuccess) {
+            showSuccess('Booking Cancelled Successfully! ✅', 'The page will reload to reflect the changes.', 3000);
+          } else {
+            alert('Booking cancelled successfully! The page will reload to reflect the changes.');
+          }
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+          return;
+        }
+        
+        throw new Error('Invalid response format from server');
+      }
 
       if (data.success) {
         const message = refundType === 'giftcard' 
-          ? `Booking cancelled successfully! 🎁\n\nYour gift card code: ${data.giftcard_code}\nValue: ₹${data.refund_amount.toLocaleString()}\n\nA confirmation email with your gift card details has been sent to your registered email address.` 
-          : `Booking cancelled successfully! 💳\n\nRefund amount: ₹${data.refund_amount.toLocaleString()}\n\nThe refund will be processed in 5-7 business days. A confirmation email has been sent.`;
+          ? `Your gift card code: ${data.giftcard_code} | Value: ₹${(data.refund_amount || 0).toLocaleString()} | A confirmation email has been sent.` 
+          : `Refund amount: ₹${(data.refund_amount || 0).toLocaleString()} | Processing time: 5-7 business days | Confirmation email sent.`;
         
-        alert(message);
+        if (showSuccess) {
+          showSuccess('Booking Cancelled Successfully! ✅', message, 8000);
+        } else {
+          alert('Booking cancelled successfully!\n\n' + message);
+        }
+        
         setShowCancellationModal(false);
         
         // Remove from UI immediately for better UX
-        window.location.reload();
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       } else {
-        alert('Failed to cancel booking: ' + (data.message || 'Unknown error'));
+        if (showError) {
+          showError('Cancellation Failed', data.message || 'Unknown error occurred', 5000);
+        } else {
+          alert('Failed to cancel booking: ' + (data.message || 'Unknown error'));
+        }
       }
     } catch (error) {
       console.error('Error cancelling booking:', error);
-      alert('An error occurred while cancelling the booking. Please try again.');
+      const errorDetails = error instanceof Error ? error.message : String(error);
+      console.error('Error details:', errorDetails);
+      
+      if (showError) {
+        showError('Error Cancelling Booking', errorDetails, 5000);
+      } else {
+        alert(`An error occurred while cancelling the booking.\n\nError: ${errorDetails}\n\nPlease check the console for more details.`);
+      }
     }
   };
 
@@ -221,8 +306,29 @@ Thank you for choosing Indian Wonderer! 🇮🇳
         return <Clock4 className="w-5 h-5 text-yellow-500" />;
       case 'cancelled':
         return <XCircle className="w-5 h-5 text-red-500" />;
+      case 'in_progress':
+        return <Clock4 className="w-5 h-5 text-blue-500" />;
+      case 'completed':
+        return <CheckCircle className="w-5 h-5 text-purple-500" />;
       default:
         return <AlertCircle className="w-5 h-5 text-gray-500" />;
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'in_progress':
+        return 'IN PROGRESS';
+      case 'confirmed':
+        return 'CONFIRMED';
+      case 'pending':
+        return 'PENDING';
+      case 'cancelled':
+        return 'CANCELLED';
+      case 'completed':
+        return 'COMPLETED';
+      default:
+        return status.toUpperCase();
     }
   };
 
@@ -230,6 +336,10 @@ Thank you for choosing Indian Wonderer! 🇮🇳
     switch (status) {
       case 'confirmed':
         return 'bg-green-500 text-white';
+      case 'in_progress':
+        return 'bg-blue-600 text-white animate-pulse';
+      case 'completed':
+        return 'bg-purple-600 text-white';
       case 'pending':
         return 'bg-yellow-500 text-white';
       case 'cancelled':
@@ -272,14 +382,19 @@ Thank you for choosing Indian Wonderer! 🇮🇳
       <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl border-2 border-transparent ${getHoverEffect(itinerary.status)} ${itinerary.status === 'cancelled' ? 'opacity-75' : ''}`}>
         <div className="relative">
           <img 
-            src={itinerary.tour?.image || '/api/placeholder/400/300'} 
+            src={itinerary.tour?.image || '/goa.avif'} 
             alt={itinerary.tour?.title || 'Tour image'} 
-            className={`w-full h-32 object-cover ${itinerary.status === 'cancelled' ? 'grayscale' : ''}`} 
+            className={`w-full h-32 object-cover ${itinerary.status === 'cancelled' ? 'grayscale' : ''}`}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.onerror = null;
+              target.src = '/goa.avif';
+            }}
           />
           <div className="absolute top-4 right-4">
             <span className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center space-x-1 ${getStatusColor(itinerary.status)}`}>
               {getStatusIcon(itinerary.status)}
-              <span>{itinerary.status.toUpperCase()}</span>
+              <span>{getStatusText(itinerary.status)}</span>
             </span>
           </div>
           {itinerary.paymentData && (
@@ -610,7 +725,7 @@ Thank you for choosing Indian Wonderer! 🇮🇳
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-semibold text-green-600">
-                    ₹{itinerary.selectedAgent.price.toLocaleString()}/day
+                    ₹{(itinerary.selectedAgent.price || 0).toLocaleString()}/day
                   </p>
                 </div>
               </div>

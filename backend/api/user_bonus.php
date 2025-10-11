@@ -1,8 +1,4 @@
 <?php
-/**
- * User Bonus API
- * Get user activity and bonus information
- */
 
 header('Access-Control-Allow-Origin: http://localhost:4200');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
@@ -13,6 +9,8 @@ header('Content-Type: application/json');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
+
+session_start();
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../services/UserActivityBonus.php';
@@ -32,6 +30,10 @@ class UserBonusAPI {
     }
     
     public function handleRequest() {
+        if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+            return $this->sendError('Admin authentication required', 401);
+        }
+        
         $action = $_GET['action'] ?? '';
         
         try {
@@ -50,10 +52,7 @@ class UserBonusAPI {
             return $this->sendError($e->getMessage(), 500);
         }
     }
-    
-    /**
-     * Get user bonus percentage
-     */
+
     private function getUserBonus() {
         $userId = $_GET['user_id'] ?? null;
         
@@ -68,10 +67,7 @@ class UserBonusAPI {
             'bonus' => $bonusInfo
         ]);
     }
-    
-    /**
-     * Get user activity details
-     */
+
     private function getUserActivity() {
         $userId = $_GET['user_id'] ?? null;
         
@@ -90,10 +86,7 @@ class UserBonusAPI {
             'activity' => $activity
         ]);
     }
-    
-    /**
-     * Calculate bonus amount for a gift card based on booking amount
-     */
+
     private function calculateGiftCardBonus() {
         $userId = $_GET['user_id'] ?? null;
         $bookingAmount = $_GET['booking_amount'] ?? 0;

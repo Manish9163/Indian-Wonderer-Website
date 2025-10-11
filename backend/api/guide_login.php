@@ -1,8 +1,4 @@
 <?php
-/**
- * Guide Login API
- * Authenticates guides and returns their profile data
- */
 
 require_once '../config/database.php';
 
@@ -30,7 +26,6 @@ if (empty($email)) {
 }
 
 try {
-    // Get guide by email
     $stmt = $pdo->prepare("
         SELECT 
             g.*,
@@ -55,7 +50,6 @@ try {
         exit;
     }
     
-    // Get guide stats
     $statsStmt = $pdo->prepare("
         SELECT 
             COUNT(CASE WHEN tga.status = 'assigned' THEN 1 END) as active_bookings,

@@ -1,8 +1,4 @@
 <?php
-/**
- * Itineraries Model
- * Handles itinerary management for admin panel
- */
 
 class Itineraries {
     private $conn;
@@ -22,14 +18,11 @@ class Itineraries {
         $this->conn = $db;
     }
     
-    /**
-     * Create new itinerary
-     */
+ 
     public function create($schedule_data = []) {
         try {
             $this->conn->beginTransaction();
             
-            // Insert itinerary
             $query = "INSERT INTO " . $this->table_name . " 
                       (tour_id, tour_name, total_days, status, created_by) 
                       VALUES (:tour_id, :tour_name, :total_days, :status, :created_by)";
@@ -45,7 +38,6 @@ class Itineraries {
             if ($stmt->execute()) {
                 $this->id = $this->conn->lastInsertId();
                 
-                // Insert schedule if provided
                 if (!empty($schedule_data)) {
                     foreach ($schedule_data as $day) {
                         $this->addScheduleDay($day);
@@ -64,10 +56,7 @@ class Itineraries {
             throw $e;
         }
     }
-    
-    /**
-     * Add schedule day to itinerary
-     */
+
     public function addScheduleDay($day_data) {
         $query = "INSERT INTO " . $this->schedule_table . " 
                   (itinerary_id, day_number, title, description, time_schedule, location, activities) 
@@ -75,7 +64,6 @@ class Itineraries {
         
         $stmt = $this->conn->prepare($query);
         
-        // Extract values to variables for bindParam (required for pass-by-reference)
         $itinerary_id = $this->id;
         $day_number = $day_data['day_number'];
         $title = $day_data['title'];
@@ -94,10 +82,7 @@ class Itineraries {
         
         return $stmt->execute();
     }
-    
-    /**
-     * Get all itineraries
-     */
+
     public function getAllItineraries($limit = 50, $offset = 0) {
         $query = "SELECT i.*, 
                          u.first_name as creator_name,
@@ -115,12 +100,8 @@ class Itineraries {
         
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-    
-    /**
-     * Get itinerary by ID with schedule
-     */
+
     public function getItineraryById($id) {
-        // Get itinerary details
         $query = "SELECT i.*, 
                          u.first_name as creator_name,
                          t.title as tour_title, t.destination
@@ -136,7 +117,6 @@ class Itineraries {
         if ($stmt->rowCount() > 0) {
             $itinerary = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            // Get schedule
             $schedule_query = "SELECT * FROM " . $this->schedule_table . " 
                               WHERE itinerary_id = :itinerary_id 
                               ORDER BY day_number";
@@ -147,7 +127,6 @@ class Itineraries {
             
             $schedule = $schedule_stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Decode JSON activities
             foreach ($schedule as &$day) {
                 $day['activities'] = json_decode($day['activities'], true) ?: [];
             }
@@ -159,15 +138,11 @@ class Itineraries {
         
         return false;
     }
-    
-    /**
-     * Update itinerary
-     */
+
     public function update($schedule_data = []) {
         try {
             $this->conn->beginTransaction();
             
-            // Update itinerary
             $query = "UPDATE " . $this->table_name . " 
                       SET tour_name = :tour_name, total_days = :total_days, status = :status
                       WHERE id = :id";
@@ -180,15 +155,12 @@ class Itineraries {
             $stmt->bindParam(':id', $this->id);
             
             if ($stmt->execute()) {
-                // Update schedule if provided
                 if (!empty($schedule_data)) {
-                    // Delete existing schedule
                     $delete_query = "DELETE FROM " . $this->schedule_table . " WHERE itinerary_id = :itinerary_id";
                     $delete_stmt = $this->conn->prepare($delete_query);
                     $delete_stmt->bindParam(':itinerary_id', $this->id);
                     $delete_stmt->execute();
                     
-                    // Insert new schedule
                     foreach ($schedule_data as $day) {
                         $this->addScheduleDay($day);
                     }
@@ -206,21 +178,16 @@ class Itineraries {
             throw $e;
         }
     }
-    
-    /**
-     * Delete itinerary
-     */
+
     public function delete($id) {
         try {
             $this->conn->beginTransaction();
             
-            // Delete schedule first
             $schedule_query = "DELETE FROM " . $this->schedule_table . " WHERE itinerary_id = :itinerary_id";
             $schedule_stmt = $this->conn->prepare($schedule_query);
             $schedule_stmt->bindParam(':itinerary_id', $id);
             $schedule_stmt->execute();
             
-            // Delete itinerary
             $query = "DELETE FROM " . $this->table_name . " WHERE id = :id";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':id', $id);
@@ -238,32 +205,25 @@ class Itineraries {
             throw $e;
         }
     }
-    
-    /**
-     * Get itinerary statistics
-     */
+
     public function getItineraryStats() {
         $stats = [];
         
-        // Total itineraries
         $query = "SELECT COUNT(*) as total FROM " . $this->table_name;
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         $stats['total_itineraries'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
         
-        // Itineraries by status
         $query = "SELECT status, COUNT(*) as count FROM " . $this->table_name . " GROUP BY status";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         $stats['itineraries_by_status'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Average total days
         $query = "SELECT AVG(total_days) as avg_days FROM " . $this->table_name;
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         $stats['average_days'] = round($stmt->fetch(PDO::FETCH_ASSOC)['avg_days'], 1);
         
-        // Total schedule entries
         $query = "SELECT COUNT(*) as total FROM " . $this->schedule_table;
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
@@ -272,9 +232,7 @@ class Itineraries {
         return $stats;
     }
     
-    /**
-     * Search itineraries
-     */
+
     public function searchItineraries($search_term, $limit = 20) {
         $query = "SELECT i.*, 
                          u.first_name as creator_name,
@@ -293,10 +251,7 @@ class Itineraries {
         
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-    
-    /**
-     * Get itineraries for a specific tour
-     */
+
     public function getItinerariesByTour($tour_id) {
         $query = "SELECT * FROM " . $this->table_name . " 
                   WHERE tour_id = :tour_id AND status = 'active' 

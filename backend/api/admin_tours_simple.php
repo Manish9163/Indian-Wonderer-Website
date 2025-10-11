@@ -1,5 +1,4 @@
 <?php
-// Simple Admin Tours API - No authentication required for testing
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
@@ -20,18 +19,15 @@ $tourId = isset($_GET['id']) ? (int)$_GET['id'] : null;
 $action = isset($_GET['action']) ? $_GET['action'] : null;
 
 try {
-    // Handle special actions for POST requests
     if ($method === 'POST' && $action === 'assign_guide') {
         $input = json_decode(file_get_contents('php://input'), true);
         
-        // Validate required fields
         if (!isset($input['guide_id']) || !isset($input['booking_id'])) {
             http_response_code(400);
             echo json_encode(['success' => false, 'error' => 'guide_id and booking_id are required']);
             exit;
         }
         
-        // Check if assignment already exists
         $checkStmt = $pdo->prepare("SELECT id FROM tour_guide_assignments WHERE guide_id = ? AND booking_id = ?");
         $checkStmt->execute([$input['guide_id'], $input['booking_id']]);
         
@@ -41,7 +37,6 @@ try {
             exit;
         }
         
-        // Create the assignment
         $stmt = $pdo->prepare("INSERT INTO tour_guide_assignments (guide_id, booking_id, assignment_date, status) 
             VALUES (?, ?, ?, 'assigned')");
         $stmt->execute([
@@ -49,8 +44,6 @@ try {
             $input['booking_id'],
             $input['assigned_date'] ?? date('Y-m-d')
         ]);
-        
-        // Update guide status to busy
         $updateGuideStmt = $pdo->prepare("UPDATE guides SET status = 'busy' WHERE id = ?");
         $updateGuideStmt->execute([$input['guide_id']]);
         
@@ -65,7 +58,6 @@ try {
     switch ($method) {
         case 'GET':
             if ($tourId) {
-                // Get single tour
                 $stmt = $pdo->prepare("SELECT t.*, 
                     COUNT(DISTINCT b.id) as booking_count,
                     AVG(CASE WHEN r.rating IS NOT NULL THEN r.rating ELSE 0 END) as avg_rating
@@ -84,7 +76,6 @@ try {
                     echo json_encode(['success' => false, 'error' => 'Tour not found']);
                 }
             } else {
-                // Get all tours with stats
                 $stmt = $pdo->query("SELECT t.*, 
                     COUNT(DISTINCT b.id) as booking_count,
                     COALESCE(AVG(r.rating), 0) as avg_rating,
@@ -96,7 +87,6 @@ try {
                     ORDER BY t.created_at DESC");
                 $tours = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 
-                // Calculate stats
                 $stats = [
                     'totalTours' => count($tours),
                     'activeTours' => count(array_filter($tours, fn($t) => $t['is_active'])),
@@ -148,13 +138,11 @@ try {
             break;
             
         case 'DELETE':
-            // Check if tour has bookings
             $checkStmt = $pdo->prepare("SELECT COUNT(*) as booking_count FROM bookings WHERE tour_id = ?");
             $checkStmt->execute([$tourId]);
             $result = $checkStmt->fetch(PDO::FETCH_ASSOC);
             
             if ($result['booking_count'] > 0) {
-                // Tour has bookings - give user option to soft delete or cancel
                 http_response_code(400);
                 echo json_encode([
                     'success' => false, 
@@ -164,7 +152,6 @@ try {
                     'suggestion' => 'deactivate'
                 ]);
             } else {
-                // Safe to delete - no bookings
                 $stmt = $pdo->prepare("DELETE FROM tours WHERE id = ?");
                 $stmt->execute([$tourId]);
                 echo json_encode(['success' => true, 'message' => 'Tour deleted successfully']);

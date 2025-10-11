@@ -1,12 +1,8 @@
 <?php
-/**
- * Authentication Controller
- * Handles user login, registration, and authentication
- */
+
 
 session_start();
 
-// Handle CORS for React frontend and Angular admin panel
 $allowed_origins = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
@@ -46,14 +42,10 @@ class AuthController {
         $this->db = $database->getConnection();
         $this->user = new User($this->db);
     }
-    
-    /**
-     * User registration
-     */
+ 
     public function register() {
         $data = getJsonInput();
         
-        // Validation
         $errors = [];
         
         if (empty($data['username'])) {
@@ -84,17 +76,14 @@ class AuthController {
             ApiResponse::error("Validation failed", 400, $errors);
         }
         
-        // Check if email exists
         if ($this->user->emailExists($data['email'])) {
             ApiResponse::error("Email already exists", 409);
         }
         
-        // Check if username exists
         if ($this->user->usernameExists($data['username'])) {
             ApiResponse::error("Username already exists", 409);
         }
         
-        // Set user properties
         $this->user->username = $data['username'];
         $this->user->email = $data['email'];
         $this->user->password = $data['password'];
@@ -103,18 +92,15 @@ class AuthController {
         $this->user->phone = $data['phone'] ?? '';
         $this->user->role = $data['role'] ?? 'customer';
         
-        // Register user
         if ($this->user->register()) {
-            // Log activity
             logActivity($this->user->id, 'User registered', 'users', $this->user->id);
             
-            // Generate JWT token
             $payload = [
                 'user_id' => $this->user->id,
                 'username' => $this->user->username,
                 'email' => $this->user->email,
                 'role' => $this->user->role,
-                'exp' => time() + (24 * 60 * 60) // 24 hours
+                'exp' => time() + (24 * 60 * 60) 
             ];
             
             $token = JWTHelper::encode($payload);
@@ -135,36 +121,28 @@ class AuthController {
             ApiResponse::serverError("Registration failed");
         }
     }
-    
-    /**
-     * User login
-     */
+
     public function login() {
         $data = getJsonInput();
         
-        // Validation
         if (empty($data['email']) || empty($data['password'])) {
             ApiResponse::error("Email and password are required", 400);
         }
         
-        // Attempt login
         if ($this->user->login($data['email'], $data['password'])) {
-            // Log activity
             logActivity($this->user->id, 'User logged in', 'users', $this->user->id);
 
-            // Set admin session if user is admin
             if ($this->user->role === 'admin') {
                 $_SESSION['admin_logged_in'] = true;
                 $_SESSION['admin_id'] = $this->user->id;
             }
 
-            // Generate JWT token
             $payload = [
                 'user_id' => $this->user->id,
                 'username' => $this->user->username,
                 'email' => $this->user->email,
                 'role' => $this->user->role,
-                'exp' => time() + (24 * 60 * 60) // 24 hours
+                'exp' => time() + (24 * 60 * 60) 
             ];
 
             $token = JWTHelper::encode($payload);
@@ -185,10 +163,7 @@ class AuthController {
             ApiResponse::error("Invalid email or password", 401);
         }
     }
-    
-    /**
-     * Get current user profile
-     */
+
     public function getProfile() {
         $token = getAuthorizationHeader();
         
@@ -205,16 +180,14 @@ class AuthController {
         $user_data = $this->user->getUserById($decoded['user_id']);
         
         if ($user_data) {
-            unset($user_data['password']); // Remove password from response
+            unset($user_data['password']); 
             ApiResponse::success($user_data);
         } else {
             ApiResponse::notFound("User not found");
         }
     }
     
-    /**
-     * Update user profile
-     */
+
     public function updateProfile() {
         $token = getAuthorizationHeader();
         
@@ -230,7 +203,6 @@ class AuthController {
         
         $data = getJsonInput();
         
-        // Set user properties
         $this->user->id = $decoded['user_id'];
         $this->user->first_name = $data['first_name'] ?? '';
         $this->user->last_name = $data['last_name'] ?? '';
@@ -238,7 +210,6 @@ class AuthController {
         $this->user->profile_image = $data['profile_image'] ?? '';
         
         if ($this->user->updateProfile()) {
-            // Log activity
             logActivity($this->user->id, 'Profile updated', 'users', $this->user->id);
             
             ApiResponse::success(null, "Profile updated successfully");
@@ -246,10 +217,7 @@ class AuthController {
             ApiResponse::serverError("Profile update failed");
         }
     }
-    
-    /**
-     * Change password
-     */
+
     public function changePassword() {
         $token = getAuthorizationHeader();
         
@@ -265,7 +233,6 @@ class AuthController {
         
         $data = getJsonInput();
         
-        // Validation
         if (empty($data['current_password']) || empty($data['new_password'])) {
             ApiResponse::error("Current password and new password are required", 400);
         }
@@ -277,7 +244,6 @@ class AuthController {
         $this->user->id = $decoded['user_id'];
         
         if ($this->user->changePassword($data['current_password'], $data['new_password'])) {
-            // Log activity
             logActivity($this->user->id, 'Password changed', 'users', $this->user->id);
             
             ApiResponse::success(null, "Password changed successfully");
@@ -285,10 +251,7 @@ class AuthController {
             ApiResponse::error("Current password is incorrect", 400);
         }
     }
-    
-    /**
-     * Verify token
-     */
+
     public function verifyToken() {
         $token = getAuthorizationHeader();
         
@@ -310,7 +273,6 @@ class AuthController {
     }
 }
 
-// Route handling
 $auth = new AuthController();
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';

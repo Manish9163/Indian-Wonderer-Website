@@ -17,7 +17,6 @@ class PlaylistAPI {
         $this->conn = $db;
     }
     
-    // Get all playlists
     public function getAllPlaylists() {
         try {
             $query = "SELECT 
@@ -52,7 +51,6 @@ class PlaylistAPI {
         }
     }
     
-    // Get active playlists only (for frontend)
     public function getActivePlaylists() {
         try {
             $query = "SELECT 
@@ -230,7 +228,6 @@ class PlaylistAPI {
         }
     }
     
-    // Toggle playlist active status
     public function togglePlaylistStatus($id) {
         try {
             $query = "UPDATE destination_playlists 
@@ -259,25 +256,20 @@ class PlaylistAPI {
     }
 }
 
-// Initialize database connection
 $database = new Database();
 $db = $database->getConnection();
 
 $api = new PlaylistAPI($db);
 
-// Handle different request methods
 $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
         if (isset($_GET['destination'])) {
-            // Get single playlist by destination
             echo json_encode($api->getPlaylistByDestination($_GET['destination']));
         } elseif (isset($_GET['active']) && $_GET['active'] === 'true') {
-            // Get only active playlists (for frontend)
             echo json_encode($api->getActivePlaylists());
         } else {
-            // Get all playlists
             echo json_encode($api->getAllPlaylists());
         }
         break;
@@ -294,7 +286,6 @@ switch ($method) {
             exit;
         }
         
-        // Set defaults
         $data['spotify_playlist_url'] = $data['spotify_playlist_url'] ?? '';
         $data['youtube_playlist_url'] = $data['youtube_playlist_url'] ?? '';
         $data['description'] = $data['description'] ?? '';

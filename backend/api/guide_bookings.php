@@ -1,8 +1,4 @@
 <?php
-/**
- * Guide Bookings API
- * Returns bookings assigned to a specific guide with customer details
- */
 
 require_once '../config/database.php';
 
@@ -30,7 +26,6 @@ if (!$guideId) {
 }
 
 try {
-    // Get all bookings for this guide
     $stmt = $pdo->prepare("
         SELECT 
             b.id as booking_id,
@@ -66,11 +61,12 @@ try {
         JOIN tours t ON b.tour_id = t.id
         JOIN users u ON b.user_id = u.id
         LEFT JOIN guide_earnings ge ON tga.id = ge.assignment_id
-        WHERE tga.guide_id = ?
+        WHERE tga.guide_id = ? 
+        AND tga.status != 'completed'
         ORDER BY 
             CASE tga.status
-                WHEN 'assigned' THEN 1
-                WHEN 'completed' THEN 2
+                WHEN 'in_progress' THEN 1
+                WHEN 'assigned' THEN 2
                 ELSE 3
             END,
             b.travel_date ASC
@@ -78,20 +74,17 @@ try {
     $stmt->execute([$guideId]);
     $bookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Calculate stats
     $activeCount = 0;
     $completedCount = 0;
     $totalEarnings = 0;
     $pendingEarnings = 0;
     
     foreach ($bookings as &$booking) {
-        // Format data
         $booking['total_amount'] = floatval($booking['total_amount']);
         $booking['earning_amount'] = floatval($booking['earning_amount'] ?? ($booking['total_amount'] * 0.30));
         $booking['number_of_travelers'] = intval($booking['number_of_travelers']);
         $booking['status'] = $booking['assignment_status'];
         
-        // Count stats
         if ($booking['assignment_status'] === 'assigned') {
             $activeCount++;
         } elseif ($booking['assignment_status'] === 'completed') {

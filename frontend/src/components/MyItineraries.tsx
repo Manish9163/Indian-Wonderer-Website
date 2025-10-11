@@ -1,20 +1,12 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Calendar } from 'lucide-react';
 import ItineraryCard from './ItineraryCard';
 import PaymentReceipt from './PaymentRecipt';
 import LiveTracking from './LiveTracking';
+import apiService from '../services/api.service';
 
-// Destination playlist keys
-const DESTINATION_PLAYLISTS: Record<string, {spotify: string; youtube: string}> = {
-  goa: { spotify: "Goa Party Travel Songs", youtube: "Goa Party Songs Playlist" },
-  shimla: { spotify: "LoFi Chill Roadtrip", youtube: "Shimla LoFi Chill Songs" },
-  rajasthan: { spotify: "Rajasthani Folk Songs", youtube: "Rajasthani Folk Songs Playlist" },
-  ladakh: { spotify: "Himalayan Roadtrip Songs", youtube: "Ladakh Roadtrip Songs" },
-  kerala: { spotify: "Kerala Travel Vibes", youtube: "Kerala Travel Songs" },
-  tajmahal: { spotify: "Romantic Love Travel Songs", youtube: "Taj Mahal Romantic Songs" },
-  kolkata: { spotify: "Bengali Travel Songs", youtube: "Kolkata Bengali Songs" },
-  varanasi: { spotify: "Indian Classical Devotional", youtube: "Varanasi Ganga Aarti Songs" },
-  mumbai: { spotify: "Bollywood Travel Hits", youtube: "Mumbai Bollywood Songs" },
+const DEFAULT_PLAYLISTS: Record<string, {spotify: string; youtube: string}> = {
+  default: { spotify: "Indian Travel Songs", youtube: "Travel Songs India Playlist" }
 };
 
 interface MyItinerariesProps {
@@ -23,29 +15,117 @@ interface MyItinerariesProps {
   setActiveTab: (tab: string) => void;
   expandedItinerary: string | null;
   setExpandedItinerary: (id: string | null) => void;
-  userDetails: any; 
+  userDetails: any;
+  showSuccess?: (title: string, message: string, duration?: number) => void;
+  showError?: (title: string, message: string, duration?: number) => void;
+  showWarning?: (title: string, message: string, duration?: number) => void;
+  showInfo?: (title: string, message: string, duration?: number) => void;
 }
 
-const MyItineraries: React.FC<MyItinerariesProps> = ({ darkMode, myItineraries, setActiveTab, expandedItinerary, setExpandedItinerary,userDetails}) => {
+const MyItineraries: React.FC<MyItinerariesProps> = ({ 
+  darkMode, 
+  myItineraries, 
+  setActiveTab, 
+  expandedItinerary, 
+  setExpandedItinerary,
+  userDetails,
+  showSuccess,
+  showError,
+  showWarning,
+  showInfo
+}) => {
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [selectedItinerary, setSelectedItinerary] = useState<any>(null);
   const [showLiveTracking, setShowLiveTracking] = useState(false);
   const [trackingBookingId, setTrackingBookingId] = useState<number | null>(null);
+  const [destinationPlaylists, setDestinationPlaylists] = useState<Record<string, {spotify: string; youtube: string}>>(DEFAULT_PLAYLISTS);
+  const [availableDestinations, setAvailableDestinations] = useState<string[]>([]);
 
-  // Debug: Log received props
+  // Load destination playlists from database on component mount
+  useEffect(() => {
+    loadDestinationPlaylists();
+  }, []);
+
+  const loadDestinationPlaylists = async () => {
+    try {
+      // Fetch all tours to get unique destinations from database
+      const response = await apiService.get('tours.php?action=all');
+      
+      if (response.success && response.data) {
+        const tours = response.data;
+        const destinationSet = new Set(tours.map((tour: any) => tour.destination));
+        const uniqueDestinations = Array.from(destinationSet) as string[];
+        setAvailableDestinations(uniqueDestinations);
+        
+        // Generate dynamic playlist names based on actual destinations
+        const playlists: Record<string, {spotify: string; youtube: string}> = {};
+        
+        uniqueDestinations.forEach((destination: string) => {
+          const destLower = destination.toLowerCase();
+          const destName = destination;
+          
+          // Create intelligent playlist names based on destination characteristics
+          if (destLower.includes('goa') || destLower.includes('beach')) {
+            playlists[destLower] = {
+              spotify: `${destName} Beach Party Songs`,
+              youtube: `${destName} Beach Vibes Playlist`
+            };
+          } else if (destLower.includes('himalaya') || destLower.includes('ladakh') || destLower.includes('shimla') || destLower.includes('manali')) {
+            playlists[destLower] = {
+              spotify: `${destName} Mountain Roadtrip`,
+              youtube: `${destName} Himalayan Journey Songs`
+            };
+          } else if (destLower.includes('rajasthan') || destLower.includes('jaipur') || destLower.includes('udaipur') || destLower.includes('jodhpur')) {
+            playlists[destLower] = {
+              spotify: `${destName} Folk & Cultural Music`,
+              youtube: `${destName} Rajasthani Songs`
+            };
+          } else if (destLower.includes('kerala') || destLower.includes('backwater')) {
+            playlists[destLower] = {
+              spotify: `${destName} Tropical Vibes`,
+              youtube: `${destName} Malayalam Travel Songs`
+            };
+          } else if (destLower.includes('varanasi') || destLower.includes('spiritual') || destLower.includes('temple')) {
+            playlists[destLower] = {
+              spotify: `${destName} Devotional & Classical`,
+              youtube: `${destName} Spiritual Journey`
+            };
+          } else if (destLower.includes('mumbai') || destLower.includes('delhi')) {
+            playlists[destLower] = {
+              spotify: `${destName} Bollywood Hits`,
+              youtube: `${destName} City Vibes Playlist`
+            };
+          } else {
+            // Generic travel playlist for other destinations
+            playlists[destLower] = {
+              spotify: `${destName} Travel Songs`,
+              youtube: `${destName} Journey Playlist`
+            };
+          }
+        });
+        
+        setDestinationPlaylists({...DEFAULT_PLAYLISTS, ...playlists});
+        console.log('🎵 Loaded playlists for destinations:', Object.keys(playlists));
+      }
+    } catch (error) {
+      console.error('Error loading destination playlists:', error);
+      // Keep default playlists if API fails
+    }
+  };
+
   console.log('🎯 MyItineraries component rendered with:', {
     myItinerariesCount: myItineraries.length,
     myItineraries: myItineraries,
-    userDetails: userDetails
+    userDetails: userDetails,
+    availableDestinations: availableDestinations,
+    destinationPlaylists: Object.keys(destinationPlaylists)
   });
 
-  // Handler to open live tracking modal
   const handleTrackGuide = (itinerary: any) => {
-    // Try multiple ways to get booking ID, fallback to 1 for demo
     const bookingId = itinerary.bookingData?.id || 
                      itinerary.booking_id || 
                      itinerary.id || 
-                     1; // Fallback ID for demo
+                     1; 
     
     console.log('📍 Opening live tracking for booking:', bookingId);
     console.log('📍 Itinerary data:', itinerary);
@@ -53,12 +133,10 @@ const MyItineraries: React.FC<MyItinerariesProps> = ({ darkMode, myItineraries, 
     setShowLiveTracking(true);
   };
 
-  // Check if tracking should be available (during tour period only)
   const isTrackingAvailable = (itinerary: any) => {
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time to midnight for date-only comparison
+    today.setHours(0, 0, 0, 0); 
     
-    // Get travel dates from booking data
     const travelDate = itinerary.bookingData?.travel_date || itinerary.travel_date;
     const tourEndDate = itinerary.bookingData?.tour_end_date || itinerary.tour_end_date;
     
@@ -82,38 +160,32 @@ const MyItineraries: React.FC<MyItinerariesProps> = ({ darkMode, myItineraries, 
     return today >= startDate && today <= endDate;
   };
 
-  // Function to map tour data to valid playlist destination
-  const getPlaylistDestination = (tour: any) => {
-    const DESTINATION_MAP: Record<string, string> = {
-      'goa': 'goa',
-      'shimla': 'shimla',
-      'rajasthan': 'rajasthan',
-      'jaipur': 'rajasthan',
-      'jodhpur': 'rajasthan',
-      'udaipur': 'rajasthan',
-      'ladakh': 'ladakh',
-      'kerala': 'kerala',
-      'kochi': 'kerala',
-      'munnar': 'kerala',
-      'taj mahal': 'tajmahal',
-      'agra': 'tajmahal',
-      'kolkata': 'kolkata',
-      'varanasi': 'varanasi',
-      'mumbai': 'mumbai',
-      'delhi': 'mumbai',
-      'manali': 'shimla',
-      'darjeeling': 'shimla',
-    };
-
-    const searchText = (tour?.destination || tour?.location || tour?.title || '').toLowerCase();
+  // Function to get playlist for tour destination from real database data
+  const getPlaylistDestination = (tour: any): string => {
+    const destination = (tour?.destination || tour?.location || tour?.title || '').toLowerCase();
     
-    for (const [key, value] of Object.entries(DESTINATION_MAP)) {
-      if (searchText.includes(key)) {
-        return value;
+    // First, try exact match with available destinations
+    if (destinationPlaylists[destination]) {
+      return destination;
+    }
+    
+    // Try partial match with available destinations from database
+    for (const availableDest of availableDestinations) {
+      const availableDestLower = availableDest.toLowerCase();
+      if (destination.includes(availableDestLower) || availableDestLower.includes(destination)) {
+        return availableDestLower;
       }
     }
     
-    return 'goa'; // Default fallback
+    // Try matching with generated playlist keys
+    for (const playlistKey of Object.keys(destinationPlaylists)) {
+      if (destination.includes(playlistKey) || playlistKey.includes(destination)) {
+        return playlistKey;
+      }
+    }
+    
+    // Fallback to default
+    return 'default';
   };
 
   const handleShowReceipt = (itinerary: any) => {
@@ -185,6 +257,10 @@ const MyItineraries: React.FC<MyItinerariesProps> = ({ darkMode, myItineraries, 
                   setExpandedItinerary={setExpandedItinerary}
                   userDetails={userDetails}
                   onShowReceipt={handleShowReceipt}
+                  showSuccess={showSuccess}
+                  showError={showError}
+                  showWarning={showWarning}
+                  showInfo={showInfo}
                 />
                 
                 {/* Action Buttons */}
@@ -203,13 +279,23 @@ const MyItineraries: React.FC<MyItinerariesProps> = ({ darkMode, myItineraries, 
                   
                   {/* Playlist Button */}
                   <button
-                    className="bg-green-600 text-white px-3 py-2 rounded-lg shadow hover:bg-green-700"
+                    className="bg-green-600 text-white px-3 py-2 rounded-lg shadow hover:bg-green-700 flex items-center space-x-2 transition-all duration-300"
                     onClick={() => {
                       const validDest = getPlaylistDestination(itinerary.tour);
-                      window.dispatchEvent(new CustomEvent('showPlaylist', { detail: { destination: validDest } }));
+                      const playlistInfo = destinationPlaylists[validDest] || destinationPlaylists.default;
+                      console.log('🎵 Opening playlist for:', validDest, playlistInfo);
+                      window.dispatchEvent(new CustomEvent('showPlaylist', { 
+                        detail: { 
+                          destination: validDest,
+                          playlistName: playlistInfo.spotify,
+                          destinationName: itinerary.tour?.destination || 'Your Destination'
+                        } 
+                      }));
                     }}
+                    title={`Listen to ${itinerary.tour?.destination || 'travel'} songs`}
                   >
-                    🎶 Play Travel Playlist
+                    <span>🎶</span>
+                    <span className="font-semibold">Travel Playlist</span>
                   </button>
                 </div>
               </div>

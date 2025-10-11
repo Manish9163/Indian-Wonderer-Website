@@ -1,12 +1,7 @@
 <?php
-/**
- * Tours API Controller
- * Handles tour management for both frontend and admin
- */
 
 session_start();
 
-// Handle CORS for React frontend and Angular admin panel
 $allowed_origins = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
@@ -48,15 +43,12 @@ class ToursController {
         $this->tours = new Tours($this->db);
     }
     
-    /**
-     * Get all tours with filters
-     */
+
     public function getAllTours() {
         $filters = [];
         $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
         $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
         
-        // Extract filters from query parameters
         if (isset($_GET['destination'])) $filters['destination'] = $_GET['destination'];
         if (isset($_GET['category'])) $filters['category'] = $_GET['category'];
         if (isset($_GET['min_price'])) $filters['min_price'] = $_GET['min_price'];
@@ -75,10 +67,7 @@ class ToursController {
             ]
         ]);
     }
-    
-    /**
-     * Get tour by ID
-     */
+
     public function getTourById() {
         $id = $_GET['id'] ?? null;
         
@@ -94,12 +83,8 @@ class ToursController {
             ApiResponse::notFound("Tour not found");
         }
     }
-    
-    /**
-     * Create new tour (Admin only)
-     */
+
     public function createTour() {
-        // Verify admin authentication
         $token = getAuthorizationHeader();
         if (!$token) {
             ApiResponse::unauthorized("Token required");
@@ -112,7 +97,6 @@ class ToursController {
         
         $data = getJsonInput();
         
-        // Validation
         $errors = [];
         
         if (empty($data['title'])) $errors[] = "Title is required";
@@ -124,7 +108,6 @@ class ToursController {
             ApiResponse::error("Validation failed", 400, $errors);
         }
         
-        // Set tour properties
         $this->tours->title = $data['title'];
         $this->tours->description = $data['description'] ?? '';
         $this->tours->destination = $data['destination'];
@@ -141,7 +124,6 @@ class ToursController {
         $this->tours->created_by = $decoded['user_id'];
         
         if ($this->tours->create()) {
-            // Log activity
             logActivity($decoded['user_id'], 'Tour created', 'tours', $this->tours->id);
             
             ApiResponse::success([
@@ -152,12 +134,8 @@ class ToursController {
             ApiResponse::serverError("Tour creation failed");
         }
     }
-    
-    /**
-     * Update tour (Admin only)
-     */
+
     public function updateTour() {
-        // Verify admin authentication
         $token = getAuthorizationHeader();
         if (!$token) {
             ApiResponse::unauthorized("Token required");
@@ -175,10 +153,8 @@ class ToursController {
         
         $data = getJsonInput();
         
-        // Get existing tour for logging
         $old_tour = $this->tours->getTourById($id);
         
-        // Set tour properties
         $this->tours->id = $id;
         $this->tours->title = $data['title'] ?? '';
         $this->tours->description = $data['description'] ?? '';
@@ -195,7 +171,6 @@ class ToursController {
         $this->tours->exclusions = $data['exclusions'] ?? [];
         
         if ($this->tours->update()) {
-            // Log activity
             logActivity($decoded['user_id'], 'Tour updated', 'tours', $id, $old_tour, $data);
             
             ApiResponse::success(null, "Tour updated successfully");
@@ -203,12 +178,8 @@ class ToursController {
             ApiResponse::serverError("Tour update failed");
         }
     }
-    
-    /**
-     * Delete tour (Admin only)
-     */
+
     public function deleteTour() {
-        // Verify admin authentication
         $token = getAuthorizationHeader();
         if (!$token) {
             ApiResponse::unauthorized("Token required");
@@ -225,7 +196,6 @@ class ToursController {
         }
         
         if ($this->tours->delete($id)) {
-            // Log activity
             logActivity($decoded['user_id'], 'Tour deleted', 'tours', $id);
             
             ApiResponse::success(null, "Tour deleted successfully");
@@ -233,20 +203,14 @@ class ToursController {
             ApiResponse::serverError("Tour deletion failed");
         }
     }
-    
-    /**
-     * Get popular tours
-     */
+ 
     public function getPopularTours() {
         $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
         $tours = $this->tours->getPopularTours($limit);
         
         ApiResponse::success($tours);
     }
-    
-    /**
-     * Search tours
-     */
+ 
     public function searchTours() {
         $search_term = $_GET['q'] ?? '';
         $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
@@ -259,12 +223,8 @@ class ToursController {
         
         ApiResponse::success($tours);
     }
-    
-    /**
-     * Get tour statistics (Admin only)
-     */
+
     public function getTourStats() {
-        // Verify admin authentication
         $token = getAuthorizationHeader();
         if (!$token) {
             ApiResponse::unauthorized("Token required");
@@ -280,7 +240,6 @@ class ToursController {
     }
 }
 
-// Route handling
 $tours_controller = new ToursController();
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';

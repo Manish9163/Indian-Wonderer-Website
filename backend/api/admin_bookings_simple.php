@@ -1,5 +1,4 @@
 <?php
-// Simple Admin Bookings API - No authentication required for testing
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
@@ -22,7 +21,6 @@ try {
     switch ($method) {
         case 'GET':
             if ($bookingId) {
-                // Get single booking
                 $stmt = $pdo->prepare("SELECT b.*, 
                     COALESCE(
                         NULLIF(TRIM(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, ''))), ''),
@@ -52,7 +50,6 @@ try {
                 $booking = $stmt->fetch(PDO::FETCH_ASSOC);
                 
                 if ($booking) {
-                    // Clean up customer name
                     $booking['customer_name'] = trim($booking['customer_name'] ?? '');
                     if (empty($booking['customer_name'])) {
                         $booking['customer_name'] = $booking['customer_email'] ?? 'Unknown Customer';
@@ -67,7 +64,6 @@ try {
                     echo json_encode(['success' => false, 'error' => 'Booking not found']);
                 }
             } else {
-                // Get all bookings
                 $stmt = $pdo->query("SELECT b.*, 
                     COALESCE(
                         NULLIF(TRIM(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, ''))), ''),
@@ -99,24 +95,19 @@ try {
                     ORDER BY b.created_at DESC");
                 $bookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 
-                // Process bookings to ensure customer_name is properly set
                 foreach ($bookings as &$booking) {
-                    // Clean up customer name - trim whitespace
                     $booking['customer_name'] = trim($booking['customer_name'] ?? '');
                     
-                    // If customer_name is empty or just whitespace, use email or fallback
                     if (empty($booking['customer_name'])) {
                         $booking['customer_name'] = $booking['customer_email'] ?? 'Unknown Customer';
                     }
                     
-                    // Ensure tour_name exists
                     if (empty($booking['tour_name'])) {
                         $booking['tour_name'] = 'Unknown Tour';
                     }
                 }
-                unset($booking); // Break reference
+                unset($booking); 
                 
-                // Calculate stats
                 $statsStmt = $pdo->query("SELECT 
                     COUNT(*) as total,
                     COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
@@ -164,25 +155,18 @@ try {
                 break;
             }
             
-            // Start transaction to delete booking and all related records
             $pdo->beginTransaction();
             try {
-                // Delete related tour guide assignments
                 $stmt = $pdo->prepare("DELETE FROM tour_guide_assignments WHERE booking_id = ?");
                 $stmt->execute([$bookingId]);
                 
-                // Delete related payments
                 $stmt = $pdo->prepare("DELETE FROM payments WHERE booking_id = ?");
                 $stmt->execute([$bookingId]);
                 
-                // Delete any other related records (add more if needed)
-                // Example: reviews, notifications, etc.
                 
-                // Finally, delete the booking itself
                 $stmt = $pdo->prepare("DELETE FROM bookings WHERE id = ?");
                 $stmt->execute([$bookingId]);
                 
-                // Check if booking was actually deleted
                 if ($stmt->rowCount() === 0) {
                     $pdo->rollBack();
                     http_response_code(404);
@@ -190,11 +174,9 @@ try {
                     break;
                 }
                 
-                // Commit transaction
                 $pdo->commit();
                 echo json_encode(['success' => true, 'message' => 'Booking and all related records deleted successfully']);
             } catch (PDOException $e) {
-                // Rollback on error
                 $pdo->rollBack();
                 throw $e;
             }

@@ -1,13 +1,8 @@
 <?php
-/**
- * Advanced Analytics API for Admin Dashboard
- * Production-ready analytics system with comprehensive metrics
- */
 
 require_once '../config/database.php';
 require_once '../config/api_config.php';
 
-// Handle CORS properly for credentials
 $allowed_origins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:4200            FROM bookings b
             GROUP BY period
             ORDER BY period DESC
@@ -40,9 +35,7 @@ class AdvancedAnalyticsAPI {
         $this->pdo = $database->getConnection();
     }
     
-    /**
-     * Handle analytics requests
-     */
+
     public function handleRequest() {
         $action = $_GET['action'] ?? 'dashboard';
         
@@ -84,36 +77,25 @@ class AdvancedAnalyticsAPI {
             ]);
         }
     }
-    
-    /**
-     * Get comprehensive dashboard analytics
-     */
+
     private function getDashboardAnalytics() {
         $timeframe = $_GET['timeframe'] ?? '30'; // days
         $startDate = date('Y-m-d', strtotime("-{$timeframe} days"));
         
-        // Overview metrics
         $overview = $this->getOverviewMetrics($startDate);
         
-        // Revenue metrics
         $revenue = $this->getRevenueMetrics($startDate);
         
-        // Tour performance
         $tourPerformance = $this->getTourPerformanceMetrics($startDate);
         
-        // Customer metrics
         $customers = $this->getCustomerMetrics($startDate);
         
-        // Booking trends
         $bookingTrends = $this->getBookingTrends($startDate);
         
-        // Top destinations
         $topDestinations = $this->getTopDestinations($startDate);
         
-        // Recent activities
         $recentActivities = $this->getRecentActivities(10);
         
-        // Refund analytics
         $refunds = $this->getRefundAnalytics($startDate);
         
         echo json_encode([
@@ -133,9 +115,7 @@ class AdvancedAnalyticsAPI {
         ]);
     }
     
-    /**
-     * Get overview metrics
-     */
+
     private function getOverviewMetrics($startDate) {
         $stmt = $this->pdo->prepare("
             SELECT 
@@ -152,7 +132,6 @@ class AdvancedAnalyticsAPI {
         
         $metrics = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        // Calculate growth rates (compare with previous period)
         $previousPeriodStart = date('Y-m-d', strtotime("-" . (2 * intval($_GET['timeframe'] ?? 30)) . " days"));
         
         $stmt = $this->pdo->prepare("
@@ -163,7 +142,6 @@ class AdvancedAnalyticsAPI {
         $stmt->execute([$previousPeriodStart, $startDate, $previousPeriodStart, $startDate]);
         $previousMetrics = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        // Calculate growth percentages
         $metrics['booking_growth'] = $previousMetrics['prev_bookings'] > 0 ? 
             round((($metrics['new_bookings'] - $previousMetrics['prev_bookings']) / $previousMetrics['prev_bookings']) * 100, 2) : 0;
         
@@ -172,10 +150,7 @@ class AdvancedAnalyticsAPI {
         
         return $metrics;
     }
-    
-    /**
-     * Get revenue metrics
-     */
+
     private function getRevenueMetrics($startDate) {
         $stmt = $this->pdo->prepare("
             SELECT 
@@ -194,12 +169,10 @@ class AdvancedAnalyticsAPI {
         $stmt->execute([$startDate, $startDate, $startDate, $startDate, $startDate, $startDate]);
         $revenue = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        // Calculate net revenue (revenue - refunds)
         $revenue['net_revenue'] = floatval($revenue['current_revenue']) - floatval($revenue['recent_refunds'] ?? 0);
         $revenue['refund_rate'] = $revenue['paid_bookings'] > 0 ? 
             round(($revenue['cancelled_count'] / ($revenue['paid_bookings'] + $revenue['cancelled_count'])) * 100, 2) : 0;
         
-        // Daily revenue for chart
         $stmt = $this->pdo->prepare("
             SELECT 
                 DATE(created_at) as date,
@@ -217,9 +190,6 @@ class AdvancedAnalyticsAPI {
         return $revenue;
     }
     
-    /**
-     * Get tour performance metrics
-     */
     private function getTourPerformanceMetrics($startDate) {
         $stmt = $this->pdo->prepare("
             SELECT 
@@ -243,9 +213,7 @@ class AdvancedAnalyticsAPI {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
-    /**
-     * Get customer metrics
-     */
+
     private function getCustomerMetrics($startDate) {
         $stmt = $this->pdo->prepare("
             SELECT 
@@ -260,7 +228,6 @@ class AdvancedAnalyticsAPI {
         $stmt->execute([$startDate, $startDate, $startDate]);
         $customerMetrics = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        // Top customers by bookings
         $stmt = $this->pdo->prepare("
             SELECT 
                 u.id, u.first_name, u.last_name, u.email,
@@ -279,10 +246,7 @@ class AdvancedAnalyticsAPI {
         
         return $customerMetrics;
     }
-    
-    /**
-     * Get booking trends
-     */
+
     private function getBookingTrends($startDate) {
         $stmt = $this->pdo->prepare("
             SELECT 
@@ -302,10 +266,7 @@ class AdvancedAnalyticsAPI {
         
         return array_reverse($stmt->fetchAll(PDO::FETCH_ASSOC));
     }
-    
-    /**
-     * Get top destinations
-     */
+
     private function getTopDestinations($startDate) {
         $stmt = $this->pdo->prepare("
             SELECT 
@@ -327,11 +288,8 @@ class AdvancedAnalyticsAPI {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
-    /**
-     * Get recent activities (bookings)
-     */
+
     private function getRecentActivities($limit = 10) {
-        // Use bookings as recent activities since activity_logs might be empty
         $stmt = $this->pdo->prepare("
             SELECT 
                 b.id,
@@ -364,9 +322,7 @@ class AdvancedAnalyticsAPI {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
-    /**
-     * Get detailed revenue analytics
-     */
+
     private function getRevenueAnalytics() {
         $timeframe = $_GET['timeframe'] ?? 'month';
         $period = $_GET['period'] ?? '12';
@@ -378,7 +334,6 @@ class AdvancedAnalyticsAPI {
             default => '%Y-%m'
         };
         
-        // Revenue by period
         $stmt = $this->pdo->prepare("
             SELECT 
                 DATE_FORMAT(b.created_at, ?) as period,
@@ -394,7 +349,6 @@ class AdvancedAnalyticsAPI {
         $stmt->execute([$dateFormat, (int)$period]);
         $revenueByPeriod = array_reverse($stmt->fetchAll(PDO::FETCH_ASSOC));
         
-        // Revenue by tour category
         $stmt = $this->pdo->prepare("
             SELECT 
                 t.category,
@@ -410,7 +364,6 @@ class AdvancedAnalyticsAPI {
         $stmt->execute();
         $revenueByCategory = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Revenue by payment method
         $stmt = $this->pdo->prepare("
             SELECT 
                 p.payment_method,
@@ -437,11 +390,8 @@ class AdvancedAnalyticsAPI {
         ]);
     }
     
-    /**
-     * Get detailed tour analytics
-     */
+
     private function getTourAnalytics() {
-        // Tour performance metrics
         $stmt = $this->pdo->prepare("
             SELECT 
                 t.*,
@@ -464,7 +414,6 @@ class AdvancedAnalyticsAPI {
         $stmt->execute();
         $tourMetrics = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Calculate additional metrics
         foreach ($tourMetrics as &$tour) {
             $tour['conversion_rate'] = $tour['total_bookings'] > 0 ? 
                 round(($tour['confirmed_bookings'] / $tour['total_bookings']) * 100, 2) : 0;
@@ -480,11 +429,8 @@ class AdvancedAnalyticsAPI {
         ]);
     }
     
-    /**
-     * Get refund analytics
-     */
+
     private function getRefundAnalytics($startDate) {
-        // Overall refund stats
         $stmt = $this->pdo->prepare("
             SELECT 
                 COUNT(r.id) as total_refunds,
@@ -501,7 +447,6 @@ class AdvancedAnalyticsAPI {
         $stmt->execute([$startDate, $startDate]);
         $refundStats = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        // Gift card stats
         $stmt = $this->pdo->prepare("
             SELECT 
                 COUNT(gc.id) as total_giftcards,
@@ -516,7 +461,6 @@ class AdvancedAnalyticsAPI {
         $stmt->execute([$startDate, $startDate]);
         $giftcardStats = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        // Pending refunds list (for admin action)
         $stmt = $this->pdo->prepare("
             SELECT 
                 r.id as refund_id,
@@ -540,7 +484,6 @@ class AdvancedAnalyticsAPI {
         $stmt->execute();
         $pendingRefunds = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Daily refund trends
         $stmt = $this->pdo->prepare("
             SELECT 
                 DATE(initiated_at) as date,
@@ -562,14 +505,11 @@ class AdvancedAnalyticsAPI {
         ];
     }
     
-    /**
-     * Export analytics data
-     */
+
     private function exportAnalytics() {
         $format = $_GET['format'] ?? 'json';
         $type = $_GET['type'] ?? 'dashboard';
         
-        // Get data based on type
         $data = [];
         switch ($type) {
             case 'tours':
@@ -585,6 +525,5 @@ class AdvancedAnalyticsAPI {
     }
 }
 
-// Initialize and handle request
 $api = new AdvancedAnalyticsAPI();
 $api->handleRequest();

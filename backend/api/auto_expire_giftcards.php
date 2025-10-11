@@ -1,8 +1,4 @@
 <?php
-/**
- * Automatic Gift Card Expiry Checker
- * Runs periodically to expire gift cards past their expiry date
- */
 
 require_once __DIR__ . '/../config/database.php';
 
@@ -12,7 +8,6 @@ try {
     $database = new Database();
     $pdo = $database->getConnection();
     
-    // Update expired gift cards
     $stmt = $pdo->prepare("
         UPDATE gift_cards 
         SET status = 'expired'
@@ -23,7 +18,6 @@ try {
     $stmt->execute();
     $expiredCount = $stmt->rowCount();
     
-    // Get list of expired cards
     $stmt = $pdo->prepare("
         SELECT 
             gc.id,

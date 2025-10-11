@@ -1,8 +1,5 @@
 <?php
-/**
- * Customer Analytics API
- * Provides analytics data for individual customers
- */
+
 
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, OPTIONS');
@@ -32,10 +29,8 @@ try {
         exit();
     }
     
-    // Get customer analytics
     $analytics = [];
     
-    // Booking statistics
     $stmt = $pdo->prepare("
         SELECT 
             COUNT(*) as total_bookings,
@@ -52,7 +47,6 @@ try {
     $bookingStats = $stmt->fetch(PDO::FETCH_ASSOC);
     $analytics['bookings'] = $bookingStats;
     
-    // Payment statistics
     $stmt = $pdo->prepare("
         SELECT 
             COUNT(*) as total_payments,
@@ -68,7 +62,6 @@ try {
     $paymentStats = $stmt->fetch(PDO::FETCH_ASSOC);
     $analytics['payments'] = $paymentStats;
     
-    // Favorite destinations
     $stmt = $pdo->prepare("
         SELECT 
             t.destination,
@@ -84,7 +77,6 @@ try {
     $stmt->execute([$userId]);
     $analytics['favorite_destinations'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Booking trends (last 12 months)
     $stmt = $pdo->prepare("
         SELECT 
             DATE_FORMAT(created_at, '%Y-%m') as month,
@@ -99,7 +91,6 @@ try {
     $stmt->execute([$userId]);
     $analytics['booking_trends'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Tour categories booked
     $stmt = $pdo->prepare("
         SELECT 
             t.category,
@@ -114,7 +105,6 @@ try {
     $stmt->execute([$userId]);
     $analytics['categories'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Upcoming bookings
     $stmt = $pdo->prepare("
         SELECT 
             b.id,
@@ -136,7 +126,6 @@ try {
     $stmt->execute([$userId]);
     $analytics['upcoming_bookings'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Recent activities
     $stmt = $pdo->prepare("
         SELECT 
             b.id,
@@ -154,16 +143,15 @@ try {
     $stmt->execute([$userId]);
     $analytics['recent_activities'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Customer loyalty score (simple calculation)
     $totalBookings = (int)$bookingStats['total_bookings'];
     $completedBookings = (int)$bookingStats['completed'];
     $totalSpent = (float)$bookingStats['total_spent'];
     
     $loyaltyScore = 0;
     if ($totalBookings > 0) {
-        $loyaltyScore += min($totalBookings * 10, 50); // Max 50 points for bookings
-        $loyaltyScore += min(($completedBookings / max($totalBookings, 1)) * 30, 30); // Max 30 for completion rate
-        $loyaltyScore += min($totalSpent / 1000, 20); // Max 20 for spending
+        $loyaltyScore += min($totalBookings * 10, 50); 
+        $loyaltyScore += min(($completedBookings / max($totalBookings, 1)) * 30, 30); 
+        $loyaltyScore += min($totalSpent / 1000, 20); 
     }
     
     $analytics['loyalty'] = [

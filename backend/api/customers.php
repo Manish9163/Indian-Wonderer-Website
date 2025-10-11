@@ -1,5 +1,4 @@
 <?php
-// Handle CORS for React frontend and Angular admin panel
 $allowed_origins = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
@@ -36,10 +35,8 @@ $method = $_SERVER['REQUEST_METHOD'];
 $request_uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $path_parts = explode('/', trim($request_uri, '/'));
 
-// Extract customer ID if present
 $customer_id = isset($path_parts[4]) ? (int)$path_parts[4] : null;
 
-// Get headers for authentication
 $headers = apache_request_headers();
 $token = isset($headers['Authorization']) ? str_replace('Bearer ', '', $headers['Authorization']) : null;
 
@@ -97,7 +94,6 @@ function getAllCustomers($conn) {
     $stmt->execute();
     $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Map profile_image to avatar for frontend compatibility
     foreach ($customers as &$customer) {
         $customer['avatar'] = $customer['profile_image'] ?? null;
         $customer['name'] = trim(($customer['first_name'] ?? '') . ' ' . ($customer['last_name'] ?? ''));
@@ -106,7 +102,6 @@ function getAllCustomers($conn) {
         }
     }
     
-    // Calculate stats
     $stats = [
         'total' => count($customers),
         'active' => count(array_filter($customers, fn($c) => $c['is_active'])),
@@ -142,14 +137,12 @@ function getCustomer($conn, $customer_id) {
     $customer = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($customer) {
-        // Map profile_image to avatar for frontend compatibility
         $customer['avatar'] = $customer['profile_image'] ?? null;
         $customer['name'] = trim(($customer['first_name'] ?? '') . ' ' . ($customer['last_name'] ?? ''));
         if (empty($customer['name'])) {
             $customer['name'] = $customer['username'];
         }
         
-        // Get customer's bookings
         $bookings_query = "SELECT b.*, t.title as tour_title, t.destination, p.status as payment_status
                           FROM bookings b
                           LEFT JOIN tours t ON b.tour_id = t.id
@@ -180,7 +173,6 @@ function createCustomer($conn) {
         }
     }
     
-    // Check if email already exists
     $check_query = "SELECT id FROM users WHERE email = ?";
     $check_stmt = $conn->prepare($check_query);
     $check_stmt->execute([$input['email']]);
@@ -242,7 +234,6 @@ function updateCustomer($conn, $customer_id) {
         return;
     }
     
-    // Check if email already exists for other users
     if (isset($input['email'])) {
         $check_query = "SELECT id FROM users WHERE email = ? AND id != ?";
         $check_stmt = $conn->prepare($check_query);
@@ -271,10 +262,8 @@ function updateCustomer($conn, $customer_id) {
 
 function deleteCustomer($conn, $customer_id) {
     try {
-        // Start transaction
         $conn->beginTransaction();
         
-        // Check if customer has bookings
         $check_query = "SELECT COUNT(*) as booking_count FROM bookings WHERE user_id = ?";
         $check_stmt = $conn->prepare($check_query);
         $check_stmt->execute([$customer_id]);
@@ -287,23 +276,19 @@ function deleteCustomer($conn, $customer_id) {
             return;
         }
         
-        // Delete related activity logs first (to avoid foreign key constraint)
         $delete_logs_query = "DELETE FROM activity_logs WHERE user_id = ?";
         $delete_logs_stmt = $conn->prepare($delete_logs_query);
         $delete_logs_stmt->execute([$customer_id]);
         
-        // Delete related reviews if any
         $delete_reviews_query = "DELETE FROM reviews WHERE user_id = ?";
         $delete_reviews_stmt = $conn->prepare($delete_reviews_query);
         $delete_reviews_stmt->execute([$customer_id]);
         
-        // Finally, delete the customer
         $query = "DELETE FROM users WHERE id = ? AND role = 'customer'";
         $stmt = $conn->prepare($query);
         $result = $stmt->execute([$customer_id]);
         
         if ($result && $stmt->rowCount() > 0) {
-            // Commit transaction
             $conn->commit();
             echo json_encode(['success' => true, 'message' => 'Customer and related records deleted successfully']);
         } else {
@@ -312,7 +297,6 @@ function deleteCustomer($conn, $customer_id) {
             echo json_encode(['success' => false, 'message' => 'Customer not found or already deleted']);
         }
     } catch (Exception $e) {
-        // Rollback on error
         if ($conn->inTransaction()) {
             $conn->rollBack();
         }

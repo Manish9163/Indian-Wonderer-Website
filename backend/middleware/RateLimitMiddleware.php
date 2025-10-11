@@ -1,25 +1,19 @@
 <?php
-/**
- * Rate Limiting Middleware
- * Prevents abuse and ensures fair usage for both frontends
- */
+
 
 class RateLimitMiddleware {
     private $db;
     private $limits = [
-        'default' => ['requests' => 100, 'window' => 3600], // 100 requests per hour
-        'admin' => ['requests' => 500, 'window' => 3600],   // 500 requests per hour for admin
-        'auth' => ['requests' => 10, 'window' => 900],      // 10 auth attempts per 15 minutes
+        'default' => ['requests' => 100, 'window' => 3600], 
+        'admin' => ['requests' => 500, 'window' => 3600],   
+        'auth' => ['requests' => 10, 'window' => 900],     
     ];
     
     public function __construct($database) {
         $this->db = $database;
         $this->createRateLimitTable();
     }
-    
-    /**
-     * Process rate limiting middleware
-     */
+
     public function handle($request, $next) {
         $clientId = $this->getClientIdentifier();
         $endpoint = $this->getEndpointType();
@@ -32,15 +26,11 @@ class RateLimitMiddleware {
         $this->recordRequest($clientId, $endpoint);
         return $next($request);
     }
-    
-    /**
-     * Get client identifier (IP + User Agent hash)
-     */
+
     private function getClientIdentifier() {
         $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
         $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
         
-        // For authenticated users, use user ID if available
         session_start();
         if (isset($_SESSION['user_id'])) {
             return 'user_' . $_SESSION['user_id'];
@@ -50,13 +40,9 @@ class RateLimitMiddleware {
             return 'admin_' . $_SESSION['admin_id'];
         }
         
-        // Fallback to IP + User Agent hash
         return $ip . '_' . substr(md5($userAgent), 0, 8);
     }
-    
-    /**
-     * Determine endpoint type for rate limiting
-     */
+
     private function getEndpointType() {
         $uri = $_SERVER['REQUEST_URI'] ?? '';
         
@@ -73,9 +59,7 @@ class RateLimitMiddleware {
         return 'default';
     }
     
-    /**
-     * Check if client is rate limited
-     */
+
     private function isRateLimited($clientId, $endpoint) {
         $limit = $this->limits[$endpoint] ?? $this->limits['default'];
         $windowStart = time() - $limit['window'];
@@ -92,13 +76,11 @@ class RateLimitMiddleware {
             return $result['request_count'] >= $limit['requests'];
         } catch (Exception $e) {
             error_log('Rate limit check error: ' . $e->getMessage());
-            return false; // Allow on error
+            return false; 
         }
     }
     
-    /**
-     * Record request for rate limiting
-     */
+
     private function recordRequest($clientId, $endpoint) {
         try {
             $stmt = $this->db->prepare("
@@ -107,19 +89,15 @@ class RateLimitMiddleware {
             ");
             $stmt->execute([$clientId, $endpoint, time()]);
             
-            // Clean old records
             $this->cleanOldRecords();
         } catch (Exception $e) {
             error_log('Rate limit record error: ' . $e->getMessage());
         }
     }
-    
-    /**
-     * Clean old rate limit records
-     */
+
     private function cleanOldRecords() {
         $maxWindow = max(array_column($this->limits, 'window'));
-        $cutoff = time() - ($maxWindow * 2); // Keep 2x the largest window
+        $cutoff = time() - ($maxWindow * 2);
         
         try {
             $stmt = $this->db->prepare("DELETE FROM rate_limits WHERE timestamp < ?");
@@ -128,10 +106,7 @@ class RateLimitMiddleware {
             error_log('Rate limit cleanup error: ' . $e->getMessage());
         }
     }
-    
-    /**
-     * Send rate limit exceeded response
-     */
+
     private function sendRateLimitResponse() {
         http_response_code(429);
         header('Retry-After: 3600'); // 1 hour
@@ -143,10 +118,7 @@ class RateLimitMiddleware {
         ]);
         exit;
     }
-    
-    /**
-     * Create rate limiting table if it doesn't exist
-     */
+
     private function createRateLimitTable() {
         try {
             $sql = "
@@ -164,10 +136,7 @@ class RateLimitMiddleware {
             error_log('Rate limit table creation error: ' . $e->getMessage());
         }
     }
-    
-    /**
-     * Get current rate limit status for client
-     */
+
     public function getRateLimitStatus($clientId, $endpoint) {
         $limit = $this->limits[$endpoint] ?? $this->limits['default'];
         $windowStart = time() - $limit['window'];

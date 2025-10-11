@@ -1,8 +1,5 @@
 <?php
-/**
- * Middleware Manager
- * Orchestrates all middleware components for unified frontend communication
- */
+
 
 require_once 'AuthMiddleware.php';
 require_once 'CorsMiddleware.php';
@@ -24,12 +21,8 @@ class MiddlewareManager {
         
         $this->initializeMiddlewares();
     }
-    
-    /**
-     * Initialize middleware stack
-     */
+
     private function initializeMiddlewares() {
-        // Order matters - CORS must be first to handle OPTIONS requests
         if ($this->config['enable_cors']) {
             $this->middlewares[] = new CorsMiddleware();
         }
@@ -46,26 +39,18 @@ class MiddlewareManager {
             $this->middlewares[] = new AuthMiddleware();
         }
     }
-    
-    /**
-     * Process request through middleware stack
-     */
+
     public function handle($request, $finalHandler) {
         return $this->processMiddleware(0, $request, $finalHandler);
     }
-    
-    /**
-     * Process middleware recursively
-     */
+
     private function processMiddleware($index, $request, $finalHandler) {
-        // If we've processed all middleware, call the final handler
         if ($index >= count($this->middlewares)) {
             return $finalHandler($request);
         }
         
         $middleware = $this->middlewares[$index];
         
-        // Create next function for current middleware
         $next = function($request) use ($index, $finalHandler) {
             return $this->processMiddleware($index + 1, $request, $finalHandler);
         };
@@ -73,9 +58,7 @@ class MiddlewareManager {
         return $middleware->handle($request, $next);
     }
     
-    /**
-     * Route requests to appropriate API endpoints
-     */
+
     public static function route($endpoint, $data = null) {
         $manager = new self();
         
@@ -91,17 +74,12 @@ class MiddlewareManager {
             return MiddlewareManager::executeEndpoint($request);
         });
     }
-    
-    /**
-     * Execute the actual API endpoint
-     */
+
     private static function executeEndpoint($request) {
         $endpoint = $request['endpoint'];
         $method = $request['method'];
         
-        // Map endpoints to their comprehensive admin handlers
         $routes = [
-            // Authentication endpoints
             'auth/login' => function() use ($method) {
                 if ($method === 'POST') {
                     return self::handleAuthLogin();
@@ -123,32 +101,26 @@ class MiddlewareManager {
                 return self::methodNotAllowed();
             },
             
-            // Advanced Admin Tours Management
             'admin/tours' => function() use ($method) {
                 return self::handleAdminTours();
             },
             
-            // Advanced Admin User Management
             'admin/users' => function() use ($method) {
                 return self::handleAdminUsers();
             },
             
-            // Advanced Admin Booking Management
             'admin/bookings' => function() use ($method) {
                 return self::handleAdminBookings();
             },
             
-            // Advanced Admin Dashboard
             'admin/dashboard' => function() use ($method) {
                 return self::handleAdminDashboard();
             },
             
-            // Advanced Admin Analytics
             'admin/analytics' => function() use ($method) {
                 return self::handleAdminAnalytics();
             },
             
-            // Public Tours (for frontend)
             'tours' => function() use ($method) {
                 switch ($method) {
                     case 'GET':
@@ -158,7 +130,6 @@ class MiddlewareManager {
                 }
             },
             
-            // Public Bookings (for frontend)
             'bookings' => function() use ($method) {
                 switch ($method) {
                     case 'GET':
@@ -170,7 +141,6 @@ class MiddlewareManager {
                 }
             },
             
-            // User management (basic)
             'users' => function() use ($method) {
                 switch ($method) {
                     case 'GET':
@@ -182,7 +152,6 @@ class MiddlewareManager {
                 }
             },
             
-            // Dashboard stats (basic)
             'dashboard/stats' => function() use ($method) {
                 if ($method === 'GET') {
                     return self::handleDashboardStats();
@@ -190,7 +159,6 @@ class MiddlewareManager {
                 return self::methodNotAllowed();
             },
             
-            // Analytics (basic)
             'analytics' => function() use ($method) {
                 if ($method === 'GET') {
                     return self::handleAnalytics();
@@ -198,7 +166,6 @@ class MiddlewareManager {
                 return self::methodNotAllowed();
             },
             
-            // Customers endpoints
             'customers' => function() use ($method) {
                 switch ($method) {
                     case 'GET':
@@ -210,7 +177,6 @@ class MiddlewareManager {
                 }
             },
             
-            // Itineraries endpoints
             'itineraries' => function() use ($method) {
                 switch ($method) {
                     case 'GET':
@@ -222,7 +188,6 @@ class MiddlewareManager {
                 }
             },
             
-            // Payments endpoints
             'payments' => function() use ($method) {
                 switch ($method) {
                     case 'GET':
@@ -235,7 +200,6 @@ class MiddlewareManager {
             }
         ];
         
-        // Execute route handler
         if (isset($routes[$endpoint])) {
             try {
                 return $routes[$endpoint]();
@@ -246,10 +210,7 @@ class MiddlewareManager {
         
         return self::notFoundResponse();
     }
-    
-    /**
-     * Authentication handlers
-     */
+
     private static function handleAuthLogin() {
         $input = RequestResponseMiddleware::getJsonInput();
         
@@ -257,10 +218,8 @@ class MiddlewareManager {
             return self::errorResponse('Email and password are required', 400);
         }
         
-        // Include the auth API
         require_once __DIR__ . '/../api/auth.php';
         
-        // Simulate API call
         $_POST = $input;
         ob_start();
         include __DIR__ . '/../api/auth.php';
@@ -274,22 +233,17 @@ class MiddlewareManager {
     }
     
     private static function handleAuthVerify() {
-        // Verify JWT token from headers
         $headers = getallheaders();
         $token = $headers['Authorization'] ?? '';
         
         if (strpos($token, 'Bearer ') === 0) {
             $token = substr($token, 7);
-            // Add JWT verification logic here
             return ['success' => true, 'valid' => true];
         }
         
         return ['success' => false, 'valid' => false];
     }
-    
-    /**
-     * Tours handlers
-     */
+
     private static function handleGetTours() {
         require_once __DIR__ . '/../api/tours.php';
         
@@ -316,10 +270,7 @@ class MiddlewareManager {
         
         return json_decode($output, true) ?: ['success' => false];
     }
-    
-    /**
-     * Users handlers
-     */
+
     private static function handleGetUsers() {
         require_once __DIR__ . '/../api/users.php';
         
@@ -347,9 +298,7 @@ class MiddlewareManager {
         return json_decode($output, true) ?: ['success' => false];
     }
     
-    /**
-     * Bookings handlers
-     */
+
     private static function handleGetBookings() {
         require_once __DIR__ . '/../api/bookings.php';
         
@@ -376,10 +325,7 @@ class MiddlewareManager {
         
         return json_decode($output, true) ?: ['success' => false];
     }
-    
-    /**
-     * Dashboard handlers
-     */
+
     private static function handleDashboardStats() {
         require_once __DIR__ . '/../api/dashboard.php';
         
@@ -389,10 +335,7 @@ class MiddlewareManager {
         
         return json_decode($output, true) ?: [];
     }
-    
-    /**
-     * Analytics handlers
-     */
+
     private static function handleAnalytics() {
         require_once __DIR__ . '/../api/analytics.php';
         
@@ -402,10 +345,7 @@ class MiddlewareManager {
         
         return json_decode($output, true) ?: [];
     }
-    
-    /**
-     * Customers handlers
-     */
+
     private static function handleGetCustomers() {
         require_once __DIR__ . '/../api/customers.php';
         
@@ -432,10 +372,7 @@ class MiddlewareManager {
         
         return json_decode($output, true) ?: ['success' => false];
     }
-    
-    /**
-     * Itineraries handlers
-     */
+
     private static function handleGetItineraries() {
         require_once __DIR__ . '/../api/itineraries.php';
         
@@ -463,13 +400,10 @@ class MiddlewareManager {
         return json_decode($output, true) ?: ['success' => false];
     }
     
-    /**
-     * Admin API handlers using the new comprehensive APIs
-     */
+
     private static function handleAdminTours() {
         require_once __DIR__ . '/../api/admin_tours.php';
         
-        // Capture output from the admin tours API
         ob_start();
         $api = new AdminToursAPI();
         $api->handleRequest();
@@ -522,9 +456,7 @@ class MiddlewareManager {
         return json_decode($output, true) ?: ['success' => false, 'message' => 'Admin analytics API error'];
     }
     
-    /**
-     * Payments handlers
-     */
+
     private static function handleGetPayments() {
         require_once __DIR__ . '/../api/payments.php';
         
@@ -551,10 +483,6 @@ class MiddlewareManager {
         
         return json_decode($output, true) ?: ['success' => false];
     }
-    
-    /**
-     * Helper methods
-     */
     private static function methodNotAllowed() {
         http_response_code(405);
         return [
@@ -581,10 +509,7 @@ class MiddlewareManager {
             'error_code' => 'ERROR_' . $code
         ];
     }
-    
-    /**
-     * Send JSON response
-     */
+ 
     public static function sendResponse($data) {
         header('Content-Type: application/json');
         echo json_encode($data, JSON_PRETTY_PRINT);

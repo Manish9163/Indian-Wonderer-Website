@@ -32,7 +32,6 @@ type UserProfileProps = {
 const UserProfile: React.FC<UserProfileProps> = ({ darkMode, userDetails, onUpdateProfile, onClose }) => {
   const [isEditing, setIsEditing] = useState(false);
   
-  // Initialize profileData with userDetails, merging with default values
   const initializeProfileData = (): UserProfileData => {
     const defaultData: UserProfileData = {
       firstName: null,
@@ -51,11 +50,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ darkMode, userDetails, onUpda
     
     if (!userDetails) return defaultData;
     
-    // Merge userDetails with defaults, keeping non-null values from userDetails
     return {
       ...defaultData,
       ...userDetails,
-      // Ensure these fields are properly set from userDetails
       firstName: userDetails.firstName || defaultData.firstName,
       lastName: userDetails.lastName || defaultData.lastName,
       email: userDetails.email || defaultData.email,
@@ -68,26 +65,17 @@ const UserProfile: React.FC<UserProfileProps> = ({ darkMode, userDetails, onUpda
   const [showAvatarSelector, setShowAvatarSelector] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Debug: Log userDetails when component mounts
-  useEffect(() => {
-    console.log('UserProfile mounted with userDetails:', userDetails);
-    console.log('Initial profileData:', profileData);
-  }, []);
 
-  // Sync previewPhoto with profileData changes
   useEffect(() => {
     setPreviewPhoto(profileData.profilePhoto || '');
   }, [profileData.profilePhoto]);
 
-  // Sync profileData with userDetails prop changes
   useEffect(() => {
     if (userDetails) {
-      console.log('Syncing profileData with updated userDetails:', userDetails);
       setProfileData(initializeProfileData());
     }
   }, [userDetails]);
 
-  // Initialize avatar SVG if not present
   useEffect(() => {
     if (profileData.avatar && !profileData.avatarSvg) {
       setProfileData(prev => ({
@@ -97,8 +85,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ darkMode, userDetails, onUpda
     }
   }, [profileData.avatar]);
 
-  // Predefined avatar options
   const avatarOptions = [
+    // Travel & Adventure
     { name: 'Explorer', seed: 'explorer' },
     { name: 'Adventurer', seed: 'adventurer' },
     { name: 'Traveler', seed: 'traveler' },
@@ -106,18 +94,108 @@ const UserProfile: React.FC<UserProfileProps> = ({ darkMode, userDetails, onUpda
     { name: 'Nomad', seed: 'nomad' },
     { name: 'Tourist', seed: 'tourist' },
     { name: 'Backpacker', seed: 'backpacker' },
-    { name: 'Journey', seed: 'journey' },
-    { name: 'Discovery', seed: 'discovery' },
-    { name: 'Adventure', seed: 'adventure' },
+    { name: 'Pilgrim', seed: 'pilgrim' },
+    { name: 'Voyager', seed: 'voyager' },
+    { name: 'Navigator', seed: 'navigator' },
+    
+    // Nature & Landscapes
     { name: 'Mountain', seed: 'mountain' },
     { name: 'Ocean', seed: 'ocean' },
     { name: 'Forest', seed: 'forest' },
     { name: 'Desert', seed: 'desert' },
     { name: 'Valley', seed: 'valley' },
-    { name: 'Sunrise', seed: 'sunrise' }
+    { name: 'Sunrise', seed: 'sunrise' },
+    { name: 'Sunset', seed: 'sunset' },
+    { name: 'River', seed: 'river' },
+    { name: 'Lake', seed: 'lake' },
+    { name: 'Waterfall', seed: 'waterfall' },
+    { name: 'Canyon', seed: 'canyon' },
+    { name: 'Beach', seed: 'beach' },
+    { name: 'Island', seed: 'island' },
+    { name: 'Jungle', seed: 'jungle' },
+    { name: 'Rainforest', seed: 'rainforest' },
+    
+    // Journey & Discovery
+    { name: 'Journey', seed: 'journey' },
+    { name: 'Discovery', seed: 'discovery' },
+    { name: 'Adventure', seed: 'adventure' },
+    { name: 'Quest', seed: 'quest' },
+    { name: 'Expedition', seed: 'expedition' },
+    { name: 'Safari', seed: 'safari' },
+    { name: 'Trek', seed: 'trek' },
+    { name: 'Cruise', seed: 'cruise' },
+    { name: 'Roadtrip', seed: 'roadtrip' },
+    
+    // Animals & Wildlife
+    { name: 'Eagle', seed: 'eagle' },
+    { name: 'Tiger', seed: 'tiger' },
+    { name: 'Lion', seed: 'lion' },
+    { name: 'Elephant', seed: 'elephant' },
+    { name: 'Dolphin', seed: 'dolphin' },
+    { name: 'Panda', seed: 'panda' },
+    { name: 'Wolf', seed: 'wolf' },
+    { name: 'Bear', seed: 'bear' },
+    { name: 'Fox', seed: 'fox' },
+    { name: 'Deer', seed: 'deer' },
+    
+    // Cultural & Historical
+    { name: 'Taj Mahal', seed: 'tajmahal' },
+    { name: 'Rajasthan', seed: 'rajasthan' },
+    { name: 'Kerala', seed: 'kerala' },
+    { name: 'Goa', seed: 'goa' },
+    { name: 'Himalayas', seed: 'himalayas' },
+    { name: 'Mumbai', seed: 'mumbai' },
+    { name: 'Delhi', seed: 'delhi' },
+    { name: 'Jaipur', seed: 'jaipur' },
+    { name: 'Varanasi', seed: 'varanasi' },
+    { name: 'Kashmir', seed: 'kashmir' },
+    
+    // Seasons & Weather
+    { name: 'Spring', seed: 'spring' },
+    { name: 'Summer', seed: 'summer' },
+    { name: 'Autumn', seed: 'autumn' },
+    { name: 'Winter', seed: 'winter' },
+    { name: 'Monsoon', seed: 'monsoon' },
+    { name: 'Rainbow', seed: 'rainbow' },
+    { name: 'Thunder', seed: 'thunder' },
+    { name: 'Breeze', seed: 'breeze' },
+    
+    // Activities
+    { name: 'Hiking', seed: 'hiking' },
+    { name: 'Camping', seed: 'camping' },
+    { name: 'Swimming', seed: 'swimming' },
+    { name: 'Skiing', seed: 'skiing' },
+    { name: 'Surfing', seed: 'surfing' },
+    { name: 'Climbing', seed: 'climbing' },
+    { name: 'Diving', seed: 'diving' },
+    { name: 'Kayaking', seed: 'kayaking' },
+    
+    // Cosmic & Sky
+    { name: 'Star', seed: 'star' },
+    { name: 'Moon', seed: 'moon' },
+    { name: 'Sky', seed: 'sky' },
+    { name: 'Cloud', seed: 'cloud' },
+    { name: 'Aurora', seed: 'aurora' },
+    { name: 'Comet', seed: 'comet' },
+    
+    // Mythical & Fantasy
+    { name: 'Phoenix', seed: 'phoenix' },
+    { name: 'Dragon', seed: 'dragon' },
+    { name: 'Unicorn', seed: 'unicorn' },
+    { name: 'Pegasus', seed: 'pegasus' },
+    { name: 'Griffin', seed: 'griffin' },
+    
+    // Colors & Vibes
+    { name: 'Amber', seed: 'amber' },
+    { name: 'Azure', seed: 'azure' },
+    { name: 'Crimson', seed: 'crimson' },
+    { name: 'Emerald', seed: 'emerald' },
+    { name: 'Golden', seed: 'golden' },
+    { name: 'Indigo', seed: 'indigo' },
+    { name: 'Violet', seed: 'violet' },
+    { name: 'Coral', seed: 'coral' }
   ];
 
-  // Avatar functions
   const getAvatarSvg = (seed: string) => avatars.createAvatar(style, { seed });
 
   const handleAvatarChange = (newSeed: string) => {
@@ -129,7 +207,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ darkMode, userDetails, onUpda
     }));
   };
 
-  // Database functions
   const saveToDatabase = async (data: UserProfileData) => {
     try {
       const response = await fetch('/api/user/profile', {
@@ -147,7 +224,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ darkMode, userDetails, onUpda
       return await response.json();
     } catch (error) {
       console.error('Database save error:', error);
-      // Fallback to localStorage
       localStorage.setItem('userProfile', JSON.stringify(data));
       return data;
     }
@@ -199,7 +275,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ darkMode, userDetails, onUpda
 
   const handleSave = async () => {
     try {
-      // Ensure avatarSvg is up to date with the current avatar
       const updatedProfileData = {
         ...profileData,
         avatarSvg: profileData.avatar ? getAvatarSvg(profileData.avatar) : profileData.avatarSvg
@@ -223,7 +298,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ darkMode, userDetails, onUpda
       <div className={`max-w-4xl w-full max-h-screen overflow-y-auto rounded-xl shadow-2xl ${
         darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
       }`}>
-        {/* Header */}
         <div className={`sticky top-0 z-10 px-6 py-4 border-b ${
           darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
         } flex justify-between items-center`}>
@@ -240,7 +314,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ darkMode, userDetails, onUpda
         </div>
 
         <div className="p-6 space-y-8">
-          {/* Profile Photo/Avatar Section */}
           <div className="flex flex-col items-center space-y-4">
             <div className="relative">
               <div className={`w-32 h-32 rounded-full overflow-hidden border-4 ${
@@ -279,7 +352,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ darkMode, userDetails, onUpda
               )}
             </div>
             
-            {/* Avatar Selector */}
             {isEditing && showAvatarSelector && (
               <div className="w-full max-w-md">
                 <div className="flex items-center gap-4 mb-3">
@@ -351,7 +423,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ darkMode, userDetails, onUpda
             )}
           </div>
 
-          {/* Personal Information */}
           <div className="space-y-6">
             <h3 className="text-xl font-semibold border-b pb-2">Personal Information</h3>
             
@@ -502,7 +573,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ darkMode, userDetails, onUpda
             </div>
           </div>
 
-          {/* Travel Preferences */}
           <div className="space-y-4">
             <h3 className="text-xl font-semibold border-b pb-2">Travel Preferences</h3>
             {isEditing ? (
@@ -545,7 +615,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ darkMode, userDetails, onUpda
             )}
           </div>
 
-          {/* Emergency Contact */}
           <div className="space-y-4">
             <h3 className="text-xl font-semibold border-b pb-2">Emergency Contact</h3>
             <div className="grid md:grid-cols-3 gap-4">
@@ -613,7 +682,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ darkMode, userDetails, onUpda
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex justify-end space-x-3 pt-6 border-t">
             {isEditing ? (
               <>

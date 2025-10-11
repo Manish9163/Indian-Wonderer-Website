@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Toast from '../components/Toast';
 import ConfirmModal from '../components/ConfirmModal';
-import LocationSharing from '../components/LocationSharing';
 
 interface Guide {
   id: number;
@@ -123,7 +122,7 @@ export default function DashboardPage() {
   };
 
   const handleStartTour = async (booking: Booking) => {
-    const isStarted = tourStatuses[booking.booking_id]?.started;
+    const isStarted = tourStatuses[booking.booking_id]?.started || booking.assignment_status === 'in_progress';
     
     if (isStarted) {
       // End/Complete Tour
@@ -132,22 +131,55 @@ export default function DashboardPage() {
         title: 'Complete Tour?',
         message: `Complete tour for ${booking.customer_name}?\n\nTour: ${booking.tour_name}\n\nThis will mark the tour as completed and process your payment.`,
         type: 'success',
-        onConfirm: () => {
-          // Remove from active tours
-          const newStatuses = {...tourStatuses};
-          delete newStatuses[booking.booking_id];
-          setTourStatuses(newStatuses);
-          localStorage.setItem('tourStatuses', JSON.stringify(newStatuses));
-          
+        onConfirm: async () => {
           setConfirmModal({...confirmModal, isOpen: false});
-          setToast({
-            message: '✅ Tour completed successfully!\n\n💰 Your earnings will be processed within 24 hours.\n📧 Customer will receive a feedback request.',
-            type: 'success'
-          });
+          setLoading(true);
           
-          // Refresh bookings
-          if (guide) {
-            setTimeout(() => fetchBookings(guide.id), 500);
+          try {
+            // Call API to complete tour
+            const response = await fetch(
+              `http://localhost/fu/backend/api/tour_management.php?action=complete`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  booking_id: booking.booking_id,
+                  guide_id: guide?.id
+                })
+              }
+            );
+            
+            const data = await response.json();
+            
+            if (data.success) {
+              // Remove from local storage
+              const newStatuses = {...tourStatuses};
+              delete newStatuses[booking.booking_id];
+              setTourStatuses(newStatuses);
+              localStorage.setItem('tourStatuses', JSON.stringify(newStatuses));
+              
+              setToast({
+                message: `✅ Tour completed successfully!\n\n💰 Earning: ₹${data.data.earning_amount.toFixed(2)}\n📧 Customer will receive feedback request`,
+                type: 'success'
+              });
+              
+              // Refresh bookings (tour will disappear)
+              if (guide) {
+                setTimeout(() => fetchBookings(guide.id), 500);
+              }
+            } else {
+              setToast({
+                message: `❌ Failed to complete tour: ${data.message}`,
+                type: 'error'
+              });
+            }
+          } catch (error) {
+            setToast({
+              message: '❌ Error completing tour. Please try again.',
+              type: 'error'
+            });
+          } finally {
+            setLoading(false);
           }
         }
       });
@@ -158,23 +190,62 @@ export default function DashboardPage() {
         title: 'Start Tour?',
         message: `Start tour for ${booking.customer_name}?\n\nTour: ${booking.tour_name}\nDestination: ${booking.destination}\nTravelers: ${booking.number_of_travelers}\n\nReady to begin?`,
         type: 'info',
-        onConfirm: () => {
-          const startTime = new Date().toISOString();
-          const newStatuses = {
-            ...tourStatuses,
-            [booking.booking_id]: {
-              started: true,
-              startTime: startTime
-            }
-          };
-          setTourStatuses(newStatuses);
-          localStorage.setItem('tourStatuses', JSON.stringify(newStatuses));
-          
+        onConfirm: async () => {
           setConfirmModal({...confirmModal, isOpen: false});
-          setToast({
-            message: '🚀 Tour started successfully!\n\n✓ Status updated to "In Progress"\n✓ Customer has been notified\n✓ GPS tracking enabled',
-            type: 'success'
-          });
+          setLoading(true);
+          
+          try {
+            // Call API to start tour
+            const response = await fetch(
+              `http://localhost/fu/backend/api/tour_management.php?action=start`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  booking_id: booking.booking_id,
+                  guide_id: guide?.id
+                })
+              }
+            );
+            
+            const data = await response.json();
+            
+            if (data.success) {
+              // Update local storage
+              const startTime = new Date().toISOString();
+              const newStatuses = {
+                ...tourStatuses,
+                [booking.booking_id]: {
+                  started: true,
+                  startTime: startTime
+                }
+              };
+              setTourStatuses(newStatuses);
+              localStorage.setItem('tourStatuses', JSON.stringify(newStatuses));
+              
+              setToast({
+                message: '🚀 Tour started successfully!\n\n✓ Status: In Progress\n✓ Customer notified\n✓ GPS tracking active',
+                type: 'success'
+              });
+              
+              // Refresh bookings
+              if (guide) {
+                setTimeout(() => fetchBookings(guide.id), 500);
+              }
+            } else {
+              setToast({
+                message: `❌ Failed to start tour: ${data.message}`,
+                type: 'error'
+              });
+            }
+          } catch (error) {
+            setToast({
+              message: '❌ Error starting tour. Please try again.',
+              type: 'error'
+            });
+          } finally {
+            setLoading(false);
+          }
         }
       });
     }
@@ -409,21 +480,6 @@ export default function DashboardPage() {
                         )}
                       </div>
                     </div>
-
-                    {/* Live Location Sharing - Shows when tour is started */}
-                    {isTourStarted && (
-                      <div className="mt-4 pt-4 border-t border-gray-200">
-                        <LocationSharing
-                          bookingId={booking.booking_id}
-                          guideId={guide!.id}
-                          tourName={booking.tour_name}
-                          isActive={true}
-                          onLocationUpdate={(location) => {
-                            console.log('📍 Location updated:', location);
-                          }}
-                        />
-                      </div>
-                    )}
                 </div>
               </div>
             </div>

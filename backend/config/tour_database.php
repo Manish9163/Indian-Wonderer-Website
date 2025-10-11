@@ -1,6 +1,4 @@
 <?php
-// Database Configuration for Tour System
-// Secure database connection settings
 
 class Database {
     private $host = 'localhost';
@@ -27,7 +25,6 @@ class Database {
     }
 }
 
-// Database utility functions
 class DatabaseUtil {
     private $db;
     
@@ -40,7 +37,6 @@ class DatabaseUtil {
         return $this->db;
     }
     
-    // Secure query execution with prepared statements
     public function executeQuery($sql, $params = []) {
         try {
             $stmt = $this->db->prepare($sql);
@@ -53,31 +49,26 @@ class DatabaseUtil {
         }
     }
     
-    // Get single record
     public function fetchOne($sql, $params = []) {
         $stmt = $this->executeQuery($sql, $params);
         return $stmt->fetch();
     }
     
-    // Get multiple records
     public function fetchAll($sql, $params = []) {
         $stmt = $this->executeQuery($sql, $params);
         return $stmt->fetchAll();
     }
     
-    // Insert record and return ID
     public function insert($sql, $params = []) {
         $this->executeQuery($sql, $params);
         return $this->db->lastInsertId();
     }
     
-    // Update/Delete and return affected rows
     public function execute($sql, $params = []) {
         $stmt = $this->executeQuery($sql, $params);
         return $stmt->rowCount();
     }
 }
 
-// Global database instance
 $database = new DatabaseUtil();
 ?>

@@ -25,9 +25,14 @@ const TourCard: React.FC<TourCardProps> = ({ tour, darkMode, onBookTour }) => {
       <div className="relative">
         <div className="relative overflow-hidden rounded-t-3xl">
           <img 
-            src={tour.image_url || tour.image || '/default-tour-image.jpg'} 
+            src={tour.image_url || tour.image || '/goa.avif'} 
             alt={tour.title} 
-            className={`w-full h-48 object-cover transition-all duration-700 ${isHovered ? 'scale-110' : 'scale-100'}`} 
+            className={`w-full h-48 object-cover transition-all duration-700 ${isHovered ? 'scale-110' : 'scale-100'}`}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.onerror = null; // Prevent infinite loop
+              target.src = '/goa.avif'; // Fallback to existing image
+            }}
           />
           
           {/* Gradient overlay */}

@@ -418,7 +418,7 @@ export class PaymentsComponent implements OnInit, OnDestroy {
       // Check if it's a bank refund or gift card
       if (refund.refund_id && refund.refund_method === 'bank') {
         // Process bank refund
-        const refundAmount = refund.refund_amount || refund.amount || 0;
+        const refundAmount = parseFloat(refund.refund_amount || refund.amount || 0);
         const confirmed = confirm(`Process refund of ₹${refundAmount.toFixed(2)} for ${refund.first_name} ${refund.last_name}?\n\nBooking: ${refund.booking_reference}\nMethod: Bank Transfer\n\nThis will mark the refund as completed and notify the customer.`);
         
         if (confirmed) {
@@ -456,7 +456,8 @@ export class PaymentsComponent implements OnInit, OnDestroy {
         }
       } else if (refund.giftcard_id || refund.refund_method === 'giftcard') {
         // Process gift card activation
-        const confirmed = confirm(`Activate gift card for ${refund.first_name} ${refund.last_name}?\n\nBooking: ${refund.booking_reference}\nAmount: ₹${refund.refund_amount || refund.giftcard_amount}\n\nThis will send a reminder email with the gift card details.`);
+        const giftcardAmount = parseFloat(refund.refund_amount || refund.giftcard_amount || 0);
+        const confirmed = confirm(`Activate gift card for ${refund.first_name} ${refund.last_name}?\n\nBooking: ${refund.booking_reference}\nAmount: ₹${giftcardAmount.toFixed(2)}\n\nThis will send a reminder email with the gift card details.`);
         
         if (confirmed) {
           const giftcardId = refund.giftcard_id || null;
@@ -466,7 +467,8 @@ export class PaymentsComponent implements OnInit, OnDestroy {
             next: (response: any) => {
               if (response.success) {
                 const giftcard = response.data.giftcard;
-                alert(`✅ Gift Card Activated Successfully!\n\nCode: ${giftcard.code}\nAmount: ₹${giftcard.amount}\n\nThe customer has been notified via email with instructions on how to use the gift card.`);
+                const amount = parseFloat(giftcard.amount || 0);
+                alert(`✅ Gift Card Activated Successfully!\n\nCode: ${giftcard.code}\nAmount: ₹${amount.toFixed(2)}\n\nThe customer has been notified via email with instructions on how to use the gift card.`);
                 
                 // Immediate refresh for live monitoring
                 console.log('🔄 Triggering immediate data refresh after gift card activation...');

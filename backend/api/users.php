@@ -1,12 +1,7 @@
 <?php
-/**
- * Users API - Admin Panel
- * Manages users, guides approval, and user operations
- */
 
 session_start();
 
-// Handle CORS for React frontend and Angular admin panel
 $allowed_origins = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
@@ -26,7 +21,6 @@ header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 header("Access-Control-Allow-Credentials: true");
 
-// Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
@@ -36,12 +30,10 @@ require_once '../config/database.php';
 $database = new Database();
 $db = $database->getConnection();
 
-// Get request method and action
 $method = $_SERVER['REQUEST_METHOD'];
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 $user_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
-// Verify admin authentication for most actions
 if (in_array($action, ['all', 'guides', 'pending-guides', 'approve-guide', 'reject-guide', 'stats'])) {
     if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
         http_response_code(403);
@@ -192,7 +184,6 @@ function getAllGuides($db) {
         $stmt->execute();
         $guides = $stmt->fetchAll();
         
-        // Parse JSON fields
         foreach ($guides as &$guide) {
             $guide['specialties'] = $guide['specialties'] ? json_decode($guide['specialties']) : [];
             $guide['languages'] = $guide['languages'] ? json_decode($guide['languages']) : [];
@@ -223,7 +214,6 @@ function getPendingGuides($db) {
         $stmt->execute();
         $guides = $stmt->fetchAll();
         
-        // Parse JSON fields
         foreach ($guides as &$guide) {
             $guide['specialties'] = $guide['specialties'] ? json_decode($guide['specialties']) : [];
             $guide['languages'] = $guide['languages'] ? json_decode($guide['languages']) : [];
@@ -245,7 +235,6 @@ function approveGuide($db, $guide_id) {
     try {
         $db->beginTransaction();
         
-        // Update or insert guide record
         $query = "INSERT INTO guides (user_id, status, approved_at) 
                   VALUES (?, 'approved', NOW()) 
                   ON DUPLICATE KEY UPDATE 
@@ -254,7 +243,6 @@ function approveGuide($db, $guide_id) {
         $stmt = $db->prepare($query);
         $stmt->execute([$guide_id]);
         
-        // Log the activity
         logActivity($db, null, 'APPROVE_GUIDE', 'guides', $guide_id, null, ['status' => 'approved']);
         
         $db->commit();
@@ -276,7 +264,6 @@ function rejectGuide($db, $guide_id, $data) {
         
         $db->beginTransaction();
         
-        // Update or insert guide record
         $query = "INSERT INTO guides (user_id, status, rejection_reason, rejected_at) 
                   VALUES (?, 'rejected', ?, NOW()) 
                   ON DUPLICATE KEY UPDATE 
@@ -285,7 +272,6 @@ function rejectGuide($db, $guide_id, $data) {
         $stmt = $db->prepare($query);
         $stmt->execute([$guide_id, $reason, $reason]);
         
-        // Log the activity
         logActivity($db, null, 'REJECT_GUIDE', 'guides', $guide_id, null, ['status' => 'rejected', 'reason' => $reason]);
         
         $db->commit();
@@ -312,7 +298,6 @@ function createUser($db, $data) {
             }
         }
         
-        // Check if email already exists
         $query = "SELECT id FROM users WHERE email = ?";
         $stmt = $db->prepare($query);
         $stmt->execute([$data['email']]);
@@ -322,7 +307,6 @@ function createUser($db, $data) {
             return;
         }
         
-        // Hash password
         $hashed_password = password_hash($data['password'], PASSWORD_DEFAULT);
         
         $query = "INSERT INTO users (username, email, password, first_name, last_name, phone, role, profile_image, is_active) 
@@ -421,7 +405,6 @@ function getUserStats($db) {
     try {
         $stats = [];
         
-        // Total users by role
         $query = "SELECT role, COUNT(*) as count FROM users GROUP BY role";
         $stmt = $db->prepare($query);
         $stmt->execute();
@@ -432,7 +415,6 @@ function getUserStats($db) {
             $stats['by_role'][$stat['role']] = $stat['count'];
         }
         
-        // Pending guides
         $query = "SELECT COUNT(*) as count FROM users u 
                   LEFT JOIN guides g ON u.id = g.user_id 
                   WHERE u.role = 'guide' AND (g.status = 'pending' OR g.status IS NULL)";
@@ -440,7 +422,6 @@ function getUserStats($db) {
         $stmt->execute();
         $stats['pending_guides'] = $stmt->fetch()['count'];
         
-        // Recent registrations
         $query = "SELECT COUNT(*) as count FROM users WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
         $stmt = $db->prepare($query);
         $stmt->execute();

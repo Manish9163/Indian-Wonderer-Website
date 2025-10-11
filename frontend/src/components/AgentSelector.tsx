@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Star, MapPin, Phone, Mail, Award, Languages, Calendar, Shuffle, Heart, Zap, Globe, Camera, Clock, CheckCircle } from 'lucide-react';
+import { User, Star, MapPin, Award, Languages, Shuffle, Heart, Zap, Clock, CheckCircle } from 'lucide-react';
 import apiService from '../services/api.service';
 
 interface Agent {
@@ -47,124 +47,7 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
   const [isAnimating, setIsAnimating] = useState(false);
   const [showSelectionToast, setShowSelectionToast] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Fallback mock agent data (will be replaced with database data)
-  const fallbackAgentData: Agent[] = [
-    {
-      id: 1,
-      name: "Raj Kumar",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-      specialization: ["Cultural Tours", "Historical Sites", "Photography"],
-      languages: ["Hindi", "English", "Punjabi"],
-      experience: 8,
-      rating: 4.9,
-      reviews: 247,
-      location: "Delhi, India",
-      phone: "+91 98765 43210",
-      email: "raj.kumar@indianwonderer.com",
-      bio: "Passionate about Indian history and culture. Specialized in Golden Triangle tours with deep knowledge of Mughal architecture.",
-      availability: ["Mon", "Tue", "Wed", "Thu", "Fri"],
-      badges: ["Expert Guide", "Photography Expert", "Heritage Specialist"],
-      profileColor: "from-purple-500 to-pink-500",
-      isOnline: true,
-      responseTime: "< 5 min"
-    },
-    {
-      id: 2,
-      name: "Priya Sharma",
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b5c5?w=150&h=150&fit=crop&crop=face",
-      specialization: ["Adventure Tours", "Trekking", "Mountain Expeditions"],
-      languages: ["Hindi", "English", "German"],
-      experience: 6,
-      rating: 4.8,
-      reviews: 189,
-      location: "Shimla, Himachal Pradesh",
-      phone: "+91 87654 32109",
-      email: "priya.sharma@indianwonderer.com",
-      bio: "Adventure enthusiast with expertise in Himalayan treks. Certified mountaineering guide with safety-first approach.",
-      availability: ["All Days"],
-      badges: ["Adventure Expert", "Safety Certified", "Mountain Guide"],
-      profileColor: "from-blue-500 to-teal-500",
-      isOnline: true,
-      responseTime: "< 10 min"
-    },
-    {
-      id: 3,
-      name: "Arjun Reddy",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-      specialization: ["Beach Tours", "Water Sports", "Local Cuisine"],
-      languages: ["Tamil", "English", "Telugu"],
-      experience: 5,
-      rating: 4.7,
-      reviews: 156,
-      location: "Goa, India",
-      phone: "+91 76543 21098",
-      email: "arjun.reddy@indianwonderer.com",
-      bio: "Beach expert and food enthusiast. Knows the best hidden beaches and authentic local restaurants in Goa.",
-      availability: ["Fri", "Sat", "Sun", "Mon"],
-      badges: ["Beach Expert", "Food Guide", "Local Insider"],
-      profileColor: "from-orange-500 to-red-500",
-      isOnline: false,
-      responseTime: "< 30 min"
-    },
-    {
-      id: 4,
-      name: "Meera Patel",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
-      specialization: ["Desert Safari", "Camel Rides", "Rajasthani Culture"],
-      languages: ["Hindi", "English", "Gujarati", "Rajasthani"],
-      experience: 10,
-      rating: 4.9,
-      reviews: 312,
-      location: "Jaisalmer, Rajasthan",
-      phone: "+91 65432 10987",
-      email: "meera.patel@indianwonderer.com",
-      bio: "Born and raised in the Thar Desert. Expert in desert navigation and Rajasthani folk traditions.",
-      availability: ["All Days"],
-      badges: ["Desert Expert", "Cultural Ambassador", "Senior Guide"],
-      profileColor: "from-yellow-500 to-orange-600",
-      isOnline: true,
-      responseTime: "< 3 min"
-    },
-    {
-      id: 5,
-      name: "Vikram Singh",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
-      specialization: ["Wildlife Safari", "Bird Watching", "Nature Photography"],
-      languages: ["Hindi", "English", "Punjabi"],
-      experience: 7,
-      rating: 4.8,
-      reviews: 203,
-      location: "Jim Corbett, Uttarakhand",
-      phone: "+91 54321 09876",
-      email: "vikram.singh@indianwonderer.com",
-      bio: "Wildlife photographer turned guide. Excellent at spotting tigers and teaching photography techniques.",
-      availability: ["Wed", "Thu", "Fri", "Sat", "Sun"],
-      badges: ["Wildlife Expert", "Photography Pro", "Nature Specialist"],
-      profileColor: "from-green-500 to-emerald-600",
-      isOnline: true,
-      responseTime: "< 15 min"
-    },
-    {
-      id: 6,
-      name: "Kavya Nair",
-      avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face",
-      specialization: ["Backwater Tours", "Ayurveda", "Traditional Arts"],
-      languages: ["Malayalam", "English", "Tamil"],
-      experience: 4,
-      rating: 4.6,
-      reviews: 98,
-      location: "Kochi, Kerala",
-      phone: "+91 43210 98765",
-      email: "kavya.nair@indianwonderer.com",
-      bio: "Kerala native with deep knowledge of backwaters, spices, and traditional Kerala arts like Kathakali.",
-      availability: ["Mon", "Tue", "Wed", "Thu"],
-      badges: ["Backwater Guide", "Ayurveda Expert", "Arts Specialist"],
-      profileColor: "from-emerald-500 to-teal-600",
-      isOnline: false,
-      responseTime: "< 1 hour"
-    }
-  ];
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadGuides();
@@ -173,14 +56,14 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
   const loadGuides = async () => {
     try {
       setIsLoading(true);
+      setError(null);
       const response = await apiService.get('guides.php?status=available');
       
-      if (response.success && response.data) {
-        // Transform database guides to match Agent interface
+      if (response.success && response.data && response.data.length > 0) {
         const transformedGuides = response.data.map((guide: any, index: number) => ({
           id: guide.id,
           name: guide.full_name || `${guide.first_name || ''} ${guide.last_name || ''}`.trim() || 'Guide',
-          avatar: guide.profile_image || `https://images.unsplash.com/photo-150700321116${index % 10}-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face`,
+          avatar: guide.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(guide.full_name || 'Guide')}&size=150&background=random`,
           specialization: Array.isArray(guide.specialization) ? guide.specialization : [guide.specialization || 'Tour Guide'],
           languages: Array.isArray(guide.languages) ? guide.languages : ['English', 'Hindi'],
           experience: guide.experience_years || 5,
@@ -192,21 +75,21 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
           bio: guide.bio || 'Experienced tour guide',
           availability: Array.isArray(guide.availability) ? guide.availability : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
           badges: guide.certification ? [guide.certification] : ['Certified Guide'],
-          profileColor: ['from-purple-500 to-pink-500', 'from-blue-500 to-teal-500', 'from-orange-500 to-red-500'][index % 3],
+          profileColor: ['from-purple-500 to-pink-500', 'from-blue-500 to-teal-500', 'from-orange-500 to-red-500', 'from-green-500 to-emerald-600', 'from-yellow-500 to-orange-600'][index % 5],
           isOnline: guide.status === 'available',
           responseTime: '< 15 min',
           status: guide.status
         }));
         
-        setAgents(transformedGuides.length > 0 ? transformedGuides : fallbackAgentData);
+        setAgents(transformedGuides);
       } else {
-        // Use fallback data if API fails
-        setAgents(fallbackAgentData);
+        setAgents([]);
+        setError('No guides available at the moment');
       }
     } catch (error) {
       console.error('Error loading guides:', error);
-      // Use fallback data on error
-      setAgents(fallbackAgentData);
+      setError('Failed to load guides. Please try again.');
+      setAgents([]);
     } finally {
       setIsLoading(false);
       setIsAnimating(true);
@@ -246,7 +129,6 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
         darkMode ? 'bg-gray-900/95 text-white border-gray-700' : 'bg-white/95 text-gray-900 border-gray-200'
       } rounded-3xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl border backdrop-blur-lg glass transform transition-all duration-500 animate-slideIn`}>
         
-        {/* Compact Header with Gradient */}
         <div className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 opacity-10 animate-shimmer"></div>
           <div className="relative p-6 border-b border-gray-200/20 dark:border-gray-700/30">
@@ -279,11 +161,9 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
           </div>
         </div>
 
-        {/* Compact Filters Section */}
         <div className="p-4 border-b border-gray-200/20 dark:border-gray-700/30 bg-gradient-to-r from-blue-50/30 to-purple-50/30 dark:from-gray-800/30 dark:to-gray-700/30">
           <div className="flex flex-wrap gap-4 items-center justify-between">
             <div className="flex flex-wrap gap-3">
-              {/* Specialization Filter */}
               <div className="space-y-1">
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Specialization</label>
                 <select
@@ -303,7 +183,6 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
                 </select>
               </div>
 
-              {/* Sort Filter */}
               <div className="space-y-1">
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Sort By</label>
                 <select
@@ -319,7 +198,6 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex gap-2">
               <button
                 onClick={handleRandomSelect}
@@ -332,22 +210,59 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
           </div>
         </div>
 
-        {/* Compact Agents Grid */}
         <div className="flex-1 overflow-y-auto p-4 pb-24 min-h-0 relative">
-          {/* Scroll Indicator */}
-          {filteredAgents.length > 4 && (
-            <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-transparent to-transparent pointer-events-none z-10">
-              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-center animate-bounce">
-                <div className={`text-xs font-medium px-3 py-1 rounded-full ${
-                  darkMode ? 'bg-gray-800 text-gray-300' : 'bg-white/90 text-gray-600'
-                } shadow-lg border border-purple-200`}>
-                  ⬇ Scroll to see {filteredAgents.length} guides ⬇
-                </div>
-              </div>
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-20 space-y-4">
+              <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+              <p className={`text-lg font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                Loading expert guides...
+              </p>
             </div>
-          )}
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-max">
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-20 space-y-4">
+              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                <span className="text-3xl">⚠️</span>
+              </div>
+              <p className={`text-lg font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                {error}
+              </p>
+              <button
+                onClick={loadGuides}
+                className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-300"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : filteredAgents.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 space-y-4">
+              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                <User className="w-8 h-8 text-gray-400" />
+              </div>
+              <p className={`text-lg font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                No guides match your filters
+              </p>
+              <button
+                onClick={() => setFilterSpecialization('all')}
+                className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-300"
+              >
+                Clear Filters
+              </button>
+            </div>
+          ) : (
+            <>
+              {filteredAgents.length > 4 && (
+                <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-transparent to-transparent pointer-events-none z-10">
+                  <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-center animate-bounce">
+                    <div className={`text-xs font-medium px-3 py-1 rounded-full ${
+                      darkMode ? 'bg-gray-800 text-gray-300' : 'bg-white/90 text-gray-600'
+                    } shadow-lg border border-purple-200`}>
+                      ⬇ Scroll to see {filteredAgents.length} guides ⬇
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-max">
             {filteredAgents.map((agent, index) => (
               <div
                 key={agent.id}
@@ -357,7 +272,6 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
                   setShowSelectionToast(true);
                   setTimeout(() => setIsAnimating(false), 300);
                   setTimeout(() => setShowSelectionToast(false), 3000);
-                  // Auto-select after 1.5 seconds for better UX
                   setTimeout(() => {
                     onAgentSelect(agent);
                   }, 1500);
@@ -369,25 +283,21 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
                     : 'hover:shadow-xl hover:scale-[1.02] hover:ring-2 hover:ring-purple-300 hover:ring-offset-1'
                 }`}
               >
-                {/* Selection Indicator */}
                 {selectedAgent?.id === agent.id && (
                   <div className="absolute -top-2 -right-2 z-20 bg-green-500 text-white rounded-full p-1 shadow-lg animate-bounce-in">
                     <CheckCircle size={20} />
                   </div>
                 )}
                 
-                {/* Selection Overlay */}
                 {selectedAgent?.id === agent.id && (
                   <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl z-10 pointer-events-none animate-fadeIn" />
                 )}
-                {/* Compact Agent Card */}
                 <div className={`rounded-xl overflow-hidden ${
                   darkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-white border-gray-200'
                 } border backdrop-blur-sm glass transition-all duration-300 ${
                   selectedAgent?.id === agent.id ? 'border-purple-400' : ''
                 }`}>
                   
-                  {/* Compact Profile Header */}
                   <div className={`relative h-20 bg-gradient-to-r ${agent.profileColor} p-3`}>
                     <div className="absolute top-2 right-2 flex items-center space-x-1">
                       {agent.isOnline && (
@@ -398,7 +308,6 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
                       )}
                     </div>
                     
-                    {/* Compact Avatar */}
                     <div className="absolute -bottom-6 left-3">
                       <div className="relative">
                         <img
@@ -420,7 +329,6 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
                     </div>
                   </div>
 
-                  {/* Compact Agent Info */}
                   <div className="pt-8 p-3 space-y-2">
                     <div>
                       <div className="flex items-center justify-between">
@@ -447,7 +355,6 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
                       )}
                     </div>
 
-                    {/* Compact Specializations */}
                     <div className="flex flex-wrap gap-1">
                       {(Array.isArray(agent.specialization) ? agent.specialization : [agent.specialization]).slice(0, 1).map((spec: string, index: number) => (
                         <span
@@ -468,7 +375,6 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
                       )}
                     </div>
 
-                    {/* Compact Stats - NO PRICE DISPLAY */}
                     <div className="flex items-center space-x-3 text-xs">
                       <div className="flex items-center space-x-1">
                         <Award className="w-3 h-3 text-blue-500" />
@@ -480,7 +386,6 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
                       </div>
                     </div>
 
-                    {/* Compact Badge */}
                     <div className="flex items-center space-x-1">
                       <CheckCircle className="w-3 h-3 text-green-500" />
                       <span className="text-xs text-green-600 dark:text-green-400 font-medium">
@@ -490,7 +395,6 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
                   </div>
                 </div>
 
-                {/* Enhanced Selection Overlay */}
                 {selectedAgent?.id === agent.id && (
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-xl border-2 border-purple-400 animate-fadeIn">
                     <div className="absolute top-2 right-2 bg-purple-500 text-white rounded-full p-1.5 animate-pulse shadow-lg">
@@ -502,7 +406,6 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
                   </div>
                 )}
 
-                {/* Hover Feedback */}
                 <div className={`absolute inset-0 transition-opacity duration-300 pointer-events-none ${
                   selectedAgent?.id === agent.id ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'
                 }`}>
@@ -517,14 +420,14 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
                 </div>
               </div>
             ))}
-          </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
       
-      {/* Floating Action Buttons */}
       <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-60">
         <div className="flex space-x-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 p-4">
-          {/* Skip Button */}
           <button
             onClick={() => onAgentSelect(null)}
             className={`group px-6 py-4 rounded-xl border-2 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 ${
@@ -539,7 +442,6 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
             </div>
           </button>
           
-          {/* Continue Button */}
           <button
             onClick={() => {
               if (selectedAgent) {
@@ -571,7 +473,6 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
               )}
             </div>
             
-            {/* Loading overlay */}
             {isAnimating && selectedAgent && (
               <div className="absolute inset-0 bg-white/20 rounded-xl flex items-center justify-center">
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -581,7 +482,6 @@ const AgentSelector: React.FC<AgentSelectorProps> = ({
         </div>
       </div>
       
-      {/* Selection Confirmation Toast */}
       {showSelectionToast && selectedAgent && (
         <div className="fixed top-4 right-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-4 rounded-xl shadow-xl z-60 animate-slideIn">
           <div className="flex items-center space-x-3">

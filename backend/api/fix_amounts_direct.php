@@ -1,23 +1,17 @@
 <?php
-/**
- * Direct SQL Fix for Refund Amounts
- * This bypasses the Database class and uses direct PDO
- */
 
-// Database configuration
+
 $host = 'localhost';
 $dbname = 'indian_wonderer_base';
 $username = 'root';
 $password = '';
 
 try {
-    // Connect directly using PDO
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
     echo "=== Fixing Refund Amounts ===\n\n";
     
-    // Check current state
     echo "Step 1: Checking current refund amounts...\n";
     $stmt = $pdo->query("
         SELECT 
@@ -34,7 +28,6 @@ try {
         echo "  Refund #{$refund['id']}: Current={$refund['current_amount']}, Should be={$refund['booking_total']}\n";
     }
     
-    // Update the amounts
     echo "\nStep 2: Updating refund amounts...\n";
     $updateStmt = $pdo->prepare("
         UPDATE refunds r
@@ -47,7 +40,6 @@ try {
     
     echo "✅ Updated {$updated} refund records\n\n";
     
-    // Verify the fix
     echo "Step 3: Verifying the fix...\n";
     $stmt = $pdo->query("
         SELECT 

@@ -1,14 +1,9 @@
 <?php
-/**
- * User Model
- * Handles user authentication, registration, and profile management
- */
 
 class User {
     private $conn;
     private $table_name = "users";
     
-    // User properties
     public $id;
     public $username;
     public $email;
@@ -26,10 +21,7 @@ class User {
     public function __construct($db) {
         $this->conn = $db;
     }
-    
-    /**
-     * Register new user
-     */
+
     public function register() {
         $query = "INSERT INTO " . $this->table_name . " 
                   (username, email, password, first_name, last_name, phone, role) 
@@ -37,7 +29,6 @@ class User {
         
         $stmt = $this->conn->prepare($query);
         
-        // Hash password
         $this->password = password_hash($this->password, PASSWORD_DEFAULT);
         
         $stmt->bindParam(':username', $this->username);
@@ -55,10 +46,7 @@ class User {
         
         return false;
     }
-    
-    /**
-     * Login user
-     */
+
     public function login($email, $password) {
         $query = "SELECT id, username, email, password, first_name, last_name, role, is_active 
                   FROM " . $this->table_name . " 
@@ -85,10 +73,7 @@ class User {
         
         return false;
     }
-    
-    /**
-     * Get user by ID
-     */
+
     public function getUserById($id) {
         $query = "SELECT id, username, email, first_name, last_name, phone, role, profile_image, 
                          is_active, email_verified, created_at 
@@ -105,10 +90,7 @@ class User {
         
         return false;
     }
-    
-    /**
-     * Get all users (admin only)
-     */
+
     public function getAllUsers($role = null, $limit = 50, $offset = 0) {
         $query = "SELECT id, username, email, first_name, last_name, phone, role, 
                          is_active, email_verified, created_at 
@@ -132,10 +114,7 @@ class User {
         
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-    
-    /**
-     * Update user profile
-     */
+ 
     public function updateProfile() {
         $query = "UPDATE " . $this->table_name . " 
                   SET first_name = :first_name, last_name = :last_name, 
@@ -152,12 +131,8 @@ class User {
         
         return $stmt->execute();
     }
-    
-    /**
-     * Change password
-     */
+
     public function changePassword($current_password, $new_password) {
-        // First verify current password
         $query = "SELECT password FROM " . $this->table_name . " WHERE id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $this->id);
@@ -167,7 +142,6 @@ class User {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if (password_verify($current_password, $row['password'])) {
-                // Update password
                 $query = "UPDATE " . $this->table_name . " SET password = :password WHERE id = :id";
                 $stmt = $this->conn->prepare($query);
                 
@@ -181,10 +155,7 @@ class User {
         
         return false;
     }
-    
-    /**
-     * Check if email exists
-     */
+
     public function emailExists($email) {
         $query = "SELECT id FROM " . $this->table_name . " WHERE email = :email";
         $stmt = $this->conn->prepare($query);
@@ -193,10 +164,7 @@ class User {
         
         return $stmt->rowCount() > 0;
     }
-    
-    /**
-     * Check if username exists
-     */
+
     public function usernameExists($username) {
         $query = "SELECT id FROM " . $this->table_name . " WHERE username = :username";
         $stmt = $this->conn->prepare($query);
@@ -205,10 +173,7 @@ class User {
         
         return $stmt->rowCount() > 0;
     }
-    
-    /**
-     * Delete user (admin only)
-     */
+
     public function deleteUser($id) {
         $query = "UPDATE " . $this->table_name . " SET is_active = 0 WHERE id = :id";
         $stmt = $this->conn->prepare($query);
@@ -216,27 +181,21 @@ class User {
         
         return $stmt->execute();
     }
-    
-    /**
-     * Get user statistics (admin dashboard)
-     */
+
     public function getUserStats() {
         $stats = [];
         
-        // Total users
         $query = "SELECT COUNT(*) as total FROM " . $this->table_name . " WHERE is_active = 1";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         $stats['total_users'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
         
-        // New users this month
         $query = "SELECT COUNT(*) as total FROM " . $this->table_name . " 
                   WHERE is_active = 1 AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         $stats['new_users_month'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
         
-        // Users by role
         $query = "SELECT role, COUNT(*) as count FROM " . $this->table_name . " 
                   WHERE is_active = 1 GROUP BY role";
         $stmt = $this->conn->prepare($query);

@@ -720,6 +720,10 @@ const App = () => {
           expandedItinerary={expandedItinerary}
           setExpandedItinerary={setExpandedItinerary}
           userDetails={userDetails} // Pass userDetails to MyItineraries
+          showSuccess={showSuccess}
+          showError={showError}
+          showWarning={showWarning}
+          showInfo={showInfo}
         />
       )}
 

@@ -1,12 +1,7 @@
 <?php
-/**
- * Indian Wonderer - Main API Router
- * Routes all API requests to appropriate handlers
- */
 
 header('Content-Type: application/json');
 
-// Handle CORS properly for credentials
 $allowed_origins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:4200', 'http://127.0.0.1:4200'];
 $origin = $_SERVER['HTTP_ORIGIN'] ?? 'http://localhost:4200';
 if (in_array($origin, $allowed_origins)) {
@@ -18,7 +13,6 @@ header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
 header('Access-Control-Allow-Credentials: true');
 
-// Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
@@ -30,19 +24,15 @@ require_once '../config/security.php';
 require_once '../classes/ResponseHandler.php';
 require_once '../classes/ApiAuth.php';
 
-// Initialize response handler
 $response = new ResponseHandler();
 
 try {
-    // Get request method and endpoint
     $method = $_SERVER['REQUEST_METHOD'];
     $endpoint = $_GET['endpoint'] ?? '';
     $action = $_GET['action'] ?? '';
 
-    // Initialize API authentication
     $apiAuth = new ApiAuth();
 
-    // Route requests based on endpoint
     switch ($endpoint) {
         case 'auth':
             require_once '../api/auth.php';

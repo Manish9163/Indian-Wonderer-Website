@@ -1,4 +1,11 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 0); 
+ini_set('log_errors', 1); 
+ini_set('error_log', __DIR__ . '/../logs/bookings_errors.log');
+
+ob_start();
+
 session_start();
 
 $allowed_origins = [
@@ -390,14 +397,12 @@ function createBooking($conn) {
         $input['guests'] = $input['number_of_travelers'] ?? 1;
     }
     
-    // Get tour duration to calculate end_date
     $durationQuery = "SELECT duration_days FROM tours WHERE id = ?";
     $durationStmt = $conn->prepare($durationQuery);
     $durationStmt->execute([$input['tour_id']]);
     $tour = $durationStmt->fetch(PDO::FETCH_ASSOC);
     $duration_days = $tour['duration_days'] ?? 1;
     
-    // Calculate tour end date
     $tour_end_date = date('Y-m-d', strtotime($input['travel_date'] . " +{$duration_days} days"));
     
     $query = "INSERT INTO bookings (user_id, tour_id, booking_date, travel_date, tour_end_date, number_of_travelers, total_amount, status, payment_status, special_requirements, booking_reference, guide_id) 
@@ -450,6 +455,94 @@ function createBooking($conn) {
             
             if (function_exists('logActivity')) {
                 logActivity($input['user_id'], 'Booking created', 'bookings', $booking_id);
+            }
+            
+            try {
+                require_once __DIR__ . '/../services/BookingEmailService.php';
+                $emailService = new BookingEmailService();
+                
+                $bookingDetailsQuery = "SELECT 
+                    b.*,
+                    t.title as tour_name,
+                    t.destination,
+                    t.duration_days,
+                    u.first_name,
+                    u.last_name,
+                    u.email as customer_email,
+                    u.phone as customer_phone,
+                    g.id as guide_id,
+                    gu.first_name as guide_first_name,
+                    gu.last_name as guide_last_name,
+                    gu.email as guide_email,
+                    gu.phone as guide_phone,
+                    g.experience_years as guide_experience
+                FROM bookings b
+                INNER JOIN tours t ON b.tour_id = t.id
+                INNER JOIN users u ON b.user_id = u.id
+                LEFT JOIN guides g ON b.guide_id = g.id
+                LEFT JOIN users gu ON g.user_id = gu.id
+                WHERE b.id = ?";
+                
+                $stmt = $conn->prepare($bookingDetailsQuery);
+                $stmt->execute([$booking_id]);
+                $bookingDetails = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($bookingDetails) {
+                    $customerEmailData = [
+                        'booking_reference' => $booking_reference,
+                        'customer_name' => $bookingDetails['first_name'] . ' ' . $bookingDetails['last_name'],
+                        'customer_email' => $bookingDetails['customer_email'],
+                        'customer_phone' => $bookingDetails['customer_phone'] ?? 'N/A',
+                        'tour_name' => $bookingDetails['tour_name'],
+                        'destination' => $bookingDetails['destination'],
+                        'duration_days' => $bookingDetails['duration_days'],
+                        'number_of_travelers' => $bookingDetails['number_of_travelers'],
+                        'travel_date' => $bookingDetails['travel_date'],
+                        'tour_end_date' => $bookingDetails['tour_end_date'],
+                        'booking_date' => $bookingDetails['booking_date'],
+                        'total_amount' => $bookingDetails['total_amount'],
+                        'payment_status' => $bookingDetails['payment_status'],
+                        'meeting_point' => $bookingDetails['destination'],
+                        'arrival_time' => '10:00 AM', 
+                        'guide_name' => '',
+                        'guide_phone' => '',
+                        'guide_email' => '',
+                        'guide_experience' => ''
+                    ];
+                    
+                    if (!empty($bookingDetails['guide_first_name'])) {
+                        $customerEmailData['guide_name'] = $bookingDetails['guide_first_name'] . ' ' . $bookingDetails['guide_last_name'];
+                        $customerEmailData['guide_phone'] = $bookingDetails['guide_phone'] ?? 'N/A';
+                        $customerEmailData['guide_email'] = $bookingDetails['guide_email'] ?? 'N/A';
+                        $customerEmailData['guide_experience'] = $bookingDetails['guide_experience'] ?? 0;
+                    }
+                    
+                    $customerEmailResult = $emailService->sendCustomerBookingConfirmation($customerEmailData);
+                    
+                    if (!empty($bookingDetails['guide_id']) && !empty($bookingDetails['guide_email'])) {
+                        $guideData = [
+                            'name' => $bookingDetails['guide_first_name'] . ' ' . $bookingDetails['guide_last_name'],
+                            'email' => $bookingDetails['guide_email']
+                        ];
+                        
+                        $bookingDataForGuide = [
+                            'booking_reference' => $booking_reference,
+                            'tour_name' => $bookingDetails['tour_name'],
+                            'destination' => $bookingDetails['destination'],
+                            'duration_days' => $bookingDetails['duration_days'],
+                            'number_of_travelers' => $bookingDetails['number_of_travelers'],
+                            'travel_date' => $bookingDetails['travel_date'],
+                            'meeting_point' => $bookingDetails['destination'],
+                            'customer_name' => $customerEmailData['customer_name'],
+                            'customer_email' => $bookingDetails['customer_email'],
+                            'customer_phone' => $customerEmailData['customer_phone']
+                        ];
+                        
+                        $guideEmailResult = $emailService->sendGuideAssignmentNotification($bookingDataForGuide, $guideData);
+                    }
+                }
+            } catch (Exception $e) {
+                error_log("Email notification error: " . $e->getMessage());
             }
             
             echo json_encode([
@@ -620,7 +713,6 @@ function editBooking($conn, $booking_id) {
         
         $conn->commit();
         
-        // Send modification email
         $booking_details = [
             'booking_reference' => $booking['booking_reference'],
             'customer_name' => ($booking['first_name'] ?? '') . ' ' . ($booking['last_name'] ?? '')
@@ -646,7 +738,6 @@ function editBooking($conn, $booking_id) {
             ];
         }
         
-        // Attempt to send email (don't fail if email fails)
         try {
             $emailService->sendModificationEmail($booking['email'], $booking_details, $changes);
         } catch (Exception $emailError) {
@@ -666,8 +757,13 @@ function editBooking($conn, $booking_id) {
 }
 
 function cancelBooking($conn, $booking_id) {
-    require_once '../services/EmailService.php';
-    $emailService = new EmailService();
+    try {
+        require_once __DIR__ . '/../services/BookingEmailService.php';
+        $emailService = new BookingEmailService();
+    } catch (Exception $e) {
+        error_log("Warning: BookingEmailService not available: " . $e->getMessage());
+        $emailService = null;
+    }
     
     $input = json_decode(file_get_contents('php://input'), true);
     
@@ -681,12 +777,14 @@ function cancelBooking($conn, $booking_id) {
     $booking = $booking_stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$booking) {
+        ob_clean();
         http_response_code(404);
         echo json_encode(['success' => false, 'message' => 'Booking not found']);
         return;
     }
     
     if ($booking['status'] === 'cancelled') {
+        ob_clean();
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Booking already cancelled']);
         return;
@@ -738,7 +836,6 @@ function cancelBooking($conn, $booking_id) {
         
         $conn->commit();
         
-        // Send cancellation email
         $booking_details = [
             'booking_reference' => $booking['booking_reference'],
             'customer_name' => ($booking['first_name'] ?? '') . ' ' . ($booking['last_name'] ?? ''),
@@ -754,12 +851,15 @@ function cancelBooking($conn, $booking_id) {
             'expiry' => $refund_type === 'giftcard' ? date('Y-m-d', strtotime('+1 year')) : null
         ];
         
-        // Attempt to send email (don't fail if email fails)
-        try {
-            $emailService->sendCancellationEmail($booking['email'], $booking_details, $refund_details);
-        } catch (Exception $emailError) {
-            error_log("Failed to send cancellation email: " . $emailError->getMessage());
+        if ($emailService !== null) {
+            try {
+                @$emailService->sendCancellationEmail($booking['email'], $booking_details, $refund_details);
+            } catch (Exception $emailError) {
+                error_log("Failed to send cancellation email: " . $emailError->getMessage());
+            }
         }
+        
+        ob_clean();
         
         echo json_encode([
             'success' => true, 
@@ -771,6 +871,9 @@ function cancelBooking($conn, $booking_id) {
         ]);
     } catch (Exception $e) {
         $conn->rollBack();
+        
+        ob_clean();
+        
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Failed to process cancellation: ' . $e->getMessage()]);
     }

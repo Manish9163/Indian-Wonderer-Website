@@ -1,8 +1,5 @@
 <?php
-/**
- * Real-time Guide Tracking API
- * Handles location updates, tour sessions, checkpoints, and live tracking
- */
+
 
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -25,9 +22,6 @@ class TrackingAPI {
         $this->conn = $this->db->getConnection();
     }
 
-    /**
-     * Update guide's current location
-     */
     public function updateLocation($data) {
         try {
             $query = "INSERT INTO guide_locations 
@@ -50,7 +44,6 @@ class TrackingAPI {
             $stmt->bindParam(':recorded_at', $recorded_at);
             
             if ($stmt->execute()) {
-                // Update tour session distance
                 $this->updateTourDistance($data['booking_id']);
                 
                 return [
@@ -66,9 +59,6 @@ class TrackingAPI {
         }
     }
 
-    /**
-     * Get current location of guide for a booking
-     */
     public function getCurrentLocation($booking_id) {
         try {
             $query = "SELECT gl.*, 
@@ -102,9 +92,6 @@ class TrackingAPI {
         }
     }
 
-    /**
-     * Get location history for a booking (track trail)
-     */
     public function getLocationHistory($booking_id, $limit = 100) {
         try {
             $query = "SELECT latitude, longitude, speed, heading, accuracy, recorded_at
@@ -130,12 +117,8 @@ class TrackingAPI {
         }
     }
 
-    /**
-     * Start a new tour session
-     */
     public function startTourSession($data) {
         try {
-            // Check if session already exists
             $checkQuery = "SELECT id, status FROM tour_sessions WHERE booking_id = :booking_id";
             $checkStmt = $this->conn->prepare($checkQuery);
             $checkStmt->bindParam(':booking_id', $data['booking_id']);
@@ -143,7 +126,6 @@ class TrackingAPI {
             $existing = $checkStmt->fetch(PDO::FETCH_ASSOC);
             
             if ($existing) {
-                // Update existing session
                 $query = "UPDATE tour_sessions SET 
                           status = 'started',
                           started_at = :started_at,
@@ -161,7 +143,6 @@ class TrackingAPI {
                 
                 $session_id = $existing['id'];
             } else {
-                // Create new session
                 $query = "INSERT INTO tour_sessions 
                           (booking_id, guide_id, user_id, tour_id, status, started_at, start_location_lat, start_location_lng, scheduled_at) 
                           VALUES (:booking_id, :guide_id, :user_id, :tour_id, 'started', :started_at, :lat, :lng, :scheduled_at)";
@@ -183,7 +164,6 @@ class TrackingAPI {
                 $session_id = $this->conn->lastInsertId();
             }
             
-            // Send notification to user
             $this->sendNotification(
                 $data['user_id'],
                 $data['booking_id'],
@@ -203,9 +183,6 @@ class TrackingAPI {
         }
     }
 
-    /**
-     * Complete a tour session
-     */
     public function completeTourSession($booking_id, $data) {
         try {
             $query = "UPDATE tour_sessions SET 
@@ -224,14 +201,12 @@ class TrackingAPI {
             $stmt->bindParam(':booking_id', $booking_id);
             
             if ($stmt->execute()) {
-                // Get user_id for notification
                 $userQuery = "SELECT user_id FROM tour_sessions WHERE booking_id = :booking_id";
                 $userStmt = $this->conn->prepare($userQuery);
                 $userStmt->bindParam(':booking_id', $booking_id);
                 $userStmt->execute();
                 $session = $userStmt->fetch(PDO::FETCH_ASSOC);
                 
-                // Send notification
                 $this->sendNotification(
                     $session['user_id'],
                     $booking_id,
@@ -253,9 +228,6 @@ class TrackingAPI {
         }
     }
 
-    /**
-     * Get tour session details
-     */
     public function getTourSession($booking_id) {
         try {
             $query = "SELECT ts.*, 
@@ -279,7 +251,6 @@ class TrackingAPI {
             $session = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if ($session) {
-                // Get checkpoints
                 $checkpointsQuery = "SELECT * FROM tour_checkpoints WHERE tour_session_id = :session_id ORDER BY planned_arrival ASC";
                 $cpStmt = $this->conn->prepare($checkpointsQuery);
                 $cpStmt->bindParam(':session_id', $session['id']);
@@ -298,9 +269,6 @@ class TrackingAPI {
         }
     }
 
-    /**
-     * Send chat message
-     */
     public function sendChatMessage($data) {
         try {
             $query = "INSERT INTO tour_chat_messages 
@@ -332,9 +300,6 @@ class TrackingAPI {
         }
     }
 
-    /**
-     * Get chat messages for a booking
-     */
     public function getChatMessages($booking_id, $limit = 50) {
         try {
             $query = "SELECT tcm.*, 
@@ -361,9 +326,6 @@ class TrackingAPI {
         }
     }
 
-    /**
-     * Create emergency alert
-     */
     public function createEmergencyAlert($data) {
         try {
             $query = "INSERT INTO emergency_alerts 
@@ -381,7 +343,6 @@ class TrackingAPI {
             $stmt->bindParam(':description', $data['description']);
             
             if ($stmt->execute()) {
-                // Send urgent notification
                 $this->sendNotification(
                     $data['user_id'],
                     $data['booking_id'],
@@ -404,9 +365,6 @@ class TrackingAPI {
         }
     }
 
-    /**
-     * Get notifications for user
-     */
     public function getNotifications($user_id, $unread_only = false) {
         try {
             $query = "SELECT * FROM tracking_notifications 
@@ -434,9 +392,6 @@ class TrackingAPI {
         }
     }
 
-    /**
-     * Mark notification as read
-     */
     public function markNotificationRead($notification_id) {
         try {
             $query = "UPDATE tracking_notifications SET is_read = 1 WHERE id = :id";
@@ -450,9 +405,6 @@ class TrackingAPI {
         }
     }
 
-    /**
-     * Private helper: Send notification to user
-     */
     private function sendNotification($user_id, $booking_id, $type, $title, $message, $data = null) {
         try {
             $query = "INSERT INTO tracking_notifications 
@@ -477,12 +429,8 @@ class TrackingAPI {
         }
     }
 
-    /**
-     * Private helper: Update total distance traveled
-     */
     private function updateTourDistance($booking_id) {
         try {
-            // Get last two locations to calculate distance
             $query = "SELECT latitude, longitude FROM guide_locations 
                       WHERE booking_id = :booking_id AND is_active = 1
                       ORDER BY recorded_at DESC LIMIT 2";
@@ -499,7 +447,6 @@ class TrackingAPI {
                     $locations[0]['latitude'], $locations[0]['longitude']
                 );
                 
-                // Update tour session total distance
                 $updateQuery = "UPDATE tour_sessions SET 
                                total_distance = total_distance + :distance 
                                WHERE booking_id = :booking_id";
@@ -514,9 +461,6 @@ class TrackingAPI {
         }
     }
 
-    /**
-     * Calculate distance between two coordinates using Haversine formula
-     */
     private function calculateDistance($lat1, $lon1, $lat2, $lon2) {
         $earthRadius = 6371; // km
         
@@ -533,7 +477,6 @@ class TrackingAPI {
     }
 }
 
-// Handle API requests
 $api = new TrackingAPI();
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';

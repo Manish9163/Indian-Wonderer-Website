@@ -1,13 +1,9 @@
 <?php
-// Email templates and sending functionality
 
 class EmailService {
     private $from_email = 'noreply@indianwonderer.com';
     private $from_name = 'Indian Wonderer';
-    
-    /**
-     * Send cancellation confirmation email
-     */
+
     public function sendCancellationEmail($to_email, $booking_details, $refund_details) {
         $subject = "Booking Cancellation Confirmed - {$booking_details['booking_reference']}";
         
@@ -17,10 +13,7 @@ class EmailService {
         
         return mail($to_email, $subject, $message, $headers);
     }
-    
-    /**
-     * Send booking modification email
-     */
+
     public function sendModificationEmail($to_email, $booking_details, $changes) {
         $subject = "Booking Modified - Confirmation Pending - {$booking_details['booking_reference']}";
         
@@ -30,10 +23,7 @@ class EmailService {
         
         return mail($to_email, $subject, $message, $headers);
     }
-    
-    /**
-     * Get email headers
-     */
+ 
     private function getEmailHeaders() {
         $headers = "MIME-Version: 1.0" . "\r\n";
         $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
@@ -43,10 +33,7 @@ class EmailService {
         
         return $headers;
     }
-    
-    /**
-     * Cancellation email template
-     */
+
     private function getCancellationEmailTemplate($booking, $refund) {
         $refund_info = '';
         if ($refund['type'] === 'giftcard') {
@@ -155,10 +142,7 @@ class EmailService {
         </html>
         ";
     }
-    
-    /**
-     * Modification email template
-     */
+
     private function getModificationEmailTemplate($booking, $changes) {
         $changes_html = '';
         foreach ($changes as $field => $change) {

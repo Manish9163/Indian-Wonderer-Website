@@ -1,14 +1,14 @@
 <?php
-/**
- * Admin Refund Management API
- * Handles refund processing and status updates
- */
+
+ob_start();
+
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
 
 require_once '../config/database.php';
 require_once '../config/api_config.php';
-require_once '../services/EmailService.php';
+require_once '../services/BookingEmailService.php';
 
-// Handle CORS
 $allowed_origins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:4200', 'http://127.0.0.1:4200'];
 $origin = $_SERVER['HTTP_ORIGIN'] ?? 'http://localhost:4200';
 if (in_array($origin, $allowed_origins)) {
@@ -35,15 +35,15 @@ class AdminRefundAPI {
             $database = new Database();
             $this->pdo = $database->getConnection();
             
-            // Try to initialize EmailService, but don't fail if it doesn't exist
-            if (class_exists('EmailService')) {
-                $this->emailService = new EmailService();
+            if (class_exists('BookingEmailService')) {
+                $this->emailService = new BookingEmailService();
             } else {
                 $this->emailService = null;
-                error_log("EmailService class not found - emails will not be sent");
+                error_log("BookingEmailService class not found - emails will not be sent");
             }
         } catch (Exception $e) {
             error_log("AdminRefundAPI Constructor Error: " . $e->getMessage());
+            ob_clean(); 
             http_response_code(500);
             echo json_encode([
                 'success' => false,
@@ -53,9 +53,7 @@ class AdminRefundAPI {
         }
     }
     
-    /**
-     * Handle API requests
-     */
+
     public function handleRequest() {
         $action = $_GET['action'] ?? '';
         
@@ -84,9 +82,7 @@ class AdminRefundAPI {
         }
     }
     
-    /**
-     * Complete a bank refund
-     */
+ 
     private function completeRefund() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             return $this->sendError('Method not allowed', 405);
@@ -103,7 +99,6 @@ class AdminRefundAPI {
         try {
             $this->pdo->beginTransaction();
             
-            // Get refund details
             $stmt = $this->pdo->prepare("
                 SELECT r.*, b.booking_reference, b.user_id, b.tour_id,
                        u.first_name, u.last_name, u.email,
@@ -121,7 +116,6 @@ class AdminRefundAPI {
                 throw new Exception('Refund not found or already processed');
             }
             
-            // Update refund status
             $stmt = $this->pdo->prepare("
                 UPDATE refunds 
                 SET status = 'completed', 
@@ -131,7 +125,6 @@ class AdminRefundAPI {
             ");
             $stmt->execute([$notes, $refundId]);
             
-            // Log the action
             $stmt = $this->pdo->prepare("
                 INSERT INTO booking_logs (booking_id, action, details, created_at)
                 VALUES (?, 'refund_completed', ?, NOW())
@@ -149,7 +142,6 @@ class AdminRefundAPI {
             
             $this->pdo->commit();
             
-            // Send email notification to customer
             $this->sendRefundCompletedEmail($refund);
             
             return $this->sendSuccess([
@@ -169,9 +161,7 @@ class AdminRefundAPI {
         }
     }
     
-    /**
-     * Complete a gift card (mark as activated/notified)
-     */
+
     private function completeGiftCard() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             return $this->sendError('Method not allowed', 405);
@@ -188,7 +178,6 @@ class AdminRefundAPI {
         try {
             $this->pdo->beginTransaction();
             
-            // Get gift card details
             if ($giftCardId) {
                 $stmt = $this->pdo->prepare("
                     SELECT g.*, b.booking_reference, b.user_id,
@@ -217,7 +206,6 @@ class AdminRefundAPI {
                 throw new Exception('Gift card not found');
             }
             
-            // Update gift card status if needed (ensure it's active)
             $stmt = $this->pdo->prepare("
                 UPDATE gift_cards 
                 SET status = 'active'
@@ -225,7 +213,6 @@ class AdminRefundAPI {
             ");
             $stmt->execute([$giftCard['id']]);
             
-            // Log the action
             $stmt = $this->pdo->prepare("
                 INSERT INTO booking_logs (booking_id, action, details, created_at)
                 VALUES (?, 'giftcard_activated', ?, NOW())
@@ -243,7 +230,6 @@ class AdminRefundAPI {
             
             $this->pdo->commit();
             
-            // Send reminder email with gift card details
             $this->sendGiftCardReminderEmail($giftCard);
             
             return $this->sendSuccess([
@@ -262,10 +248,7 @@ class AdminRefundAPI {
             return $this->sendError($e->getMessage(), 500);
         }
     }
-    
-    /**
-     * Get all pending refunds
-     */
+
     private function getPendingRefunds() {
         try {
             $stmt = $this->pdo->prepare("
@@ -322,9 +305,6 @@ class AdminRefundAPI {
         }
     }
 
-    /**
-     * Get completed refunds with full customer details
-     */
     private function getCompletedRefunds() {
         try {
             $stmt = $this->pdo->prepare("
@@ -382,12 +362,8 @@ class AdminRefundAPI {
         }
     }
 
-    /**
-     * Get all refunds (pending and completed)
-     */
     private function getAllRefunds() {
         try {
-            // First check if tables exist
             $tables = ['refunds', 'bookings', 'users', 'tours', 'gift_cards'];
             foreach ($tables as $table) {
                 $stmt = $this->pdo->query("SHOW TABLES LIKE '$table'");
@@ -396,7 +372,6 @@ class AdminRefundAPI {
                 }
             }
             
-            // Query with correct column names
             $stmt = $this->pdo->prepare("
                 SELECT 
                     r.id as refund_id,
@@ -432,9 +407,7 @@ class AdminRefundAPI {
             $stmt->execute();
             $refunds = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Add gift card details for giftcard refunds
             foreach ($refunds as &$refund) {
-                // Get gift card details if method is giftcard
                 if ($refund['refund_method'] === 'giftcard') {
                     try {
                         $gcStmt = $this->pdo->prepare("
@@ -455,7 +428,6 @@ class AdminRefundAPI {
                             $refund['giftcard_status'] = $gc['status'];
                         }
                     } catch (Exception $e) {
-                        // Gift card details optional
                     }
                 }
             }
@@ -472,9 +444,7 @@ class AdminRefundAPI {
         }
     }
     
-    /**
-     * Get refund details
-     */
+
     private function getRefundDetails() {
         $refundId = $_GET['refund_id'] ?? null;
         
@@ -516,12 +486,8 @@ class AdminRefundAPI {
             return $this->sendError($e->getMessage(), 500);
         }
     }
-    
-    /**
-     * Send refund completed email to customer
-     */
+
     private function sendRefundCompletedEmail($refund) {
-        // Check if email service is available
         if (!$this->emailService) {
             error_log("EmailService not available - skipping refund email");
             return;
@@ -566,15 +532,10 @@ class AdminRefundAPI {
             
         } catch (Exception $e) {
             error_log("Send Refund Email Error: " . $e->getMessage());
-            // Don't throw - email failure shouldn't block refund processing
         }
     }
-    
-    /**
-     * Send gift card reminder email
-     */
+
     private function sendGiftCardReminderEmail($giftCard) {
-        // Check if email service is available
         if (!$this->emailService) {
             error_log("EmailService not available - skipping gift card email");
             return;
@@ -636,16 +597,11 @@ class AdminRefundAPI {
             
         } catch (Exception $e) {
             error_log("Send Gift Card Email Error: " . $e->getMessage());
-            // Don't throw - email failure shouldn't block processing
         }
     }
-    
-    /**
-     * Get all gift cards with customer details
-     */
+
     private function getAllGiftCards() {
         try {
-            // First, auto-expire any gift cards past their expiry date
             $expireStmt = $this->pdo->prepare("
                 UPDATE gift_cards 
                 SET status = 'expired'
@@ -659,7 +615,6 @@ class AdminRefundAPI {
                 error_log("Auto-expired {$expiredCount} gift card(s)");
             }
             
-            // Now fetch all gift cards with current status
             $stmt = $this->pdo->prepare("
                 SELECT 
                     gc.id as giftcard_id,
@@ -702,11 +657,9 @@ class AdminRefundAPI {
             return $this->sendError("Database error: " . $e->getMessage(), 500);
         }
     }
-    
-    /**
-     * Send success response
-     */
+
     private function sendSuccess($data) {
+        ob_clean(); 
         http_response_code(200);
         echo json_encode([
             'success' => true,
@@ -715,10 +668,9 @@ class AdminRefundAPI {
         exit;
     }
     
-    /**
-     * Send error response
-     */
+
     private function sendError($message, $code = 400) {
+        ob_clean(); 
         http_response_code($code);
         echo json_encode([
             'success' => false,
@@ -728,6 +680,5 @@ class AdminRefundAPI {
     }
 }
 
-// Initialize and handle request
 $api = new AdminRefundAPI();
 $api->handleRequest();

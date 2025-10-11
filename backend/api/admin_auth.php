@@ -1,13 +1,9 @@
 <?php
-/**
- * Advanced Admin Authentication System
- * Production-ready authentication with role-based access control
- */
+
 
 require_once '../config/database.php';
 require_once '../config/api_config.php';
 
-// Handle CORS for React frontend and Angular admin panel
 $allowed_origins = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
@@ -31,7 +27,6 @@ header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-W
 header('Access-Control-Allow-Credentials: true');
 header('Content-Type: application/json');
 
-// Handle preflight OPTIONS request IMMEDIATELY
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
@@ -49,12 +44,9 @@ class AdvancedAdminAuth {
     public function __construct() {
         $database = new Database();
         $this->pdo = $database->getConnection();
-        $this->jwtSecret = 'your_jwt_secret_key'; // Store in environment variable in production
+        $this->jwtSecret = 'your_jwt_secret_key'; 
     }
-    
-    /**
-     * Handle authentication requests
-     */
+
     public function handleRequest() {
         $action = $_GET['action'] ?? 'login';
         $method = $_SERVER['REQUEST_METHOD'];
@@ -130,14 +122,11 @@ class AdvancedAdminAuth {
         }
     }
     
-    /**
-     * Advanced admin login with security features
-     */
+
     private function adminLogin() {
         $input = json_decode(file_get_contents('php://input'), true);
         
         if (!$input) {
-            // Try to get from POST data
             $input = $_POST;
         }
         
@@ -149,7 +138,6 @@ class AdvancedAdminAuth {
         $username = $input['username'] ?? null;
         $password = $input['password'];
         
-        // Validate email if provided
         if ($email) {
             $email = filter_var($email, FILTER_VALIDATE_EMAIL);
             if (!$email) {
@@ -157,11 +145,9 @@ class AdvancedAdminAuth {
             }
         }
         
-        // Rate limiting check
         $identifier = $email ?: $username;
         $this->checkRateLimit($identifier);
         
-        // Get user with role verification - search by email or username
         $user = null;
         
         if ($email) {
@@ -195,44 +181,35 @@ class AdvancedAdminAuth {
             throw new Exception('Invalid credentials');
         }
         
-        // Check if account is active
         if (!$user['is_active']) {
             $this->logFailedAttempt($email, 'account_disabled');
             throw new Exception('Account is disabled');
         }
         
-        // Check if account is locked due to failed attempts
         if ($user['recent_failed_attempts'] >= 5) {
             $this->logFailedAttempt($email, 'account_locked');
             throw new Exception('Account temporarily locked due to failed login attempts');
         }
         
-        // Verify password
         if (!password_verify($input['password'], $user['password'])) {
             $this->logFailedAttempt($email, 'invalid_password');
             throw new Exception('Invalid credentials');
         }
         
-        // Check if admin role is required
         if ($user['role'] !== 'admin' && ($input['require_admin'] ?? false)) {
             $this->logFailedAttempt($email, 'insufficient_privileges');
             throw new Exception('Admin privileges required');
         }
         
-        // Generate JWT tokens
         $accessToken = $this->generateAccessToken($user);
         $refreshToken = $this->generateRefreshToken($user);
         
-        // Store refresh token
         $this->storeRefreshToken($user['id'], $refreshToken);
         
-        // Log successful login
         $this->logSuccessfulLogin($user['id']);
         
-        // Get user permissions
         $permissions = $this->getUserPermissionsByRole($user['role']);
         
-        // Remove password from response
         unset($user['password']);
         unset($user['recent_failed_attempts']);
         
@@ -244,22 +221,19 @@ class AdvancedAdminAuth {
                 'access_token' => $accessToken,
                 'refresh_token' => $refreshToken,
                 'permissions' => $permissions,
-                'expires_in' => 3600, // 1 hour
+                'expires_in' => 3600, 
                 'token_type' => 'Bearer'
             ]
         ]);
     }
     
-    /**
-     * Admin logout with session cleanup
-     */
+
     private function adminLogout() {
         $token = $this->getAuthToken();
         
         if ($token) {
             $decoded = $this->decodeToken($token);
             if ($decoded) {
-                // Invalidate refresh tokens
                 $stmt = $this->pdo->prepare("
                     UPDATE user_refresh_tokens 
                     SET is_active = 0, revoked_at = NOW() 
@@ -267,7 +241,6 @@ class AdvancedAdminAuth {
                 ");
                 $stmt->execute([$decoded['user_id']]);
                 
-                // Log logout
                 $this->logActivity($decoded['user_id'], 'LOGOUT', 'auth', null);
             }
         }
@@ -278,9 +251,7 @@ class AdvancedAdminAuth {
         ]);
     }
     
-    /**
-     * Verify JWT token
-     */
+
     private function verifyToken() {
         $token = $this->getAuthToken();
         
@@ -294,7 +265,6 @@ class AdvancedAdminAuth {
             throw new Exception('Invalid or expired token');
         }
         
-        // Get fresh user data
         $stmt = $this->pdo->prepare("
             SELECT id, username, email, first_name, last_name, role, is_active 
             FROM users 
@@ -317,10 +287,7 @@ class AdvancedAdminAuth {
             ]
         ]);
     }
-    
-    /**
-     * Refresh access token
-     */
+
     private function refreshToken() {
         $input = json_decode(file_get_contents('php://input'), true);
         $refreshToken = $input['refresh_token'] ?? '';
@@ -329,7 +296,6 @@ class AdvancedAdminAuth {
             throw new Exception('Refresh token required');
         }
         
-        // Validate refresh token
         $stmt = $this->pdo->prepare("
             SELECT rt.*, u.id, u.username, u.email, u.first_name, u.last_name, u.role, u.is_active
             FROM user_refresh_tokens rt
@@ -343,7 +309,6 @@ class AdvancedAdminAuth {
             throw new Exception('Invalid or expired refresh token');
         }
         
-        // Generate new access token
         $user = [
             'id' => $tokenData['id'],
             'username' => $tokenData['username'],
@@ -366,9 +331,7 @@ class AdvancedAdminAuth {
         ]);
     }
     
-    /**
-     * Get user permissions based on role
-     */
+
     private function getUserPermissions() {
         $token = $this->getAuthToken();
         $decoded = $this->decodeToken($token);
@@ -395,10 +358,7 @@ class AdvancedAdminAuth {
             ]
         ]);
     }
-    
-    /**
-     * Get active user sessions
-     */
+
     private function getActiveSessions() {
         $token = $this->getAuthToken();
         $decoded = $this->decodeToken($token);
@@ -427,10 +387,7 @@ class AdvancedAdminAuth {
             'data' => $sessions
         ]);
     }
-    
-    /**
-     * Helper functions
-     */
+
     private function generateAccessToken($user) {
         $payload = [
             'user_id' => $user['id'],
@@ -438,7 +395,7 @@ class AdvancedAdminAuth {
             'email' => $user['email'],
             'role' => $user['role'],
             'iat' => time(),
-            'exp' => time() + 3600 // 1 hour
+            'exp' => time() + 3600
         ];
         
         return $this->encodeJWT($payload);
@@ -449,7 +406,6 @@ class AdvancedAdminAuth {
     }
     
     private function storeRefreshToken($userId, $refreshToken) {
-        // Clean old tokens
         $stmt = $this->pdo->prepare("
             UPDATE user_refresh_tokens 
             SET is_active = 0 
@@ -457,7 +413,6 @@ class AdvancedAdminAuth {
         ");
         $stmt->execute([$userId]);
         
-        // Store new token
         $stmt = $this->pdo->prepare("
             INSERT INTO user_refresh_tokens (user_id, token, expires_at, created_at, last_used_at) 
             VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 30 DAY), NOW(), NOW())
@@ -578,7 +533,6 @@ class AdvancedAdminAuth {
         $payload = json_decode(base64_decode(str_replace(['-', '_'], ['+', '/'], $parts[1])), true);
         $signature = $parts[2];
         
-        // Verify signature
         $expectedSignature = str_replace(['+', '/', '='], ['-', '_', ''], 
             base64_encode(hash_hmac('sha256', $parts[0] . "." . $parts[1], $this->jwtSecret, true)));
         
@@ -586,7 +540,6 @@ class AdvancedAdminAuth {
             return false;
         }
         
-        // Check expiration
         if ($payload['exp'] < time()) {
             return false;
         }
@@ -595,6 +548,5 @@ class AdvancedAdminAuth {
     }
 }
 
-// Initialize and handle request
 $auth = new AdvancedAdminAuth();
 $auth->handleRequest();

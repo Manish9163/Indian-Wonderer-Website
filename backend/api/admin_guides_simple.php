@@ -1,6 +1,4 @@
 <?php
-// Simple Admin Guides API
-// Handle CORS properly for credentials
 $allowed_origins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:4200', 'http://127.0.0.1:4200'];
 $origin = $_SERVER['HTTP_ORIGIN'] ?? 'http://localhost:4200';
 if (in_array($origin, $allowed_origins)) {
@@ -30,25 +28,23 @@ try {
     switch ($method) {
         case 'GET':
             if ($guideId) {
-                // Get single guide
                 $stmt = $pdo->prepare("SELECT g.*, 
                     CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')) as name,
                     u.email,
                     u.phone,
                     u.profile_image as photo,
                     COUNT(DISTINCT tga.booking_id) as tours_completed,
-                    COALESCE(SUM(b.total_amount), 0) as total_earnings
+                    COALESCE(SUM(ge.amount), 0) as total_earnings
                     FROM guides g
                     LEFT JOIN users u ON g.user_id = u.id
                     LEFT JOIN tour_guide_assignments tga ON g.id = tga.guide_id
-                    LEFT JOIN bookings b ON tga.booking_id = b.id AND b.status = 'completed'
+                    LEFT JOIN guide_earnings ge ON g.id = ge.guide_id AND ge.status IN ('earned', 'paid')
                     WHERE g.id = ?
                     GROUP BY g.id");
                 $stmt->execute([$guideId]);
                 $guide = $stmt->fetch(PDO::FETCH_ASSOC);
                 
                 if ($guide) {
-                    // Process guide data
                     $guide['name'] = trim($guide['name']);
                     if (empty($guide['name'])) {
                         $guide['name'] = $guide['email'] ?? 'Unknown Guide';
@@ -59,16 +55,12 @@ try {
                     $guide['experience_years'] = (int)($guide['experience_years'] ?? 0);
                     $guide['rating'] = (float)($guide['rating'] ?? 0);
                     
-                    // Add computed fields
                     $guide['trips'] = $guide['tours_completed'];
                     
-                    // Add default photo if missing
                     if (empty($guide['photo'])) {
                         $guide['photo'] = 'https://i.pravatar.cc/150?img=' . $guide['id'];
                     }
                     
-                    // Keep languages as JSON string for frontend processing
-                    // Frontend will parse it in viewGuideDetails()
                     
                     echo json_encode(['success' => true, 'data' => $guide]);
                 } else {
@@ -76,7 +68,6 @@ try {
                     echo json_encode(['success' => false, 'error' => 'Guide not found']);
                 }
             } else {
-                // Get all guides with optional filtering
                 $applicationStatus = $_GET['application_status'] ?? null;
                 
                 $query = "SELECT g.*, 
@@ -84,15 +75,14 @@ try {
                     u.email,
                     u.phone,
                     u.profile_image as photo,
-                    COUNT(DISTINCT tga.booking_id) as tours_completed,
-                    COALESCE(SUM(CASE WHEN b.status = 'completed' THEN b.total_amount ELSE 0 END), 0) as total_earnings,
-                    COUNT(DISTINCT CASE WHEN b.status IN ('pending', 'confirmed') THEN tga.booking_id END) as active_bookings
+                    COUNT(DISTINCT CASE WHEN tga.status = 'completed' THEN tga.booking_id END) as tours_completed,
+                    COALESCE(SUM(CASE WHEN ge.status IN ('earned', 'paid') THEN ge.amount ELSE 0 END), 0) as total_earnings,
+                    COUNT(DISTINCT CASE WHEN tga.status IN ('assigned', 'in_progress') THEN tga.booking_id END) as active_bookings
                     FROM guides g
                     LEFT JOIN users u ON g.user_id = u.id
                     LEFT JOIN tour_guide_assignments tga ON g.id = tga.guide_id
-                    LEFT JOIN bookings b ON tga.booking_id = b.id";
+                    LEFT JOIN guide_earnings ge ON g.id = ge.guide_id";
                 
-                // Add WHERE clause for filtering by application_status
                 if ($applicationStatus && in_array($applicationStatus, ['pending', 'approved', 'rejected'])) {
                     $query .= " WHERE g.application_status = ?";
                 }
@@ -108,15 +98,12 @@ try {
                 
                 $guides = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 
-                // Process each guide
                 foreach ($guides as &$guide) {
-                    // Clean up name
                     $guide['name'] = trim($guide['name']);
                     if (empty($guide['name'])) {
                         $guide['name'] = $guide['email'] ?? 'Unknown Guide';
                     }
                     
-                    // Convert to proper types
                     $guide['tours_completed'] = (int)$guide['tours_completed'];
                     $guide['total_earnings'] = (float)$guide['total_earnings'];
                     $guide['active_bookings'] = (int)$guide['active_bookings'];
@@ -124,11 +111,9 @@ try {
                     $guide['rating'] = (float)($guide['rating'] ?? 0);
                     $guide['total_tours'] = (int)($guide['total_tours'] ?? 0);
                     
-                    // Add computed fields
                     $guide['trips'] = $guide['tours_completed'];
                     $guide['traveler'] = $guide['active_bookings'];
                     
-                    // Determine availability status
                     if ($guide['status'] === 'busy' || $guide['active_bookings'] > 0) {
                         $guide['availability'] = 'Busy';
                     } elseif ($guide['status'] === 'available') {
@@ -137,12 +122,10 @@ try {
                         $guide['availability'] = 'Inactive';
                     }
                     
-                    // Add default photo if missing
                     if (empty($guide['photo'])) {
                         $guide['photo'] = 'https://i.pravatar.cc/150?img=' . $guide['id'];
                     }
                     
-                    // Parse languages if JSON
                     if (!empty($guide['languages'])) {
                         $decoded = json_decode($guide['languages'], true);
                         if (is_array($decoded)) {
@@ -152,7 +135,6 @@ try {
                 }
                 unset($guide);
                 
-                // Calculate stats
                 $statsStmt = $pdo->query("SELECT 
                     COUNT(*) as total,
                     COUNT(CASE WHEN status = 'available' THEN 1 END) as available,
@@ -164,7 +146,6 @@ try {
                     FROM guides");
                 $stats = $statsStmt->fetch(PDO::FETCH_ASSOC);
                 
-                // Calculate total earnings across all guides from guide_earnings table
                 $earningsStmt = $pdo->query("SELECT 
                     COALESCE(SUM(amount), 0) as total_earnings
                     FROM guide_earnings
@@ -192,7 +173,6 @@ try {
             break;
             
         case 'POST':
-            // Create new guide
             $input = json_decode(file_get_contents('php://input'), true);
             
             if (!isset($input['user_id'])) {
@@ -222,7 +202,6 @@ try {
             break;
             
         case 'PUT':
-            // Update guide
             $input = json_decode(file_get_contents('php://input'), true);
             
             if (!$guideId) {
@@ -270,11 +249,9 @@ try {
                 $updates[] = "application_status = ?";
                 $params[] = $input['application_status'];
                 
-                // Send notification email when application status changes
                 if (in_array($input['application_status'], ['approved', 'rejected'])) {
                     sendApplicationStatusEmail($pdo, $guideId, $input['application_status']);
                     
-                    // If approved, update user role to 'guide' and activate account
                     if ($input['application_status'] === 'approved') {
                         $guideInfoStmt = $pdo->prepare("SELECT user_id FROM guides WHERE id = ?");
                         $guideInfoStmt->execute([$guideId]);
@@ -309,7 +286,6 @@ try {
                 break;
             }
             
-            // Check if guide has active bookings
             $checkStmt = $pdo->prepare("SELECT COUNT(*) as count FROM tour_guide_assignments tga
                 JOIN bookings b ON tga.booking_id = b.id
                 WHERE tga.guide_id = ? AND b.status IN ('pending', 'confirmed')");
@@ -339,12 +315,9 @@ try {
     echo json_encode(['success' => false, 'error' => 'Database error: ' . $e->getMessage()]);
 }
 
-/**
- * Send application status notification email to guide
- */
+
 function sendApplicationStatusEmail($pdo, $guideId, $status) {
     try {
-        // Get guide and user information
         $stmt = $pdo->prepare("SELECT g.*, u.email, u.first_name, u.last_name 
             FROM guides g 
             JOIN users u ON g.user_id = u.id 
@@ -365,7 +338,6 @@ function sendApplicationStatusEmail($pdo, $guideId, $status) {
             sendRejectionEmail($email, $name);
         }
         
-        // Log notification
         $logStmt = $pdo->prepare("INSERT INTO activity_logs 
             (user_id, action, table_name, record_id) 
             VALUES (?, ?, ?, ?)");
@@ -383,9 +355,7 @@ function sendApplicationStatusEmail($pdo, $guideId, $status) {
     }
 }
 
-/**
- * Send approval email
- */
+
 function sendApprovalEmail($email, $name) {
     $subject = "🎉 Your Guide Application is APPROVED! - Indian Wonderer";
     
@@ -475,9 +445,7 @@ function sendApprovalEmail($email, $name) {
     return true;
 }
 
-/**
- * Send rejection email
- */
+
 function sendRejectionEmail($email, $name) {
     $subject = "Update on Your Guide Application - Indian Wonderer";
     

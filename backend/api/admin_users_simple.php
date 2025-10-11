@@ -1,5 +1,4 @@
 <?php
-// Simple Admin Users API - No authentication required for testing
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
@@ -22,7 +21,6 @@ try {
     switch ($method) {
         case 'GET':
             if ($userId) {
-                // Get single user
                 $stmt = $pdo->prepare("SELECT u.*, 
                     COUNT(DISTINCT b.id) as total_bookings
                     FROM users u
@@ -39,7 +37,6 @@ try {
                     echo json_encode(['success' => false, 'error' => 'User not found']);
                 }
             } else {
-                // Get all users
                 $stmt = $pdo->query("SELECT u.*, 
                     COUNT(DISTINCT b.id) as total_bookings,
                     CASE WHEN u.is_active = 1 THEN 'active' ELSE 'inactive' END as status
@@ -49,7 +46,6 @@ try {
                     ORDER BY u.created_at DESC");
                 $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 
-                // Calculate stats
                 $statsStmt = $pdo->query("SELECT 
                     COUNT(*) as total,
                     COUNT(CASE WHEN role = 'customer' THEN 1 END) as customers,
@@ -124,7 +120,6 @@ try {
             break;
             
         case 'DELETE':
-            // Check if user has bookings
             $checkStmt = $pdo->prepare("SELECT COUNT(*) as count FROM bookings WHERE user_id = ?");
             $checkStmt->execute([$userId]);
             $result = $checkStmt->fetch(PDO::FETCH_ASSOC);

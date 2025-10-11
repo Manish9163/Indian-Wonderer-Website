@@ -1,10 +1,7 @@
--- Travel Management System Database Schema
--- Create database and tables for both frontend and admin panel
 
 CREATE DATABASE IF NOT EXISTS indian_wonderer_base;
 USE indian_wonderer_base;
 
--- Users table (for both customers and admins)
 CREATE TABLE users (
     id INT PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(50) UNIQUE NOT NULL,
@@ -21,7 +18,6 @@ CREATE TABLE users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Tours/Destinations table
 CREATE TABLE tours (
     id INT PRIMARY KEY AUTO_INCREMENT,
     title VARCHAR(200) NOT NULL,
@@ -44,7 +40,6 @@ CREATE TABLE tours (
     FOREIGN KEY (created_by) REFERENCES users(id)
 );
 
--- Itineraries table
 CREATE TABLE itineraries (
     id INT PRIMARY KEY AUTO_INCREMENT,
     tour_id INT NOT NULL,
@@ -58,7 +53,6 @@ CREATE TABLE itineraries (
     FOREIGN KEY (created_by) REFERENCES users(id)
 );
 
--- Itinerary schedule (daily activities)
 CREATE TABLE itinerary_schedule (
     id INT PRIMARY KEY AUTO_INCREMENT,
     itinerary_id INT NOT NULL,
@@ -72,7 +66,6 @@ CREATE TABLE itinerary_schedule (
     FOREIGN KEY (itinerary_id) REFERENCES itineraries(id) ON DELETE CASCADE
 );
 
--- Bookings table
 CREATE TABLE bookings (
     id INT PRIMARY KEY AUTO_INCREMENT,
     booking_reference VARCHAR(50) UNIQUE NOT NULL,
@@ -94,7 +87,6 @@ CREATE TABLE bookings (
     FOREIGN KEY (itinerary_id) REFERENCES itineraries(id)
 );
 
--- Payments table
 CREATE TABLE payments (
     id INT PRIMARY KEY AUTO_INCREMENT,
     booking_id INT NOT NULL,
@@ -110,7 +102,6 @@ CREATE TABLE payments (
     FOREIGN KEY (booking_id) REFERENCES bookings(id)
 );
 
--- Guides table
 CREATE TABLE guides (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
@@ -130,7 +121,6 @@ CREATE TABLE guides (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
--- Tour guide assignments
 CREATE TABLE tour_guide_assignments (
     id INT PRIMARY KEY AUTO_INCREMENT,
     booking_id INT NOT NULL,
@@ -143,7 +133,6 @@ CREATE TABLE tour_guide_assignments (
     FOREIGN KEY (guide_id) REFERENCES guides(id)
 );
 
--- Reviews and ratings
 CREATE TABLE reviews (
     id INT PRIMARY KEY AUTO_INCREMENT,
     booking_id INT NOT NULL,
@@ -163,7 +152,6 @@ CREATE TABLE reviews (
     FOREIGN KEY (guide_id) REFERENCES guides(id)
 );
 
--- Contact/Support tickets
 CREATE TABLE support_tickets (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT,
@@ -182,7 +170,6 @@ CREATE TABLE support_tickets (
     FOREIGN KEY (assigned_to) REFERENCES users(id)
 );
 
--- System settings
 CREATE TABLE settings (
     id INT PRIMARY KEY AUTO_INCREMENT,
     setting_key VARCHAR(100) UNIQUE NOT NULL,
@@ -194,7 +181,6 @@ CREATE TABLE settings (
     FOREIGN KEY (updated_by) REFERENCES users(id)
 );
 
--- Activity logs for admin tracking
 CREATE TABLE activity_logs (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT,
@@ -209,7 +195,6 @@ CREATE TABLE activity_logs (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
--- User refresh tokens for secure authentication
 CREATE TABLE user_refresh_tokens (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
@@ -226,11 +211,9 @@ CREATE TABLE user_refresh_tokens (
     INDEX idx_expires (expires_at)
 );
 
--- Insert default admin user
 INSERT INTO users (username, email, password, first_name, last_name, role, is_active, email_verified) 
 VALUES ('admin', 'admin@indianwonderer.com', '$2y$10$ZWBhujzYx2.yeIYH580DdOBrUrzdXnIh1U4eOY3HH006eB3YjUuUK', 'Admin', 'User', 'admin', TRUE, TRUE);
 
--- Insert default settings
 INSERT INTO settings (setting_key, setting_value, setting_type, description) VALUES
 ('site_name', 'Indian Wonderer', 'string', 'Website name'),
 ('site_email', 'info@indianwonderer.com', 'string', 'Primary contact email'),
@@ -239,7 +222,6 @@ INSERT INTO settings (setting_key, setting_value, setting_type, description) VAL
 ('booking_confirmation_email', '1', 'boolean', 'Send booking confirmation emails'),
 ('max_booking_days_advance', '365', 'number', 'Maximum days in advance for booking');
 
--- Create indexes for better performance
 CREATE INDEX idx_bookings_user_id ON bookings(user_id);
 CREATE INDEX idx_bookings_tour_id ON bookings(tour_id);
 CREATE INDEX idx_bookings_status ON bookings(status);

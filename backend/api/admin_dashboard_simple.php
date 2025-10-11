@@ -1,5 +1,4 @@
 <?php
-// Simple Admin Dashboard API - No authentication required for testing
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
@@ -16,15 +15,12 @@ try {
     $database = new Database();
     $pdo = $database->getConnection();
     
-    // Get total tours
     $toursStmt = $pdo->query("SELECT COUNT(*) as count, COUNT(CASE WHEN is_active = 1 THEN 1 END) as active FROM tours");
     $toursData = $toursStmt->fetch(PDO::FETCH_ASSOC);
     
-    // Get total customers
     $customersStmt = $pdo->query("SELECT COUNT(*) as count, COUNT(CASE WHEN is_active = 1 THEN 1 END) as active FROM users WHERE role = 'customer'");
     $customersData = $customersStmt->fetch(PDO::FETCH_ASSOC);
     
-    // Get bookings stats
     $bookingsStmt = $pdo->query("SELECT 
         COUNT(*) as total,
         COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
@@ -34,7 +30,6 @@ try {
         FROM bookings");
     $bookingsData = $bookingsStmt->fetch(PDO::FETCH_ASSOC);
     
-    // Get revenue stats
     $revenueStmt = $pdo->query("SELECT 
         COALESCE(SUM(CASE WHEN p.status IN ('paid', 'completed') THEN p.amount ELSE 0 END), 0) as total_revenue,
         COALESCE(SUM(CASE WHEN p.status IN ('paid', 'completed') AND MONTH(p.payment_date) = MONTH(CURDATE()) THEN p.amount ELSE 0 END), 0) as monthly_revenue,
@@ -43,7 +38,6 @@ try {
         LEFT JOIN payments p ON b.id = p.booking_id");
     $revenueData = $revenueStmt->fetch(PDO::FETCH_ASSOC);
     
-    // Get recent bookings
     $recentBookingsStmt = $pdo->query("SELECT 
         b.id,
         b.booking_reference,
@@ -62,7 +56,6 @@ try {
         LIMIT 10");
     $recentBookings = $recentBookingsStmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Get recent customers
     $recentCustomersStmt = $pdo->query("SELECT 
         id, username as name, email, created_at as joinDate
         FROM users 
@@ -71,7 +64,6 @@ try {
         LIMIT 5");
     $recentCustomers = $recentCustomersStmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Get popular tours
     $popularToursStmt = $pdo->query("SELECT 
         t.id,
         t.title,

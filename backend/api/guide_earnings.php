@@ -1,8 +1,5 @@
 <?php
-/**
- * Guide Earnings API
- * Returns earnings data for a specific guide
- */
+
 
 require_once '../config/database.php';
 
@@ -30,7 +27,6 @@ if (!$guideId) {
 }
 
 try {
-    // Get total earnings
     $stmt = $pdo->prepare("
         SELECT 
             COALESCE(SUM(amount), 0) as total_earnings,
@@ -43,7 +39,6 @@ try {
     $stmt->execute([$guideId]);
     $summary = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    // Get today's earnings
     $todayStmt = $pdo->prepare("
         SELECT COALESCE(SUM(amount), 0) as today_earnings
         FROM guide_earnings
@@ -53,7 +48,6 @@ try {
     $todayStmt->execute([$guideId]);
     $today = $todayStmt->fetch(PDO::FETCH_ASSOC);
     
-    // Get this month's earnings
     $monthStmt = $pdo->prepare("
         SELECT COALESCE(SUM(amount), 0) as month_earnings
         FROM guide_earnings
@@ -64,7 +58,6 @@ try {
     $monthStmt->execute([$guideId]);
     $month = $monthStmt->fetch(PDO::FETCH_ASSOC);
     
-    // Get earnings history
     $historyStmt = $pdo->prepare("
         SELECT 
             ge.*,
@@ -81,7 +74,6 @@ try {
     $historyStmt->execute([$guideId]);
     $history = $historyStmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Format history
     foreach ($history as &$item) {
         $item['amount'] = floatval($item['amount']);
         $item['commission_rate'] = floatval($item['commission_rate']);

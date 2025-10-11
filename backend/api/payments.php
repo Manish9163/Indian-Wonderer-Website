@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-// Handle CORS for React frontend and Angular admin panel
 $allowed_origins = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
@@ -38,21 +37,16 @@ $method = $_SERVER['REQUEST_METHOD'];
 $request_uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $path_parts = explode('/', trim($request_uri, '/'));
 
-// Extract payment ID if present
 $payment_id = isset($path_parts[4]) ? (int)$path_parts[4] : null;
 $action = isset($path_parts[5]) ? $path_parts[5] : null;
 
-// Get headers for authentication
 $headers = apache_request_headers();
 $token = isset($headers['Authorization']) ? str_replace('Bearer ', '', $headers['Authorization']) : null;
 
-// Check authentication - allow either token or admin session
 $isAuthenticated = false;
 if ($token) {
-    // Token-based authentication
     $isAuthenticated = true;
 } elseif (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
-    // Admin session authentication
     $isAuthenticated = true;
 }
 
@@ -115,7 +109,6 @@ function getAllPayments($conn) {
     $stmt->execute();
     $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Extract customer name from traveler_details JSON if user info is not available
     foreach ($payments as &$payment) {
         if (empty($payment['first_name']) && !empty($payment['traveler_details'])) {
             $travelerDetails = json_decode($payment['traveler_details'], true);
@@ -237,7 +230,6 @@ function refundPayment($conn, $payment_id) {
     $result = $stmt->execute([$payment_id]);
     
     if ($result) {
-        // Log refund reason if provided
         if (isset($input['reason'])) {
             $log_query = "INSERT INTO payment_logs (payment_id, action, reason, created_at) VALUES (?, 'refund', ?, NOW())";
             $log_stmt = $conn->prepare($log_query);

@@ -1,10 +1,5 @@
 <?php
-/**
- * Tour & Guide Automation System
- * - Auto-assign guides to bookings
- * - Auto-complete tours after travel date
- * - Auto-calculate and distribute guide earnings
- */
+
 
 require_once '../config/database.php';
 
@@ -17,10 +12,7 @@ class TourAutomation {
         $database = new Database();
         $this->pdo = $database->getConnection();
     }
-    
-    /**
-     * Main automation runner
-     */
+
     public function runAutomation() {
         $results = [
             'auto_assignments' => $this->autoAssignGuidesToBookings(),
@@ -30,16 +22,12 @@ class TourAutomation {
         
         return $results;
     }
-    
-    /**
-     * Auto-assign available guides to confirmed bookings without guides
-     */
+
     private function autoAssignGuidesToBookings() {
         $assigned = 0;
         $errors = [];
         
         try {
-            // Get confirmed bookings without guide assignments
             $stmt = $this->pdo->query("
                 SELECT b.id as booking_id, b.tour_id, b.travel_date, t.title as tour_name
                 FROM bookings b
@@ -53,7 +41,6 @@ class TourAutomation {
             $bookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             foreach ($bookings as $booking) {
-                // Find available guide
                 $guideStmt = $this->pdo->prepare("
                     SELECT g.id, g.user_id, u.first_name, u.last_name
                     FROM guides g
@@ -67,7 +54,6 @@ class TourAutomation {
                 $guide = $guideStmt->fetch(PDO::FETCH_ASSOC);
                 
                 if ($guide) {
-                    // Assign guide to booking
                     $assignStmt = $this->pdo->prepare("
                         INSERT INTO tour_guide_assignments 
                         (guide_id, booking_id, assignment_date, status)
@@ -75,7 +61,6 @@ class TourAutomation {
                     ");
                     $assignStmt->execute([$guide['id'], $booking['booking_id']]);
                     
-                    // Update guide status to busy
                     $updateGuideStmt = $this->pdo->prepare("
                         UPDATE guides SET status = 'busy' WHERE id = ?
                     ");
@@ -109,16 +94,12 @@ class TourAutomation {
             ];
         }
     }
-    
-    /**
-     * Auto-complete tours where travel_date has passed
-     */
+
     private function autoCompleteExpiredTours() {
         $completed = 0;
         $details = [];
         
         try {
-            // Get confirmed bookings where travel date has passed
             $stmt = $this->pdo->query("
                 SELECT b.id, b.booking_reference, b.travel_date, b.total_amount,
                        t.title as tour_name
@@ -130,7 +111,6 @@ class TourAutomation {
             $expiredBookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             foreach ($expiredBookings as $booking) {
-                // Update booking status to completed
                 $updateStmt = $this->pdo->prepare("
                     UPDATE bookings 
                     SET status = 'completed',
@@ -139,7 +119,6 @@ class TourAutomation {
                 ");
                 $updateStmt->execute([$booking['id']]);
                 
-                // Update guide assignment status
                 $updateAssignmentStmt = $this->pdo->prepare("
                     UPDATE tour_guide_assignments
                     SET status = 'completed',
@@ -148,7 +127,6 @@ class TourAutomation {
                 ");
                 $updateAssignmentStmt->execute([$booking['id']]);
                 
-                // Set guides back to available if no more active bookings
                 $freeGuidesStmt = $this->pdo->query("
                     UPDATE guides g
                     SET g.status = 'available'
@@ -192,20 +170,15 @@ class TourAutomation {
             ];
         }
     }
-    
-    /**
-     * Calculate and distribute earnings to guides from completed tours
-     */
+
     private function distributeGuideEarnings() {
         $distributed = 0;
         $totalAmount = 0;
         $details = [];
         
         try {
-            // Check if guide_earnings table exists, if not create it
             $this->createGuideEarningsTable();
             
-            // Get completed bookings with guide assignments that haven't been paid
             $stmt = $this->pdo->query("
                 SELECT 
                     tga.id as assignment_id,
@@ -230,10 +203,8 @@ class TourAutomation {
             $assignments = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             foreach ($assignments as $assignment) {
-                // Calculate guide earnings (30% of total booking amount)
                 $guideCommission = floatval($assignment['total_amount']) * 0.30;
                 
-                // Record the earnings
                 $insertStmt = $this->pdo->prepare("
                     INSERT INTO guide_earnings 
                     (guide_id, assignment_id, booking_id, amount, commission_rate, status, earned_date)
@@ -246,7 +217,6 @@ class TourAutomation {
                     $guideCommission
                 ]);
                 
-                // Update guide's total earnings
                 $updateGuideStmt = $this->pdo->prepare("
                     UPDATE guides 
                     SET total_tours = COALESCE(total_tours, 0) + 1
@@ -282,10 +252,7 @@ class TourAutomation {
             ];
         }
     }
-    
-    /**
-     * Create guide_earnings table if it doesn't exist
-     */
+
     private function createGuideEarningsTable() {
         $sql = "CREATE TABLE IF NOT EXISTS guide_earnings (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -311,7 +278,6 @@ class TourAutomation {
     }
 }
 
-// Run automation
 $automation = new TourAutomation();
 $results = $automation->runAutomation();
 

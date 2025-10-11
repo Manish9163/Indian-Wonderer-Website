@@ -1,8 +1,4 @@
 <?php
-/**
- * Tours Model
- * Handles tour/destination management
- */
 
 class Tours {
     private $conn;
@@ -30,10 +26,7 @@ class Tours {
     public function __construct($db) {
         $this->conn = $db;
     }
-    
-    /**
-     * Create new tour
-     */
+
     public function create() {
         $query = "INSERT INTO " . $this->table_name . " 
                   (title, description, destination, price, duration_days, max_capacity, 
@@ -68,9 +61,7 @@ class Tours {
         return false;
     }
     
-    /**
-     * Get all tours with filters
-     */
+
     public function getAllTours($filters = [], $limit = 20, $offset = 0) {
         $query = "SELECT t.*, 
                          u.first_name as creator_name,
@@ -82,7 +73,6 @@ class Tours {
         
         $params = [];
         
-        // Apply filters
         if (isset($filters['destination']) && !empty($filters['destination'])) {
             $query .= " AND t.destination LIKE :destination";
             $params[':destination'] = '%' . $filters['destination'] . '%';
@@ -117,7 +107,6 @@ class Tours {
         
         $stmt = $this->conn->prepare($query);
         
-        // Bind filter parameters
         foreach ($params as $key => $value) {
             $stmt->bindValue($key, $value);
         }
@@ -129,7 +118,6 @@ class Tours {
         
         $tours = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Decode JSON fields
         foreach ($tours as &$tour) {
             $tour['gallery'] = json_decode($tour['gallery'], true) ?: [];
             $tour['features'] = json_decode($tour['features'], true) ?: [];
@@ -141,9 +129,7 @@ class Tours {
         return $tours;
     }
     
-    /**
-     * Get tour by ID
-     */
+
     public function getTourById($id) {
         $query = "SELECT t.*, 
                          u.first_name as creator_name,
@@ -161,7 +147,6 @@ class Tours {
         if ($stmt->rowCount() > 0) {
             $tour = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            // Decode JSON fields
             $tour['gallery'] = json_decode($tour['gallery'], true) ?: [];
             $tour['features'] = json_decode($tour['features'], true) ?: [];
             $tour['inclusions'] = json_decode($tour['inclusions'], true) ?: [];
@@ -173,10 +158,7 @@ class Tours {
         
         return false;
     }
-    
-    /**
-     * Update tour
-     */
+
     public function update() {
         $query = "UPDATE " . $this->table_name . " 
                   SET title = :title, description = :description, destination = :destination,
@@ -205,10 +187,7 @@ class Tours {
         
         return $stmt->execute();
     }
-    
-    /**
-     * Delete tour (soft delete)
-     */
+
     public function delete($id) {
         $query = "UPDATE " . $this->table_name . " SET is_active = 0 WHERE id = :id";
         $stmt = $this->conn->prepare($query);
@@ -217,9 +196,7 @@ class Tours {
         return $stmt->execute();
     }
     
-    /**
-     * Get popular tours
-     */
+
     public function getPopularTours($limit = 10) {
         $query = "SELECT t.*, 
                          (SELECT COUNT(*) FROM bookings WHERE tour_id = t.id) as booking_count,
@@ -243,27 +220,21 @@ class Tours {
         
         return $tours;
     }
-    
-    /**
-     * Get tour statistics
-     */
+
     public function getTourStats() {
         $stats = [];
         
-        // Total tours
         $query = "SELECT COUNT(*) as total FROM " . $this->table_name . " WHERE is_active = 1";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         $stats['total_tours'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
         
-        // Tours by category
         $query = "SELECT category, COUNT(*) as count FROM " . $this->table_name . " 
                   WHERE is_active = 1 GROUP BY category";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         $stats['tours_by_category'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Average price
         $query = "SELECT AVG(price) as avg_price FROM " . $this->table_name . " WHERE is_active = 1";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
@@ -272,9 +243,7 @@ class Tours {
         return $stats;
     }
     
-    /**
-     * Search tours
-     */
+
     public function searchTours($search_term, $limit = 20) {
         $query = "SELECT t.*, 
                          (SELECT AVG(rating) FROM reviews WHERE tour_id = t.id) as avg_rating

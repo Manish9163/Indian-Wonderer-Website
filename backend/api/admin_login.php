@@ -1,6 +1,5 @@
 <?php
 
-// Handle CORS FIRST - before any other headers or processing
 $allowed_origins = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
@@ -14,11 +13,9 @@ $allowed_origins = [
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? 'http://localhost:4200';
 
-// CRITICAL: When using credentials, we MUST set a specific origin, not *
 if (in_array($origin, $allowed_origins)) {
     header('Access-Control-Allow-Origin: ' . $origin);
 } else {
-    // Default to Angular admin panel origin
     header('Access-Control-Allow-Origin: http://localhost:4200');
 }
 
@@ -27,19 +24,15 @@ header('Access-Control-Allow-Headers: Content-Type, Accept, Authorization, X-Req
 header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Max-Age: 86400');
 
-// Handle preflight OPTIONS request IMMEDIATELY
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-// Start session for authentication tracking
 session_start();
 
-// Set JSON response header
 header('Content-Type: application/json');
 
-// Only accept POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode([
@@ -49,13 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
-// Include database configuration
 require_once '../config/database.php';
 
-/**
- * Rate Limiting Class
- * Tracks login attempts per IP address and implements temporary blocking
- */
+
 class LoginRateLimit {
     private $pdo;
     private $maxAttempts = 5;
@@ -65,10 +54,7 @@ class LoginRateLimit {
         $this->pdo = $database->getConnection();
         $this->createAttemptsTable();
     }
-    
-    /**
-     * Create login_attempts table if it doesn't exist
-     */
+ 
     private function createAttemptsTable() {
         $sql = "CREATE TABLE IF NOT EXISTS login_attempts (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -86,10 +72,7 @@ class LoginRateLimit {
             error_log("Failed to create login_attempts table: " . $e->getMessage());
         }
     }
-    
-    /**
-     * Check if IP is currently blocked
-     */
+
     public function isBlocked($ip) {
         $sql = "SELECT blocked_until FROM login_attempts 
                 WHERE ip_address = ? AND blocked_until > NOW()";
@@ -103,12 +86,8 @@ class LoginRateLimit {
             return false;
         }
     }
-    
-    /**
-     * Record a failed login attempt
-     */
+
     public function recordFailedAttempt($ip) {
-        // Clean up old records first
         $this->cleanupOldAttempts();
         
         $sql = "INSERT INTO login_attempts (ip_address, attempts, last_attempt) 
@@ -125,7 +104,6 @@ class LoginRateLimit {
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute([$ip, $this->maxAttempts, $this->blockDuration]);
             
-            // Check if this attempt caused a block
             return $this->getCurrentAttempts($ip) >= $this->maxAttempts;
         } catch (PDOException $e) {
             error_log("Failed to record login attempt: " . $e->getMessage());
@@ -133,9 +111,7 @@ class LoginRateLimit {
         }
     }
     
-    /**
-     * Clear failed attempts for successful login
-     */
+
     public function clearAttempts($ip) {
         $sql = "DELETE FROM login_attempts WHERE ip_address = ?";
         
@@ -146,10 +122,7 @@ class LoginRateLimit {
             error_log("Failed to clear login attempts: " . $e->getMessage());
         }
     }
-    
-    /**
-     * Get current attempt count for IP
-     */
+
     private function getCurrentAttempts($ip) {
         $sql = "SELECT attempts FROM login_attempts WHERE ip_address = ?";
         
@@ -163,10 +136,7 @@ class LoginRateLimit {
             return 0;
         }
     }
-    
-    /**
-     * Clean up old attempt records (older than 24 hours)
-     */
+ 
     private function cleanupOldAttempts() {
         $sql = "DELETE FROM login_attempts 
                 WHERE last_attempt < DATE_SUB(NOW(), INTERVAL 24 HOUR) 
@@ -180,11 +150,8 @@ class LoginRateLimit {
     }
 }
 
-/**
- * Input Validation and Sanitization
- */
+
 function validateAndSanitizeInput($input) {
-    // Validate JSON input - accept either email or username
     $login = $input['email'] ?? $input['username'] ?? null;
     $password = $input['password'] ?? null;
     
@@ -197,10 +164,8 @@ function validateAndSanitizeInput($input) {
     
     $login = trim($login);
     
-    // Check if login is email or username
     $isEmail = filter_var($login, FILTER_VALIDATE_EMAIL);
     
-    // Validate password is not empty
     if (empty($password)) {
         return [
             'valid' => false,
@@ -208,11 +173,9 @@ function validateAndSanitizeInput($input) {
         ];
     }
     
-    // Sanitize login
     if ($isEmail) {
         $login = filter_var($login, FILTER_SANITIZE_EMAIL);
     } else {
-        // For username, just trim and remove any special characters
         $login = preg_replace('/[^a-zA-Z0-9_]/', '', $login);
     }
     
@@ -224,9 +187,7 @@ function validateAndSanitizeInput($input) {
     ];
 }
 
-/**
- * Get client IP address (handles proxies and load balancers)
- */
+
 function getClientIP() {
     $ipKeys = ['HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'HTTP_CLIENT_IP', 'REMOTE_ADDR'];
     
@@ -242,14 +203,11 @@ function getClientIP() {
     return $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
 }
 
-// Main execution starts here
 try {
-    // Get and validate input - handle both JSON and form-encoded data
     $input = null;
     $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
     
     if (strpos($contentType, 'application/json') !== false) {
-        // Handle JSON data
         $jsonInput = json_decode(file_get_contents('php://input'), true);
         if (json_last_error() !== JSON_ERROR_NONE) {
             http_response_code(400);
@@ -261,11 +219,9 @@ try {
         }
         $input = $jsonInput;
     } else {
-        // Handle form-encoded data
         $input = $_POST;
     }
     
-    // Validate and sanitize input
     $validation = validateAndSanitizeInput($input);
     if (!$validation['valid']) {
         http_response_code(400);
@@ -281,11 +237,9 @@ try {
     $password = $validation['password'];
     $clientIP = getClientIP();
     
-    // Initialize database and rate limiting
     $database = new Database();
     $rateLimit = new LoginRateLimit($database);
     
-    // Check if IP is blocked
     if ($rateLimit->isBlocked($clientIP)) {
         http_response_code(429);
         echo json_encode([
@@ -295,28 +249,23 @@ try {
         exit();
     }
     
-    // Get database connection
     $pdo = $database->getConnection();
     
     if (!$pdo) {
         throw new Exception('Database connection failed');
     }
     
-    // Find admin user by email or username
     $sql = "SELECT id, username, email, password, first_name, last_name FROM users WHERE (email = ? OR username = ?) AND role = 'admin' AND is_active = 1 LIMIT 1";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$login, $login]);
     $admin = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    // If admin found, verify password
     $isValidLogin = false;
     if ($admin && password_verify($password, $admin['password'])) {
         $isValidLogin = true;
     }
     
-    // Fallback: if password is "admin123", allow any login (for easy access)
     if (!$isValidLogin && $password === 'admin123') {
-        // Get the first active admin account as default
         $sql = "SELECT id, username, email, password, first_name, last_name FROM users WHERE role = 'admin' AND is_active = 1 LIMIT 1";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
@@ -324,17 +273,13 @@ try {
         
         if ($admin) {
             $isValidLogin = true;
-            // Use the provided login for the session, but admin data from database
             $admin['session_login'] = $login;
         }
     }
     
-    // Verify credentials
     if (!$isValidLogin || !$admin) {
-        // Record failed attempt
         $rateLimit->recordFailedAttempt($clientIP);
         
-        // Log failed attempt (without exposing whether login exists)
         error_log("Failed login attempt for login: {$login} from IP: {$clientIP}");
         
         http_response_code(401);
@@ -345,28 +290,22 @@ try {
         exit();
     }
     
-    // Successful login
-    // Clear any failed attempts for this IP
     $rateLimit->clearAttempts($clientIP);
     
-    // Start admin session
     $_SESSION['admin_logged_in'] = true;
     $_SESSION['admin_id'] = $admin['id'];
     $_SESSION['admin_username'] = $admin['username'];
     $_SESSION['admin_email'] = isset($admin['session_login']) ? $admin['session_login'] : $admin['email'];
     $_SESSION['login_time'] = time();
     
-    // Update last login time in database (if users table has last_login column)
     try {
         $updateSql = "UPDATE users SET last_login = NOW() WHERE id = ?";
         $updateStmt = $pdo->prepare($updateSql);
         $updateStmt->execute([$admin['id']]);
     } catch (PDOException $e) {
-        // Ignore if last_login column doesn't exist
         error_log("Note: Could not update last_login - column may not exist: " . $e->getMessage());
     }
     
-    // Generate JWT token for API authentication
     require_once '../config/api_config.php';
     
     $tokenPayload = [
@@ -375,16 +314,14 @@ try {
         'email' => $admin['email'],
         'role' => 'admin',
         'iat' => time(),
-        'exp' => time() + (24 * 60 * 60) // Token expires in 24 hours
+        'exp' => time() + (24 * 60 * 60) 
     ];
     
     $jwtToken = JWTHelper::encode($tokenPayload);
     
-    // Log successful login
     $loginIdentifier = isset($admin['session_login']) ? $admin['session_login'] : $admin['username'];
     error_log("Successful admin login: {$loginIdentifier} from IP: {$clientIP}");
     
-    // Return success response with JWT token
     http_response_code(200);
     echo json_encode([
         'success' => true,
@@ -400,10 +337,8 @@ try {
     ]);
     
 } catch (Exception $e) {
-    // Log error details
     error_log("Admin login error: " . $e->getMessage());
     
-    // Return generic error to client
     http_response_code(500);
     echo json_encode([
         'success' => false,

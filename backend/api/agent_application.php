@@ -1,5 +1,4 @@
 <?php
-// Agent/Guide Application API
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
@@ -19,7 +18,6 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 try {
     if ($method === 'POST') {
-        // Get form data
         $name = $_POST['name'] ?? '';
         $email = $_POST['email'] ?? '';
         $phone = $_POST['phone'] ?? '';
@@ -30,7 +28,6 @@ try {
         $certification = $_POST['certification'] ?? '';
         $additional_notes = $_POST['additional_notes'] ?? '';
         
-        // Validate required fields
         if (empty($name) || empty($email) || empty($phone)) {
             http_response_code(400);
             echo json_encode([
@@ -40,7 +37,6 @@ try {
             exit();
         }
         
-        // Validate email format
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             http_response_code(400);
             echo json_encode([
@@ -50,13 +46,11 @@ try {
             exit();
         }
         
-        // Check if email already exists in users table
         $checkEmailStmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
         $checkEmailStmt->execute([$email]);
         $existingUser = $checkEmailStmt->fetch(PDO::FETCH_ASSOC);
         
         if ($existingUser) {
-            // Check if user already has a guide application
             $checkGuideStmt = $pdo->prepare("SELECT id, application_status FROM guides WHERE user_id = ?");
             $checkGuideStmt->execute([$existingUser['id']]);
             $existingGuide = $checkGuideStmt->fetch(PDO::FETCH_ASSOC);
@@ -79,21 +73,17 @@ try {
             }
         }
         
-        // Start transaction
         $pdo->beginTransaction();
         
         try {
             $userId = null;
             
             if ($existingUser) {
-                // Use existing user
                 $userId = $existingUser['id'];
             } else {
-                // Create new user account for the applicant
                 $username = strtolower(str_replace(' ', '_', $name)) . '_' . substr(uniqid(), -4);
                 $defaultPassword = password_hash('Welcome@123', PASSWORD_BCRYPT);
                 
-                // Split name into first and last name
                 $nameParts = explode(' ', trim($name), 2);
                 $firstName = $nameParts[0];
                 $lastName = $nameParts[1] ?? '';
@@ -114,11 +104,9 @@ try {
                 $userId = $pdo->lastInsertId();
             }
             
-            // Parse languages (comma-separated to JSON array)
             $languagesArray = array_map('trim', explode(',', $languages_spoken));
             $languagesJson = json_encode($languagesArray);
             
-            // Create guide application
             $createGuideStmt = $pdo->prepare("INSERT INTO guides 
                 (user_id, specialization, experience_years, languages, certification, bio, 
                 status, application_status, created_at) 
@@ -137,7 +125,6 @@ try {
             
             $guideId = $pdo->lastInsertId();
             
-            // Send notification to admin (store in activity log)
             $notificationStmt = $pdo->prepare("INSERT INTO activity_logs 
                 (user_id, action, table_name, record_id) 
                 VALUES (?, ?, ?, ?)");
@@ -149,10 +136,8 @@ try {
                 $guideId
             ]);
             
-            // Commit transaction
             $pdo->commit();
             
-            // Send confirmation email to applicant
             $confirmationSent = sendApplicationConfirmationEmail($email, $name);
             
             echo json_encode([
@@ -187,9 +172,7 @@ try {
     ]);
 }
 
-/**
- * Send application confirmation email to applicant
- */
+
 function sendApplicationConfirmationEmail($email, $name) {
     $subject = "Guide Application Received - Indian Wonderer";
     
@@ -250,9 +233,7 @@ function sendApplicationConfirmationEmail($email, $name) {
     $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
     $headers .= "From: Indian Wonderer <noreply@indianwonderer.com>" . "\r\n";
     
-    // In production, use proper email service (PHPMailer, SendGrid, etc.)
-    // For now, we'll just log it
     error_log("Email would be sent to: $email\nSubject: $subject");
     
-    return true; // Return true for now (in production, return actual mail() result)
+    return true; 
 }

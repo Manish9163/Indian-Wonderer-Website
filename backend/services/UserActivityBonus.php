@@ -1,8 +1,4 @@
 <?php
-/**
- * User Activity Tracker & Bonus Calculator
- * Calculates bonus percentage based on user activity
- */
 
 class UserActivityBonus {
     private $pdo;
@@ -11,14 +7,9 @@ class UserActivityBonus {
         $this->pdo = $pdo;
     }
     
-    /**
-     * Calculate bonus percentage for a user
-     * First time: 10%
-     * Subsequent times: 3-5% based on activity
-     */
+
     public function calculateBonusPercentage($userId) {
         try {
-            // Check if this is first booking
             $stmt = $this->pdo->prepare("
                 SELECT COUNT(*) as booking_count 
                 FROM bookings 
@@ -28,7 +19,6 @@ class UserActivityBonus {
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             $bookingCount = $result['booking_count'];
             
-            // First time user gets 10%
             if ($bookingCount == 0) {
                 return [
                     'bonus_percentage' => 10,
@@ -38,10 +28,8 @@ class UserActivityBonus {
                 ];
             }
             
-            // Calculate activity score for returning users
             $activityScore = $this->calculateActivityScore($userId);
             
-            // Determine bonus based on activity (3-5%)
             if ($activityScore >= 80) {
                 $bonus = 5.0;
                 $tier = 'gold';
@@ -75,15 +63,10 @@ class UserActivityBonus {
             ];
         }
     }
-    
-    /**
-     * Calculate user activity score (0-100)
-     * Based on: bookings, completed bookings, total spent, recency
-     */
+
     private function calculateActivityScore($userId) {
         $score = 0;
         
-        // 1. Number of bookings (max 30 points)
         $stmt = $this->pdo->prepare("
             SELECT COUNT(*) as count 
             FROM bookings 
@@ -91,9 +74,8 @@ class UserActivityBonus {
         ");
         $stmt->execute([$userId]);
         $bookingCount = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
-        $score += min($bookingCount * 5, 30); // 5 points per booking, max 30
+        $score += min($bookingCount * 5, 30); 
         
-        // 2. Completed bookings ratio (max 25 points)
         $stmt = $this->pdo->prepare("
             SELECT 
                 COUNT(*) as total,
@@ -108,7 +90,6 @@ class UserActivityBonus {
             $score += $completionRatio * 25;
         }
         
-        // 3. Total amount spent (max 25 points)
         $stmt = $this->pdo->prepare("
             SELECT COALESCE(SUM(total_amount), 0) as total_spent
             FROM bookings 
@@ -118,7 +99,6 @@ class UserActivityBonus {
         $totalSpent = $stmt->fetch(PDO::FETCH_ASSOC)['total_spent'];
         $score += min($totalSpent / 1000, 25); // 1 point per 1000 spent, max 25
         
-        // 4. Recency - recent activity (max 20 points)
         $stmt = $this->pdo->prepare("
             SELECT DATEDIFF(CURDATE(), MAX(booking_date)) as days_since_last
             FROM bookings 
@@ -141,9 +121,7 @@ class UserActivityBonus {
         return min($score, 100);
     }
     
-    /**
-     * Get user activity details
-     */
+
     public function getUserActivityDetails($userId) {
         try {
             $stmt = $this->pdo->prepare("
@@ -160,7 +138,6 @@ class UserActivityBonus {
             $stmt->execute([$userId]);
             $stats = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            // Get gift card usage
             $stmt = $this->pdo->prepare("
                 SELECT COUNT(*) as gift_cards_received
                 FROM gift_cards 

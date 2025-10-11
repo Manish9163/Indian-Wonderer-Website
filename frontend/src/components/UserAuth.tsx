@@ -4,7 +4,6 @@ import ReactCountryFlag from 'react-country-flag';
 import * as avatars from '@dicebear/avatars';
 import * as style from '@dicebear/avatars-avataaars-sprites';
 
-// Use absolute URL since proxy configuration isn't working as expected
 const API_BASE_URL = 'http://localhost/fu/backend/api';
 
 interface UserAuthProps {
@@ -59,8 +58,8 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
     "Let your dreams set sail!"
   ];
 
-  // Predefined avatar options
   const avatarOptions = [
+    // Travel & Adventure
     { name: 'Explorer', seed: 'explorer' },
     { name: 'Adventurer', seed: 'adventurer' },
     { name: 'Traveler', seed: 'traveler' },
@@ -68,15 +67,106 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
     { name: 'Nomad', seed: 'nomad' },
     { name: 'Tourist', seed: 'tourist' },
     { name: 'Backpacker', seed: 'backpacker' },
-    { name: 'Journey', seed: 'journey' },
-    { name: 'Discovery', seed: 'discovery' },
-    { name: 'Adventure', seed: 'adventure' },
+    { name: 'Pilgrim', seed: 'pilgrim' },
+    { name: 'Voyager', seed: 'voyager' },
+    { name: 'Navigator', seed: 'navigator' },
+    
+    // Nature & Landscapes
     { name: 'Mountain', seed: 'mountain' },
     { name: 'Ocean', seed: 'ocean' },
     { name: 'Forest', seed: 'forest' },
     { name: 'Desert', seed: 'desert' },
     { name: 'Valley', seed: 'valley' },
-    { name: 'Sunrise', seed: 'sunrise' }
+    { name: 'Sunrise', seed: 'sunrise' },
+    { name: 'Sunset', seed: 'sunset' },
+    { name: 'River', seed: 'river' },
+    { name: 'Lake', seed: 'lake' },
+    { name: 'Waterfall', seed: 'waterfall' },
+    { name: 'Canyon', seed: 'canyon' },
+    { name: 'Beach', seed: 'beach' },
+    { name: 'Island', seed: 'island' },
+    { name: 'Jungle', seed: 'jungle' },
+    { name: 'Rainforest', seed: 'rainforest' },
+    
+    // Journey & Discovery
+    { name: 'Journey', seed: 'journey' },
+    { name: 'Discovery', seed: 'discovery' },
+    { name: 'Adventure', seed: 'adventure' },
+    { name: 'Quest', seed: 'quest' },
+    { name: 'Expedition', seed: 'expedition' },
+    { name: 'Safari', seed: 'safari' },
+    { name: 'Trek', seed: 'trek' },
+    { name: 'Cruise', seed: 'cruise' },
+    { name: 'Roadtrip', seed: 'roadtrip' },
+    
+    // Animals & Wildlife
+    { name: 'Eagle', seed: 'eagle' },
+    { name: 'Tiger', seed: 'tiger' },
+    { name: 'Lion', seed: 'lion' },
+    { name: 'Elephant', seed: 'elephant' },
+    { name: 'Dolphin', seed: 'dolphin' },
+    { name: 'Panda', seed: 'panda' },
+    { name: 'Wolf', seed: 'wolf' },
+    { name: 'Bear', seed: 'bear' },
+    { name: 'Fox', seed: 'fox' },
+    { name: 'Deer', seed: 'deer' },
+    
+    // Cultural & Historical
+    { name: 'Taj Mahal', seed: 'tajmahal' },
+    { name: 'Rajasthan', seed: 'rajasthan' },
+    { name: 'Kerala', seed: 'kerala' },
+    { name: 'Goa', seed: 'goa' },
+    { name: 'Himalayas', seed: 'himalayas' },
+    { name: 'Mumbai', seed: 'mumbai' },
+    { name: 'Delhi', seed: 'delhi' },
+    { name: 'Jaipur', seed: 'jaipur' },
+    { name: 'Varanasi', seed: 'varanasi' },
+    { name: 'Kashmir', seed: 'kashmir' },
+    
+    // Seasons & Weather
+    { name: 'Spring', seed: 'spring' },
+    { name: 'Summer', seed: 'summer' },
+    { name: 'Autumn', seed: 'autumn' },
+    { name: 'Winter', seed: 'winter' },
+    { name: 'Monsoon', seed: 'monsoon' },
+    { name: 'Rainbow', seed: 'rainbow' },
+    { name: 'Thunder', seed: 'thunder' },
+    { name: 'Breeze', seed: 'breeze' },
+    
+    // Activities
+    { name: 'Hiking', seed: 'hiking' },
+    { name: 'Camping', seed: 'camping' },
+    { name: 'Swimming', seed: 'swimming' },
+    { name: 'Skiing', seed: 'skiing' },
+    { name: 'Surfing', seed: 'surfing' },
+    { name: 'Climbing', seed: 'climbing' },
+    { name: 'Diving', seed: 'diving' },
+    { name: 'Kayaking', seed: 'kayaking' },
+    
+    // Cosmic & Sky
+    { name: 'Star', seed: 'star' },
+    { name: 'Moon', seed: 'moon' },
+    { name: 'Sky', seed: 'sky' },
+    { name: 'Cloud', seed: 'cloud' },
+    { name: 'Aurora', seed: 'aurora' },
+    { name: 'Comet', seed: 'comet' },
+    
+    // Mythical & Fantasy
+    { name: 'Phoenix', seed: 'phoenix' },
+    { name: 'Dragon', seed: 'dragon' },
+    { name: 'Unicorn', seed: 'unicorn' },
+    { name: 'Pegasus', seed: 'pegasus' },
+    { name: 'Griffin', seed: 'griffin' },
+    
+    // Colors & Vibes
+    { name: 'Amber', seed: 'amber' },
+    { name: 'Azure', seed: 'azure' },
+    { name: 'Crimson', seed: 'crimson' },
+    { name: 'Emerald', seed: 'emerald' },
+    { name: 'Golden', seed: 'golden' },
+    { name: 'Indigo', seed: 'indigo' },
+    { name: 'Violet', seed: 'violet' },
+    { name: 'Coral', seed: 'coral' }
   ];
 
   // Google Auth handler (replace with your OAuth logic)
@@ -85,7 +175,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
     window.open('https://accounts.google.com/o/oauth2/v2/auth', '_blank');
   };
 
-  // Handle clicks outside avatar selector
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (avatarSelectorRef.current && !avatarSelectorRef.current.contains(event.target as Node)) {
@@ -99,7 +188,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
     };
   }, []);
 
-  // Check for logout flag and show toast
   useEffect(() => {
     const justLoggedOut = localStorage.getItem('justLoggedOut');
     if (justLoggedOut === 'true' && showToast) {
@@ -108,15 +196,13 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
     }
   }, [showToast]);
 
-  // Handle mode change with flip animation
   const handleModeChange = (newMode: 'login' | 'signup') => {
     if (newMode !== mode) {
       setMode(newMode);
-      setSignupStep(0); // Reset signup step when switching
+      setSignupStep(0); 
     }
   };
 
-  // Signup validation
   const validateSignup = () => {
     const errors: {[key: string]: string} = {};
     if (!signupData.firstName) errors.firstName = 'First name required';
@@ -156,7 +242,7 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
         },
         credentials: 'include',
         body: JSON.stringify({
-          username: signupData.email.split('@')[0], // Use email prefix as username
+          username: signupData.email.split('@')[0], 
           first_name: signupData.firstName,
           last_name: signupData.lastName,
           email: signupData.email,
@@ -168,7 +254,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
       const data = await response.json();
       
       if (data.success) {
-        // Store authentication token and map backend fields to frontend format
         const userData = {
           id: data.data.user?.id || data.data.id,
           username: data.data.user?.username || data.data.username,
@@ -200,10 +285,8 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
     }
   };
 
-  // Validation
   const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const validatePhone = (phone: string) => /^\d{10}$/.test(phone);
-  // Password: 8-15 chars, upper, lower, number, symbol
   const validatePassword = (password: string) => {
     return (
       password.length >= 8 &&
@@ -216,7 +299,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
   };
   const validateOTP = (otp: string) => /^\d{6}$/.test(otp);
 
-  // Animation helpers
   const triggerShake = () => {
     setShake(true);
     setTimeout(() => setShake(false), 500);
@@ -234,7 +316,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
   };
   const strengthEmoji = ['😢', '😐', '🙂', '😃', '🤩', '🔐'];
 
-  // Handlers
   const handleInputChange = (field: string, value: string) => {
     if (field === "identifier") {
       if (/^\d*$/.test(value) && value.length <= 10) {
@@ -256,22 +337,17 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
     e.preventDefault();
     let errorObj: {[key: string]: string} = {};
     
-    // Check if this is an admin login attempt first
     const isAdminLogin = formData.identifier === 'admin@indianwonderer.com' || formData.identifier === 'admin';
     
     if (!formData.identifier) {
       errorObj.identifier = "Email or phone is required";
     } else if (!isAdminLogin && !validateEmail(formData.identifier) && !validatePhone(formData.identifier)) {
-      // Only validate email/phone for non-admin users
       errorObj.identifier = "Enter a valid email or 10-digit phone";
     }
     if (!formData.password) {
       errorObj.password = "Password is required";
     }
-    
-    // Note: We don't validate password strength for login, only for signup
-    // Users might have older passwords that don't meet current requirements
-    
+        
     setErrors(errorObj);
     if (Object.keys(errorObj).length > 0) {
       triggerShake();
@@ -282,7 +358,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
     
     try {
       
-      // Check if this is an admin login attempt
       const isEmailLogin = validateEmail(formData.identifier);
       
       if (isAdminLogin) {
@@ -292,7 +367,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
           endpoint: `${API_BASE_URL}/admin_login.php`
         });
         
-        // Clean request body - only send email OR username, not both
         const adminRequestBody = isEmailLogin 
           ? {
               email: formData.identifier,
@@ -304,10 +378,8 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
             };
         
         
-        // Try admin login with form-encoded data to avoid preflight
         let response;
         try {
-          // Create form-encoded data to avoid CORS preflight
           const formDataBody = new URLSearchParams();
           if (isEmailLogin) {
             formDataBody.append('email', formData.identifier);
@@ -343,17 +415,14 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
         
         if (data.success) {
           console.log('✅ Admin login successful, redirecting to admin panel');
-          // Set admin authentication in localStorage for Angular app
           localStorage.setItem('adminAuthenticated', 'true');
           localStorage.setItem('adminData', JSON.stringify(data.data));
           
           console.log('🚀 Redirecting to: http://localhost:4200/dashboard');
-          // Redirect to admin panel
           window.location.href = 'http://localhost:4200/dashboard';
           return;
         } else if (response.status === 200) {
           console.log('❌ Admin login failed:', data.message);
-          // Admin login failed, show error
           setErrors({ password: data.message || 'Invalid admin credentials' });
           triggerShake();
           setIsLoading(false);
@@ -361,7 +430,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
         }
       }
       
-      // Regular user login flow
       console.log('🚀 Attempting regular user login...', {
         endpoint: `${API_BASE_URL}/auth.php?action=login`,
         email: formData.identifier
@@ -391,7 +459,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
       if (data.success) {
         console.log('✅ Login successful, storing authentication data');
         
-        // Map backend fields to frontend format
         const userData = {
           id: data.data.user?.id || data.data.id,
           username: data.data.user?.username || data.data.username,
@@ -405,7 +472,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
           token: data.data.token
         };
         
-        // Store authentication token
         localStorage.setItem('authToken', data.data.token);
         localStorage.setItem('userData', JSON.stringify(userData));
         
@@ -422,7 +488,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
     } catch (error) {
       console.error('💥 Login error:', error);
       
-      // More specific error message
       let errorMessage = 'Login failed. Please try again.';
       if (error instanceof Error) {
         console.error('💥 Error details:', {
@@ -464,7 +529,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
     }, 1200);
   };
 
-  // Theme classes (Cube Factory inspired)
   const theme = dark
     ? {
         bg: "bg-gradient-to-br from-gray-950 via-gray-900 to-black animate-gradient-x",
@@ -489,10 +553,8 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
         toggle: "bg-white border-green-200 text-green-500 hover:bg-green-50"
       };
 
-  // UI
   return (
     <div className={`min-h-screen flex items-center justify-center ${theme.bg}`}>
-      {/* Dark mode toggle */}
       <div className="fixed top-6 right-6 z-50">
         <button
           onClick={() => setDark((d) => !d)}
@@ -502,16 +564,11 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
         </button>
       </div>
       <div className={`w-full max-w-md p-0 rounded-3xl shadow-2xl ${theme.card} ${theme.glass} ${theme.border} transition-all duration-500 ${shake ? "animate-shake" : ""} ${mode === 'login' ? 'animate-flip-to-login' : 'animate-flip-to-signup'}`}> 
-        {/* Cube Factory Inspired Header */}
         <div className="relative w-full flex flex-col items-center justify-center pt-10 pb-6 px-8">
-          {/* Removed top cube logo SVG */}
-          {/* WhatsApp.jpg image above company name */}
           <div className="flex justify-center items-center mt-6 mb-1">
             <img src="/WhatsApp.jpg" alt="WhatsApp" className="w-16 h-16 rounded-xl shadow-lg object-cover" />
           </div>
           <h1 className="text-3xl font-black tracking-tight mb-2 mt-10 animate-fadeIn" style={{letterSpacing: "-1px", color: dark ? undefined : "#FF9933"}}>Indian Wonderer</h1>
-          {/* Removed Travel Cube Factory and vertical gradient line */}
-          {/* Impressive message */}
           <div className="text-center mb-4 animate-fadeIn">
             <span className="inline-block text-lg font-semibold bg-gradient-to-r from-orange-500 via-green-500 to-blue-600 bg-clip-text text-transparent drop-shadow-lg">
               Unlock your journey. Experience India like never before!
@@ -519,9 +576,7 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
           </div>
         </div>
         <div className="px-8 pb-10">
-          {/* ...existing code... */}
           <div className="text-center mb-8">
-            {/* Removed 'Sign In' and login credential message */}
             {step !== "auth" && (
               <h2 className="text-2xl font-bold mt-2 mb-2 animate-fadeIn">OTP Verification</h2>
             )}
@@ -589,12 +644,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
                       )}
                     </div>
                     
-                    {/* Admin Login Hint */}
-                    <div className="text-center">
-                      <p className="text-xs opacity-60">
-                        💡 Admin users: Use <span className="font-mono bg-gray-100 px-1 rounded">admin</span> or <span className="font-mono bg-gray-100 px-1 rounded">admin@indianwonderer.com</span> to access admin panel
-                      </p>
-                    </div>
                     
                     <button
                       type="submit"
@@ -637,15 +686,12 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
                 </>
               ) : (
                 <form onSubmit={handleSignupSubmit} className="space-y-4 animate-slideIn">
-                  {/* Stepper Progress Bar */}
                   <div className="flex items-center mb-6">
                     {[0,1,2,3].map((stepIdx) => (
                       <div key={stepIdx} className={`flex-1 h-2 mx-1 rounded-full ${signupStep >= stepIdx ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                     ))}
                   </div>
-                  {/* Motivational Quote */}
                   <div className="text-center text-sm italic text-blue-500 mb-2 animate-fadeIn">{motivationalQuotes[signupStep]}</div>
-                  {/* Step 1: Personal Info */}
                   {signupStep === 0 && (
                     <>
                       <div className="flex gap-2">
@@ -666,7 +712,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
                         <label className="block text-sm font-medium mb-1">Phone (10 digits)</label>
                         <input type="text" value={signupData.phone} onChange={e => handleSignupChange('phone', e.target.value)} className={`w-full px-4 py-3 border rounded-xl ${theme.input} ${signupErrors.phone ? 'border-red-400 bg-red-50' : ''}`} maxLength={10} placeholder="Enter 10-digit phone" />
                       </div>
-                      {/* Avatar Generator */}
                       <div className="mt-4" ref={avatarSelectorRef}>
                         <label className="block text-sm font-medium mb-2">Choose Your Avatar</label>
                         <div className="flex items-center gap-4 mb-3">
@@ -722,7 +767,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
                       </div>
                     </>
                   )}
-                  {/* Step 2: Security */}
                   {signupStep === 1 && (
                     <>
                       <div className="flex gap-2">
@@ -756,7 +800,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
                       </div>
                     </>
                   )}
-                  {/* Step 3: Details */}
                   {signupStep === 2 && (
                     <>
                       <div>
@@ -788,7 +831,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
                       </div>
                     </>
                   )}
-                  {/* Step 4: Review & Terms */}
                   {signupStep === 3 && (
                     <>
                       <div className="flex items-center gap-2">

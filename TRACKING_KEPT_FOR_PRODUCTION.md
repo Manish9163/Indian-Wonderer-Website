@@ -2,7 +2,7 @@
 
 ## 🎯 Decision: FEATURE KEPT FOR PRODUCTION
 
-You made the right choice! This feature will be a **huge competitive advantage** when you launch.
+This feature will be a **huge competitive advantage** when you launch.
 
 ---
 

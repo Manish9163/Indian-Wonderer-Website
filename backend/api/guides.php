@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-// Handle CORS
 $allowed_origins = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
@@ -98,7 +97,6 @@ function getAllGuides($conn) {
     $stmt->execute();
     $guides = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Parse JSON fields
     foreach ($guides as &$guide) {
         $guide['languages'] = json_decode($guide['languages'] ?? '[]', true);
         $guide['availability'] = json_decode($guide['availability'] ?? '[]', true);
@@ -147,7 +145,6 @@ function assignGuide($conn) {
         }
     }
     
-    // Check if guide is available
     $check_query = "SELECT status FROM guides WHERE id = ?";
     $check_stmt = $conn->prepare($check_query);
     $check_stmt->execute([$input['guide_id']]);
@@ -159,7 +156,6 @@ function assignGuide($conn) {
         return;
     }
     
-    // Create assignment
     $query = "INSERT INTO tour_guide_assignments (booking_id, guide_id, assignment_date, status, notes) 
               VALUES (?, ?, CURDATE(), 'assigned', ?)";
     
@@ -173,12 +169,10 @@ function assignGuide($conn) {
     if ($result) {
         $assignment_id = $conn->lastInsertId();
         
-        // Update guide status to busy
         $update_query = "UPDATE guides SET status = 'busy', total_tours = total_tours + 1 WHERE id = ?";
         $update_stmt = $conn->prepare($update_query);
         $update_stmt->execute([$input['guide_id']]);
         
-        // Update booking with guide info
         $booking_update = "UPDATE bookings SET guide_id = ? WHERE id = ?";
         $booking_stmt = $conn->prepare($booking_update);
         $booking_stmt->execute([$input['guide_id'], $input['booking_id']]);

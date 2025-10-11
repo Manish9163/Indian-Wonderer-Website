@@ -1,5 +1,4 @@
 <?php
-// Check gift cards in database
 $host = 'localhost';
 $dbname = 'indian_wonderer_base';
 $username = 'root';
@@ -11,13 +10,11 @@ try {
     
     echo "=== Gift Card Investigation ===\n\n";
     
-    // Check total gift cards
     echo "1. Total Gift Cards:\n";
     $stmt = $pdo->query("SELECT COUNT(*) as total FROM gift_cards");
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     echo "   Total: {$result['total']}\n\n";
     
-    // Check gift cards by status
     echo "2. Gift Cards by Status:\n";
     $stmt = $pdo->query("SELECT status, COUNT(*) as count FROM gift_cards GROUP BY status");
     $statuses = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -25,7 +22,6 @@ try {
         echo "   {$status['status']}: {$status['count']}\n";
     }
     
-    // Check all gift cards with details
     echo "\n3. All Gift Card Details:\n";
     $stmt = $pdo->query("
         SELECT 
@@ -53,7 +49,6 @@ try {
         echo "   Created: {$card['created_at']}\n";
     }
     
-    // Check refunds with giftcard method
     echo "\n\n4. Refunds with Gift Card Method:\n";
     $stmt = $pdo->query("
         SELECT 
