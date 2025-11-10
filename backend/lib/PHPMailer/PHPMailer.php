@@ -121,14 +121,15 @@ class PHPMailer
         
         $this->getServerResponse($socket);
 
-        fputs($socket, "EHLO {$_SERVER['SERVER_NAME']}\r\n");
+        $hostname = $_SERVER['SERVER_NAME'] ?? $_SERVER['HOSTNAME'] ?? 'localhost';
+        fputs($socket, "EHLO {$hostname}\r\n");
         $this->getServerResponse($socket);
 
         if ($this->SMTPSecure === 'tls') {
             fputs($socket, "STARTTLS\r\n");
             $this->getServerResponse($socket);
             stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
-            fputs($socket, "EHLO {$_SERVER['SERVER_NAME']}\r\n");
+            fputs($socket, "EHLO {$hostname}\r\n");
             $this->getServerResponse($socket);
         }
 

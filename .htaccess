@@ -20,6 +20,13 @@
     # Exclude already routed backend API calls
     RewriteCond %{REQUEST_URI} !^/fu/backend/api/
     
+    # Exclude population scripts
+    RewriteCond %{REQUEST_URI} !^/fu/populate_.*\.php$
+    RewriteCond %{REQUEST_URI} !^/fu/test_.*\.php$
+    RewriteCond %{REQUEST_URI} !^/fu/check_.*\.php$
+    RewriteCond %{REQUEST_URI} !^/fu/describe_.*\.php$
+    RewriteCond %{REQUEST_URI} !^/fu/list_.*\.php$
+    
     # Route everything through bridge.php
     RewriteRule ^(.*)$ bridge.php [QSA,L]
 </IfModule>

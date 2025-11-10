@@ -57,7 +57,7 @@ class TravelBookingsAPI {
     }
 
     /**
-     * Search for available travel options
+     * Search for available travel options from database
      * GET ?action=search&from=city&to=city&date=YYYY-MM-DD&mode=flight|bus|train
      */
     public function search() {
@@ -71,16 +71,22 @@ class TravelBookingsAPI {
         }
 
         try {
-            // Build dynamic query
+            // Validate date format
+            $date_obj = DateTime::createFromFormat('Y-m-d', $travel_date);
+            if (!$date_obj || $date_obj->format('Y-m-d') !== $travel_date) {
+                return $this->error('Invalid date format. Use YYYY-MM-DD', 400);
+            }
+
+            // Build dynamic query - search from real database
             $query = "SELECT 
                 id, mode, operator_name, vehicle_number, seat_class,
                 from_city, to_city, travel_date, travel_time,
-                cost, tax, total_amount, status
+                cost, tax, total_amount, status, operator_id
             FROM travel_options
-            WHERE from_city = :from_city 
-                AND to_city = :to_city 
-                AND travel_date = :travel_date
-                AND status = 'available'";
+            WHERE LOWER(from_city) = LOWER(:from_city) 
+                AND LOWER(to_city) = LOWER(:to_city) 
+                AND DATE(travel_date) = :travel_date
+                AND status IN ('confirmed', 'pending')";
 
             $params = [
                 ':from_city' => $from_city,
@@ -88,7 +94,7 @@ class TravelBookingsAPI {
                 ':travel_date' => $travel_date
             ];
 
-            if ($mode) {
+            if ($mode && $mode !== 'all') {
                 $query .= " AND mode = :mode";
                 $params[':mode'] = $mode;
             }
@@ -99,9 +105,26 @@ class TravelBookingsAPI {
             $stmt->execute($params);
             $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+            // Format results
+            foreach ($results as &$result) {
+                $result['cost'] = (float)$result['cost'];
+                $result['tax'] = (float)$result['tax'];
+                $result['total_amount'] = (float)$result['total_amount'];
+            }
+
+            if (empty($results)) {
+                return $this->success([
+                    'count' => 0,
+                    'results' => [],
+                    'message' => 'No travels available for this route on this date'
+                ]);
+            }
+
             return $this->success([
                 'count' => count($results),
-                'results' => $results
+                'results' => $results,
+                'route' => "$from_city → $to_city",
+                'date' => $travel_date
             ]);
 
         } catch (Exception $e) {

@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Plane, Bus, Train, MapPin, Calendar, Users, Clock, IndianRupee, Search } from 'lucide-react';
+import { Plane, Bus, Train, MapPin, Calendar, Users, Clock, IndianRupee, Search, Armchair } from 'lucide-react';
+import SeatSelectionModal from './SeatSelectionModal';
+import Payment from './Payment';
+import { from } from 'gsap';
+import toast, { Toaster } from 'react-hot-toast';
 
 interface TravelOption {
     id: string;
@@ -50,15 +54,20 @@ const TravelBooking: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [showBookingForm, setShowBookingForm] = useState(false);
     const [selectedOption, setSelectedOption] = useState<TravelOption | null>(null);
+    const [showSeatSelection, setShowSeatSelection] = useState(false);
+    const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+    const [totalPrice, setTotalPrice] = useState(0);
 
-    // Mock popular routes
+    // Mock popular routes (West Bengal focused)
     const popularRoutes = [
-        { from: 'Delhi', to: 'Mumbai' },
-        { from: 'Mumbai', to: 'Goa' },
-        { from: 'Bangalore', to: 'Hyderabad' },
-        { from: 'Delhi', to: 'Agra' },
+        { from: 'Delhi', to: 'Kolkata' },
         { from: 'Kolkata', to: 'Delhi' },
-        { from: 'Chennai', to: 'Bangalore' }
+        { from: 'Kolkata', to: 'Siliguri' },
+        { from: 'Siliguri', to: 'Darjeeling' },
+        { from: 'Darjeeling', to: 'Jalpaiguri' },
+        { from: 'Kolkata', to: 'Asansol' },
+        {from: 'Asansol', to: 'Durgapur' }, 
+        {from:'pune' , to : 'mathura'}
     ];
 
     // Search for travel options
@@ -66,7 +75,7 @@ const TravelBooking: React.FC = () => {
         e.preventDefault();
         
         if (!searchParams.from_city || !searchParams.to_city || !searchParams.travel_date) {
-            setError('Please fill in all search fields');
+            toast.error('Please fill in all search fields');
             return;
         }
 
@@ -76,7 +85,7 @@ const TravelBooking: React.FC = () => {
         try {
             const modeParam = searchParams.mode === 'all' ? '' : `&mode=${searchParams.mode}`;
             const response = await fetch(
-                `http://localhost:8000/backend/api/travel.php?action=search&from=${searchParams.from_city}&to=${searchParams.to_city}&date=${searchParams.travel_date}${modeParam}`
+                `http://localhost/fu/backend/api/travel.php?action=search&from=${searchParams.from_city}&to=${searchParams.to_city}&date=${searchParams.travel_date}${modeParam}`
             );
 
             if (!response.ok) {
@@ -86,15 +95,20 @@ const TravelBooking: React.FC = () => {
             const data = await response.json();
             
             if (data.success) {
-                setTravelOptions(data.data.results || []);
-                setActiveTab('bookings');
+                if (data.data.results && data.data.results.length > 0) {
+                    setTravelOptions(data.data.results);
+                    setActiveTab('bookings');
+                    toast.success(`Found ${data.data.results.length} travel options!`);
+                } else {
+                    toast.error('No travels available for this route on this date. Try different dates or cities.');
+                    setTravelOptions([]);
+                }
             } else {
-                setError(data.error || 'Search failed');
+                toast.error(data.error || 'Search failed');
             }
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'An error occurred');
-            // Load mock data for testing
-            setTravelOptions(generateMockTravelOptions(searchParams));
+            toast.error('Unable to fetch travels from database. Please try again.');
+            console.error('Error:', err);
         } finally {
             setLoading(false);
         }
@@ -102,83 +116,8 @@ const TravelBooking: React.FC = () => {
 
     // Generate mock travel options for testing
     const generateMockTravelOptions = (params: SearchParams): TravelOption[] => {
-        const mockData: TravelOption[] = [
-            {
-                id: '1',
-                mode: 'flight',
-                operator_name: 'IndiGo Airlines',
-                vehicle_number: '6E 501',
-                seat_class: 'Economy',
-                from_city: params.from_city,
-                to_city: params.to_city,
-                travel_date: params.travel_date,
-                travel_time: '08:00',
-                cost: 3500,
-                tax: 500,
-                total_amount: 4000,
-                status: 'available'
-            },
-            {
-                id: '2',
-                mode: 'flight',
-                operator_name: 'SpiceJet',
-                vehicle_number: 'SG 102',
-                seat_class: 'Economy',
-                from_city: params.from_city,
-                to_city: params.to_city,
-                travel_date: params.travel_date,
-                travel_time: '12:30',
-                cost: 3200,
-                tax: 450,
-                total_amount: 3650,
-                status: 'available'
-            },
-            {
-                id: '3',
-                mode: 'bus',
-                operator_name: 'Redbus Express',
-                seat_class: 'Sleeper',
-                from_city: params.from_city,
-                to_city: params.to_city,
-                travel_date: params.travel_date,
-                travel_time: '18:00',
-                cost: 800,
-                tax: 100,
-                total_amount: 900,
-                status: 'available'
-            },
-            {
-                id: '4',
-                mode: 'bus',
-                operator_name: 'Volvo AC',
-                seat_class: 'AC Sleeper',
-                from_city: params.from_city,
-                to_city: params.to_city,
-                travel_date: params.travel_date,
-                travel_time: '20:30',
-                cost: 1200,
-                tax: 150,
-                total_amount: 1350,
-                status: 'available'
-            },
-            {
-                id: '5',
-                mode: 'train',
-                operator_name: 'Indian Railways',
-                vehicle_number: 'Rajdhani Express',
-                seat_class: '1A',
-                from_city: params.from_city,
-                to_city: params.to_city,
-                travel_date: params.travel_date,
-                travel_time: '22:00',
-                cost: 2500,
-                tax: 300,
-                total_amount: 2800,
-                status: 'available'
-            }
-        ];
-
-        return mockData;
+        // Removed mock data - only using real database
+        return [];
     };
 
     // Load user's bookings
@@ -216,6 +155,14 @@ const TravelBooking: React.FC = () => {
     // Handle booking selection
     const handleSelectOption = (option: TravelOption) => {
         setSelectedOption(option);
+        setShowSeatSelection(true);
+    };
+
+    // Handle seat selection completion
+    const handleSeatsSelected = (seats: string[], totalCost: number) => {
+        setSelectedSeats(seats);
+        setTotalPrice(totalCost);
+        setShowSeatSelection(false);
         setShowBookingForm(true);
     };
 
@@ -249,6 +196,7 @@ const TravelBooking: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-4 md:p-8">
+            <Toaster position="top-right" />
             {/* Header */}
             <div className="max-w-7xl mx-auto mb-8">
                 <h1 className="text-4xl font-bold mb-2">Book Your Travel</h1>
@@ -333,31 +281,25 @@ const TravelBooking: React.FC = () => {
                                 {/* From */}
                                 <div>
                                     <label className="block text-sm font-semibold mb-2 text-slate-300">From</label>
-                                    <select
+                                    <input
+                                        type="text"
+                                        placeholder="e.g., Delhi, Mumbai"
                                         value={searchParams.from_city}
                                         onChange={(e) => setSearchParams({ ...searchParams, from_city: e.target.value })}
-                                        className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                                    >
-                                        <option value="">Select city</option>
-                                        {['Delhi', 'Mumbai', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Goa', 'Agra'].map((city) => (
-                                            <option key={city} value={city}>{city}</option>
-                                        ))}
-                                    </select>
+                                        className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 placeholder-slate-400"
+                                    />
                                 </div>
 
                                 {/* To */}
                                 <div>
                                     <label className="block text-sm font-semibold mb-2 text-slate-300">To</label>
-                                    <select
+                                    <input
+                                        type="text"
+                                        placeholder="e.g., Kolkata, Agra"
                                         value={searchParams.to_city}
                                         onChange={(e) => setSearchParams({ ...searchParams, to_city: e.target.value })}
-                                        className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                                    >
-                                        <option value="">Select city</option>
-                                        {['Delhi', 'Mumbai', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Goa', 'Agra'].map((city) => (
-                                            <option key={city} value={city}>{city}</option>
-                                        ))}
-                                    </select>
+                                        className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 placeholder-slate-400"
+                                    />
                                 </div>
 
                                 {/* Date */}
@@ -566,16 +508,34 @@ const TravelBooking: React.FC = () => {
             {showBookingForm && selectedOption && (
                 <BookingFormModal
                     option={selectedOption}
+                    selectedSeats={selectedSeats}
+                    totalPrice={totalPrice}
                     onClose={() => {
                         setShowBookingForm(false);
                         setSelectedOption(null);
+                        setSelectedSeats([]);
                     }}
                     onBookingComplete={() => {
                         setShowBookingForm(false);
                         setSelectedOption(null);
-                        // Refresh bookings
+                        setSelectedSeats([]);
                         loadUserBookings();
                     }}
+                />
+            )}
+
+            {/* Seat Selection Modal */}
+            {showSeatSelection && selectedOption && (
+                <SeatSelectionModal
+                    travel_id={parseInt(selectedOption.id)}
+                    travel_mode={selectedOption.mode as 'flight' | 'bus' | 'train'}
+                    onClose={() => {
+                        setShowSeatSelection(false);
+                        setSelectedOption(null);
+                    }}
+                    onConfirm={handleSeatsSelected}
+                    baseCost={selectedOption.total_amount || selectedOption.cost + selectedOption.tax}
+                    basePrice={selectedOption.cost + selectedOption.tax}
                 />
             )}
         </div>
@@ -585,62 +545,156 @@ const TravelBooking: React.FC = () => {
 // Booking Form Modal Component
 interface BookingFormModalProps {
     option: TravelOption;
+    selectedSeats: string[];
+    totalPrice: number;
     onClose: () => void;
     onBookingComplete: () => void;
 }
 
-const BookingFormModal: React.FC<BookingFormModalProps> = ({ option, onClose, onBookingComplete }) => {
-    const [formData, setFormData] = useState({
+const BookingFormModal: React.FC<BookingFormModalProps> = ({ option, selectedSeats, totalPrice, onClose, onBookingComplete }) => {
+    const [passengers, setPassengers] = useState<Array<{
+        seat_number: string;
+        passenger_name: string;
+        passenger_email: string;
+        passenger_phone: string;
+        passenger_age?: string;
+        passenger_gender?: string;
+    }>>(selectedSeats.map(seat => ({
+        seat_number: seat,
         passenger_name: '',
         passenger_email: '',
-        passenger_phone: ''
-    });
+        passenger_phone: '',
+        passenger_age: '',
+        passenger_gender: ''
+    })));
     const [loading, setLoading] = useState(false);
+    const [showPayment, setShowPayment] = useState(false);
+    const [bookingData, setBookingData] = useState<any>(null);
+
+    const handlePassengerChange = (index: number, field: string, value: string) => {
+        const updatedPassengers = [...passengers];
+        updatedPassengers[index] = {
+            ...updatedPassengers[index],
+            [field]: value
+        };
+        setPassengers(updatedPassengers);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
+        
+        // Validate all passengers have required info
+        const incompletePassenger = passengers.find(p => !p.passenger_name || !p.passenger_email || !p.passenger_phone);
+        if (incompletePassenger) {
+            toast.error('Please fill in all required fields for all passengers');
+            return;
+        }
 
+        // Store booking data and show payment
+        const preparedBookingData = {
+            user_id: localStorage.getItem('user_id') || '1',
+            travel_id: parseInt(option.id),
+            mode: option.mode,
+            from_city: option.from_city,
+            to_city: option.to_city,
+            travel_date: option.travel_date,
+            operator_name: option.operator_name,
+            vehicle_number: option.vehicle_number || null,
+            seat_class: option.seat_class || null,
+            cost: option.cost,
+            tax: option.tax,
+            selected_seats: selectedSeats,
+            total_with_seats: totalPrice,
+            passengers: passengers
+        };
+
+        setBookingData(preparedBookingData);
+        setShowPayment(true);
+    };
+
+    const handlePaymentSuccess = async (paymentData: any) => {
+        if (!bookingData) return;
+
+        setLoading(true);
         try {
-            const bookingData = {
-                user_id: localStorage.getItem('user_id') || '1',
-                mode: option.mode,
-                from_city: option.from_city,
-                to_city: option.to_city,
-                travel_date: option.travel_date,
-                travel_time: option.travel_time,
-                operator_name: option.operator_name,
-                vehicle_number: option.vehicle_number || null,
-                seat_class: option.seat_class || null,
-                cost: option.cost,
-                tax: option.tax,
-                commission_rate: 5,
-                ...formData
+            // Now submit booking with payment confirmation
+            const finalBookingData = {
+                ...bookingData,
+                payment_status: 'paid',
+                payment_id: paymentData.paymentId,
+                payment_method: paymentData.method
             };
 
-            const response = await fetch('http://localhost:8000/backend/api/travel.php?action=create', {
+            const response = await fetch('http://localhost/fu/backend/api/travel/book.php?action=create', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(bookingData)
+                body: JSON.stringify(finalBookingData)
             });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
             const data = await response.json();
 
             if (data.success) {
-                alert('Booking created successfully! ID: ' + data.data.id);
+                const booking_id = data.data.booking_id;
+                const booking_ref = data.data.booking_reference;
+                const passenger_count = data.data.passenger_count;
+                
+                toast.success(
+                    (t) => (
+                        <div>
+                            <div className="font-bold mb-2">✅ Booking Confirmed!</div>
+                            <div className="text-sm space-y-1">
+                                <p>Booking Reference: <strong>{booking_ref}</strong></p>
+                                <p>Booking ID: <strong>#{booking_id}</strong></p>
+                                <p>Passengers: <strong>{passenger_count}</strong></p>
+                                <p>Seats: <strong>{selectedSeats.join(', ')}</strong></p>
+                                <p>Total: <strong>₹{totalPrice.toLocaleString()}</strong></p>
+                            </div>
+                        </div>
+                    ),
+                    {
+                        duration: 5000,
+                        style: {
+                            background: '#10b981',
+                            color: '#fff',
+                        }
+                    }
+                );
                 onBookingComplete();
             } else {
-                alert('Error: ' + data.error);
+                toast.error('Booking Error: ' + (data.error || 'Unknown error'));
             }
         } catch (err) {
-            alert('Booking failed. Please try again.');
-            console.error(err);
+            console.error('Booking error:', err);
+            toast.error('Booking failed. Please try again.');
         } finally {
             setLoading(false);
+            setShowPayment(false);
         }
     };
+
+    if (showPayment) {
+        return (
+            <Payment
+                selectedTour={{ price: totalPrice / selectedSeats.length }}
+                bookingData={{ travelers: selectedSeats.length }}
+                darkMode={false}
+                onClose={() => {
+                    setShowPayment(false);
+                    setBookingData(null);
+                }}
+                onPaymentSuccess={handlePaymentSuccess}
+                onBack={() => {
+                    setShowPayment(false);
+                }}
+            />
+        );
+    }
 
     return (
         <div className="fixed inset-0 bg-black/80 backdrop-blur flex items-center justify-center p-4 z-50">
@@ -658,43 +712,110 @@ const BookingFormModal: React.FC<BookingFormModalProps> = ({ option, onClose, on
                     <p className="text-sm text-slate-400">
                         {option.travel_date} at {option.travel_time}
                     </p>
-                    <p className="text-lg font-bold text-green-400 mt-2">
-                        ₹{(option.total_amount || option.cost + option.tax).toLocaleString()}
+                    
+                    {selectedSeats.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-slate-600">
+                            <p className="text-xs text-slate-400 mb-1">
+                                <Armchair className="w-3 h-3 inline mr-1" />
+                                Selected Seats
+                            </p>
+                            <p className="text-sm font-semibold text-blue-300">{selectedSeats.join(', ')}</p>
+                        </div>
+                    )}
+                    
+                    <p className="text-lg font-bold text-green-400 mt-3">
+                        ₹{totalPrice.toLocaleString()}
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-semibold mb-2 text-slate-300">Passenger Name</label>
-                        <input
-                            type="text"
-                            required
-                            value={formData.passenger_name}
-                            onChange={(e) => setFormData({ ...formData, passenger_name: e.target.value })}
-                            className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                        />
-                    </div>
+                <form onSubmit={handleSubmit} className="space-y-4 max-h-[60vh] overflow-y-auto">
+                    {/* Passenger Forms */}
+                    {passengers.map((passenger, index) => (
+                        <div key={index} className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="font-semibold text-blue-300">
+                                    Passenger {index + 1}
+                                </h3>
+                                <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded">
+                                    Seat: {passenger.seat_number}
+                                </span>
+                            </div>
 
-                    <div>
-                        <label className="block text-sm font-semibold mb-2 text-slate-300">Email</label>
-                        <input
-                            type="email"
-                            required
-                            value={formData.passenger_email}
-                            onChange={(e) => setFormData({ ...formData, passenger_email: e.target.value })}
-                            className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                        />
-                    </div>
+                            <div className="space-y-3">
+                                {/* Passenger Name */}
+                                <div>
+                                    <label className="block text-xs font-semibold mb-1 text-slate-400">Name *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        placeholder="Full Name"
+                                        value={passenger.passenger_name}
+                                        onChange={(e) => handlePassengerChange(index, 'passenger_name', e.target.value)}
+                                        className="w-full bg-slate-600 border border-slate-500 rounded px-3 py-1.5 text-white focus:outline-none focus:border-blue-400 text-sm"
+                                    />
+                                </div>
 
-                    <div>
-                        <label className="block text-sm font-semibold mb-2 text-slate-300">Phone</label>
-                        <input
-                            type="tel"
-                            required
-                            value={formData.passenger_phone}
-                            onChange={(e) => setFormData({ ...formData, passenger_phone: e.target.value })}
-                            className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                        />
+                                {/* Email */}
+                                <div>
+                                    <label className="block text-xs font-semibold mb-1 text-slate-400">Email *</label>
+                                    <input
+                                        type="email"
+                                        required
+                                        placeholder="email@example.com"
+                                        value={passenger.passenger_email}
+                                        onChange={(e) => handlePassengerChange(index, 'passenger_email', e.target.value)}
+                                        className="w-full bg-slate-600 border border-slate-500 rounded px-3 py-1.5 text-white focus:outline-none focus:border-blue-400 text-sm"
+                                    />
+                                </div>
+
+                                {/* Phone */}
+                                <div>
+                                    <label className="block text-xs font-semibold mb-1 text-slate-400">Phone *</label>
+                                    <input
+                                        type="tel"
+                                        required
+                                        placeholder="9999999999"
+                                        value={passenger.passenger_phone}
+                                        onChange={(e) => handlePassengerChange(index, 'passenger_phone', e.target.value)}
+                                        className="w-full bg-slate-600 border border-slate-500 rounded px-3 py-1.5 text-white focus:outline-none focus:border-blue-400 text-sm"
+                                    />
+                                </div>
+
+                                {/* Age & Gender (Optional) */}
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label className="block text-xs font-semibold mb-1 text-slate-400">Age</label>
+                                        <input
+                                            type="number"
+                                            placeholder="Age"
+                                            value={passenger.passenger_age}
+                                            onChange={(e) => handlePassengerChange(index, 'passenger_age', e.target.value)}
+                                            className="w-full bg-slate-600 border border-slate-500 rounded px-3 py-1.5 text-white focus:outline-none focus:border-blue-400 text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold mb-1 text-slate-400">Gender</label>
+                                        <select
+                                            value={passenger.passenger_gender}
+                                            onChange={(e) => handlePassengerChange(index, 'passenger_gender', e.target.value)}
+                                            className="w-full bg-slate-600 border border-slate-500 rounded px-3 py-1.5 text-white focus:outline-none focus:border-blue-400 text-sm"
+                                        >
+                                            <option value="">Select</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+
+                    {/* Summary */}
+                    <div className="bg-blue-600/20 border border-blue-500/50 rounded-lg p-3 text-sm">
+                        <p className="text-blue-300">
+                            {passengers.length} passenger{passengers.length !== 1 ? 's' : ''} • ₹{totalPrice.toLocaleString()}
+                        </p>
                     </div>
 
                     <div className="flex gap-3 mt-6">
@@ -710,7 +831,7 @@ const BookingFormModal: React.FC<BookingFormModalProps> = ({ option, onClose, on
                             disabled={loading}
                             className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg transition-all"
                         >
-                            {loading ? 'Booking...' : 'Confirm Booking'}
+                            {loading ? 'Processing...' : 'Proceed to Payment'}
                         </button>
                     </div>
                 </form>

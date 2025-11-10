@@ -39,8 +39,7 @@ const Payment: React.FC<PaymentProps> = ({
   });
 
   const totalAmount = selectedTour?.price * bookingData?.travelers || 0;
-  const taxes = Math.round(totalAmount * 0.18); // 18% GST
-  const finalAmount = totalAmount + taxes;
+  const finalAmount = totalAmount; // For travel: no taxes included in payment
 
   // Load wallet balance when wallet method is selected
   useEffect(() => {
@@ -656,10 +655,6 @@ const Payment: React.FC<PaymentProps> = ({
               <div className="flex justify-between">
                 <span>Tour Price ({bookingData?.travelers} travelers)</span>
                 <span>₹{totalAmount.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Taxes & Fees</span>
-                <span>₹{taxes.toLocaleString()}</span>
               </div>
               <div className="border-t pt-2 flex justify-between font-bold text-lg">
                 <span>Total Amount</span>
