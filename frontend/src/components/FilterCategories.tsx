@@ -12,7 +12,6 @@ const FilterCategories: React.FC<FilterCategoriesProps> = ({ selectedCategory, d
 
   return (
     <div className="flex flex-wrap gap-4 mb-8">
-      {/* All Categories Button */}
       <button
         onClick={() => onCategoryChange('all')}
         className={`flex items-center px-4 py-2 rounded-full font-medium transition-all duration-300 ${

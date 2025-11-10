@@ -1,4 +1,3 @@
-// Type definitions for the Indian Wonderer application
 import { MapPin, Mountain, Waves, Camera, Heart, Star } from 'lucide-react';
 
 export interface Tour {
@@ -20,21 +19,19 @@ export interface Tour {
   created_by?: number;
   created_at?: string;
   updated_at?: string;
-  // Computed/Legacy properties for compatibility
-  location?: string; // Maps to destination
-  originalPrice?: number; // Maps to price
-  image?: string; // Maps to image_url
-  duration?: string; // Computed from duration_days
-  rating?: number; // Default value since not in DB yet
-  reviews?: number; // Default value since not in DB yet
-  highlights?: string[]; // Maps to features
+  location?: string; 
+  originalPrice?: number; 
+  image?: string;
+  duration?: string;
+  rating?: number; 
+  reviews?: number; 
+  highlights?: string[]; 
 }
 
-// Categories for filtering
 export interface Category {
   id: string;
   name: string;
-  icon: any; // Lucide icon component
+  icon: any; 
 }
 
 export const categories: Category[] = [
@@ -78,7 +75,7 @@ export interface Booking {
   traveler_details?: any;
   created_at: string;
   updated_at: string;
-  tour?: Tour; // Populated from join
+  tour?: Tour;
 }
 
 export interface Itinerary {
@@ -90,7 +87,7 @@ export interface Itinerary {
   created_by?: number;
   created_at: string;
   updated_at: string;
-  tour?: Tour; // Populated from join
+  tour?: Tour; 
   schedule?: ItinerarySchedule[];
 }
 
@@ -136,7 +133,7 @@ export interface Guide {
   application_status: 'pending' | 'approved' | 'rejected';
   created_at: string;
   updated_at: string;
-  user?: User; // Populated from join
+  user?: User; 
 }
 
 export interface Review {
@@ -152,11 +149,10 @@ export interface Review {
   is_verified: boolean;
   status: 'pending' | 'approved' | 'rejected';
   created_at: string;
-  user?: User; // Populated from join
-  tour?: Tour; // Populated from join
+  user?: User; 
+  tour?: Tour; 
 }
 
-// API Response types
 export interface ApiResponse<T = any> {
   success: boolean;
   message: string;
@@ -174,7 +170,6 @@ export interface PaginatedResponse<T> extends ApiResponse<T> {
   };
 }
 
-// Form data types
 export interface BookingFormData {
   tour_id: number;
   number_of_travelers: number;
@@ -203,21 +198,20 @@ export interface ContactFormData {
   category: 'general' | 'booking' | 'payment' | 'technical' | 'complaint';
 }
 
-// Helper function to transform API tour data to frontend format
 export const transformTourData = (apiTour: any): Tour => {
   return {
     ...apiTour,
-    location: apiTour.destination, // Map destination to location for compatibility
-    originalPrice: apiTour.price, // Map price to originalPrice for compatibility
-    image: apiTour.image_url || '/goa.avif', // Default image if none provided
-    duration: `${apiTour.duration_days} ${apiTour.duration_days === 1 ? 'Day' : 'Days'}`, // Format duration
-    rating: 4.2, // Default rating since reviews aren't implemented yet
-    reviews: Math.floor(Math.random() * 50) + 10, // Random review count for demo
+    location: apiTour.destination, 
+    originalPrice: apiTour.price, 
+    image: apiTour.image_url || '/goa.avif', 
+    duration: `${apiTour.duration_days} ${apiTour.duration_days === 1 ? 'Day' : 'Days'}`, 
+    rating: 4.2, 
+    reviews: Math.floor(Math.random() * 50) + 10, 
     highlights: apiTour.features ? (typeof apiTour.features === 'string' ? JSON.parse(apiTour.features) : apiTour.features) : [
       'Professional guide included',
       'All meals included',
       'Transportation provided'
-    ], // Map features to highlights with fallback
+    ], 
     gallery: apiTour.gallery ? (typeof apiTour.gallery === 'string' ? JSON.parse(apiTour.gallery) : apiTour.gallery) : [],
     features: apiTour.features ? (typeof apiTour.features === 'string' ? JSON.parse(apiTour.features) : apiTour.features) : [],
     inclusions: apiTour.inclusions ? (typeof apiTour.inclusions === 'string' ? JSON.parse(apiTour.inclusions) : apiTour.inclusions) : [],
@@ -225,5 +219,4 @@ export const transformTourData = (apiTour: any): Tour => {
   };
 };
 
-// Default empty arrays to prevent errors
-export const tourData: Tour[] = []; // Keep for compatibility but will be loaded from API
+export const tourData: Tour[] = []; 

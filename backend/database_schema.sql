@@ -105,6 +105,7 @@ CREATE TABLE payments (
 CREATE TABLE guides (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
     specialization VARCHAR(100),
     experience_years INT DEFAULT 0,
     languages JSON,
@@ -195,6 +196,57 @@ CREATE TABLE activity_logs (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+-- Wallet System Tables
+CREATE TABLE wallets (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id VARCHAR(255) UNIQUE NOT NULL,
+    total_balance DECIMAL(10, 2) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE wallet_transactions (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id VARCHAR(255) NOT NULL,
+    type ENUM('credit', 'debit') NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    description VARCHAR(255),
+    booking_id VARCHAR(255),
+    status ENUM('completed', 'pending', 'failed') DEFAULT 'completed',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES wallets(user_id)
+);
+
+-- Gift Card System Tables
+CREATE TABLE giftcard_applications (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id VARCHAR(255) NOT NULL,
+    booking_id INT,
+    amount DECIMAL(10, 2) NOT NULL,
+    reason VARCHAR(255),
+    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+    admin_notes VARCHAR(500),
+    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    processed_at TIMESTAMP NULL,
+    processed_by VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES wallets(user_id),
+    FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE SET NULL
+);
+
+CREATE TABLE gift_cards (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    user_id INT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    balance DECIMAL(10,2),
+    expiry_date DATE,
+    status ENUM('active','used','expired','cancelled') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    used_at TIMESTAMP NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
 CREATE TABLE user_refresh_tokens (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
@@ -231,3 +283,12 @@ CREATE INDEX idx_tours_destination ON tours(destination);
 CREATE INDEX idx_tours_category ON tours(category);
 CREATE INDEX idx_reviews_tour_id ON reviews(tour_id);
 CREATE INDEX idx_activity_logs_user_id ON activity_logs(user_id);
+
+-- Wallet & Gift Card Indexes
+CREATE INDEX idx_wallets_user_id ON wallets(user_id);
+CREATE INDEX idx_wallet_transactions_user_id ON wallet_transactions(user_id);
+CREATE INDEX idx_wallet_transactions_status ON wallet_transactions(status);
+CREATE INDEX idx_giftcard_applications_user_id ON giftcard_applications(user_id);
+CREATE INDEX idx_giftcard_applications_status ON giftcard_applications(status);
+CREATE INDEX idx_giftcards_user_id ON giftcards(user_id);
+CREATE INDEX idx_giftcards_status ON giftcards(status);

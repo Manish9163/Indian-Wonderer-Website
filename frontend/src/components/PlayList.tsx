@@ -5,7 +5,6 @@ const REDIRECT_URI = "http://localhost:3000/callback";
 const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize";
 const RESPONSE_TYPE = "token";
 
-// Fallback playlists (in case API fails)
 const FALLBACK_PLAYLISTS: Record<string, { spotify: string; youtube: string }> = {
   goa: { spotify: "Goa Party Travel Songs", youtube: "Goa Party Songs Playlist" },
   shimla: { spotify: "LoFi Chill Roadtrip", youtube: "Shimla LoFi Chill Songs" },
@@ -31,7 +30,6 @@ export default function DestinationPlaylist({ destination, darkMode = false }: D
   const [playlists, setPlaylists] = useState<Record<string, { spotify: string; youtube: string }>>(FALLBACK_PLAYLISTS);
   const [playlistsLoading, setPlaylistsLoading] = useState(true);
 
-  // Fetch playlists from database
   useEffect(() => {
     const fetchPlaylists = async () => {
       try {
@@ -39,7 +37,6 @@ export default function DestinationPlaylist({ destination, darkMode = false }: D
         const data = await response.json();
         
         if (data.success && data.playlists) {
-          // Transform API response to match frontend format
           const playlistMap: Record<string, { spotify: string; youtube: string }> = {};
           Object.entries(data.playlists).forEach(([key, value]: [string, any]) => {
             playlistMap[key] = {
@@ -64,7 +61,6 @@ export default function DestinationPlaylist({ destination, darkMode = false }: D
     fetchPlaylists();
   }, []);
 
-  // Always call hooks at the top level
   useEffect(() => {
     const hash = window.location.hash;
     let token = window.localStorage.getItem("token");
@@ -85,7 +81,6 @@ export default function DestinationPlaylist({ destination, darkMode = false }: D
     }
   }, []);
 
-  // 🔹 Fetch Spotify playlist
   const getSpotifyPlaylist = async () => {
     if (!token || !destination) return;
     const query = playlists[destination]?.spotify;
@@ -103,7 +98,7 @@ export default function DestinationPlaylist({ destination, darkMode = false }: D
       setTracks(data.playlists.items);
       setUseYouTube(false);
     } else {
-      setUseYouTube(true); // Fallback to YouTube
+      setUseYouTube(true); 
     }
   };
 
@@ -112,16 +107,14 @@ export default function DestinationPlaylist({ destination, darkMode = false }: D
     window.localStorage.removeItem("token");
   };
 
-  // Function to show YouTube playlist directly
   const showYouTubePlaylist = () => {
     setUseYouTube(true);
-    setTracks([]); // Clear Spotify tracks
+    setTracks([]); 
   };
 
   return (
     <div className={`min-h-[60vh] ${darkMode ? 'bg-gray-900 text-white' : 'bg-gradient-to-br from-indigo-50 via-white to-purple-50 text-gray-900'} transition-all duration-300`}>
       <div className="container mx-auto p-6">
-        {/* Header Section */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-green-500 to-green-400 mb-4 animate-pulse">
             <span className="text-3xl bg-black bg-clip-text text-transparent">🎶</span>
@@ -146,7 +139,6 @@ export default function DestinationPlaylist({ destination, darkMode = false }: D
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Authentication Section */}
             <div className={`max-w-2xl mx-auto p-6 rounded-3xl ${darkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-white/70 border-gray-200'} border backdrop-blur-sm text-center`}>
               <div className="mb-4">
                 <h2 className={`text-xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -214,7 +206,6 @@ export default function DestinationPlaylist({ destination, darkMode = false }: D
               )}
             </div>
 
-            {/* Spotify Playlists Section */}
             {!useYouTube && tracks.length > 0 && (
               <div className="max-w-6xl mx-auto">
                 <h3 className={`text-2xl font-bold text-center mb-8 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -257,7 +248,6 @@ export default function DestinationPlaylist({ destination, darkMode = false }: D
               </div>
             )}
 
-            {/* YouTube Fallback Section */}
             {useYouTube && (
               <div className={`max-w-4xl mx-auto p-8 rounded-3xl ${darkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-white/70 border-gray-200'} border backdrop-blur-sm`}>
                 <div className="text-center mb-6">

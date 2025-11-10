@@ -1,20 +1,24 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../services/api.service';
+import { RelativeTimePipe } from './relative-time.pipe';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RelativeTimePipe],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css']
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   // Router injection
   private router = inject(Router);
   private apiService = inject(ApiService);
+  
+  // Activity refresh interval
+  private activityRefreshInterval: any;
   
   // Enhanced properties
   selectedPeriod: string = 'month';
@@ -41,7 +45,8 @@ export class DashboardComponent implements OnInit {
       customer: 'John Doe', 
       tour: 'Bali Adventure', 
       destination: 'Indonesia',
-      date: new Date('2024-03-15'), 
+      createdAt: new Date('2024-03-10'),
+      date: new Date('2024-03-15T07:00:00'), 
       status: 'confirmed', 
       amount: 1200 
     },
@@ -50,7 +55,8 @@ export class DashboardComponent implements OnInit {
       customer: 'Sarah Smith', 
       tour: 'Tokyo Explorer', 
       destination: 'Japan',
-      date: new Date('2024-03-18'), 
+      createdAt: new Date('2024-03-12'),
+      date: new Date('2024-03-18T07:00:00'), 
       status: 'pending', 
       amount: 890 
     },
@@ -59,7 +65,8 @@ export class DashboardComponent implements OnInit {
       customer: 'Mike Johnson', 
       tour: 'Paris Romance', 
       destination: 'France',
-      date: new Date('2024-03-20'), 
+      createdAt: new Date('2024-03-14'),
+      date: new Date('2024-03-20T07:00:00'), 
       status: 'confirmed', 
       amount: 1500 
     },
@@ -68,7 +75,8 @@ export class DashboardComponent implements OnInit {
       customer: 'Emily Brown', 
       tour: 'Safari Kenya', 
       destination: 'Kenya',
-      date: new Date('2024-03-22'), 
+      createdAt: new Date('2024-03-18'),
+      date: new Date('2024-03-22T07:00:00'), 
       status: 'processing', 
       amount: 2100 
     }
@@ -125,30 +133,44 @@ export class DashboardComponent implements OnInit {
     this.filterBookings();
   }
 
+  ngOnDestroy() {
+    console.log('🔄 Dashboard component destroying...');
+    
+    // Clear activity refresh interval
+    if (this.activityRefreshInterval) {
+      clearInterval(this.activityRefreshInterval);
+      console.log('✅ Activity refresh interval cleared');
+    }
+  }
+
   // Load real data from backend
   loadDashboardData() {
     this.isRefreshing = true;
     
-    console.log('Loading dashboard data from API...');
+    console.log('🔄 Loading dashboard data from API...');
     
     this.apiService.getDashboardStats().subscribe({
       next: (response) => {
-        console.log('Dashboard API Response:', response);
+        console.log('✅ Dashboard API Response:', response);
         
         if (response && response.success && response.data) {
           const data = response.data;
           const stats = data.stats || {};
           
+          console.log('📊 Stats received:', stats);
+          
           this.stats = {
-            totalTours: stats.totalTours || stats.activeTours || 0,
-            activeBookings: stats.totalBookings || stats.confirmedBookings || 0,
-            totalCustomers: stats.totalCustomers || stats.activeCustomers || 0,
-            monthlyRevenue: stats.monthlyRevenue || stats.totalRevenue || 0,
-            toursGrowth: Math.floor(Math.random() * 15) + 5, // Simulated growth
-            bookingsGrowth: Math.floor(Math.random() * 20) + 5,
-            customersGrowth: Math.floor(Math.random() * 10) + 3,
-            revenueGrowth: Math.floor(Math.random() * 25) + 10
+            totalTours: stats.totalTours || 0,
+            activeBookings: stats.totalBookings || 0,
+            totalCustomers: stats.totalCustomers || 0,
+            monthlyRevenue: (stats.monthlyRevenue || stats.totalRevenue || 0),
+            toursGrowth: stats.toursGrowth || Math.floor(Math.random() * 15) + 5,
+            bookingsGrowth: stats.bookingsGrowth || Math.floor(Math.random() * 20) + 5,
+            customersGrowth: stats.customersGrowth || Math.floor(Math.random() * 10) + 3,
+            revenueGrowth: stats.revenueGrowth || Math.floor(Math.random() * 25) + 10
           };
+          
+          console.log('📊 Stats assigned to component:', this.stats);
           
           // Update recent bookings
           if (data.recentBookings && Array.isArray(data.recentBookings)) {
@@ -157,10 +179,12 @@ export class DashboardComponent implements OnInit {
               customer: booking.customer_name || 'Unknown',
               tour: booking.tour_name || 'Unknown Tour',
               destination: booking.destination || 'Unknown',
-              date: new Date(booking.travel_date || booking.created_at),
+              date: this.setTourStartTime(booking.travel_date || booking.created_at),
+              createdAt: this.ensureDate(booking.created_at),
               status: booking.status || 'pending',
               amount: parseFloat(booking.total_amount) || 0
             }));
+            console.log('📋 Recent bookings updated:', this.recentBookings.length);
           }
           
           // Update popular tours
@@ -256,7 +280,8 @@ export class DashboardComponent implements OnInit {
           customer: 'Anna Wilson', 
           tour: 'Swiss Alps', 
           destination: 'Switzerland',
-          date: new Date('2024-03-25'), 
+          createdAt: new Date('2024-03-22'),
+          date: new Date('2024-03-25T07:00:00'), 
           status: 'confirmed', 
           amount: 1800 
         },
@@ -265,7 +290,8 @@ export class DashboardComponent implements OnInit {
           customer: 'David Lee', 
           tour: 'Maldives Escape', 
           destination: 'Maldives',
-          date: new Date('2024-03-26'), 
+          createdAt: new Date('2024-03-23'),
+          date: new Date('2024-03-26T07:00:00'), 
           status: 'pending', 
           amount: 2800 
         }
@@ -404,21 +430,29 @@ export class DashboardComponent implements OnInit {
 
   // Live activity monitor - Fetch real activities from database
   startLiveActivityMonitor() {
-    console.log('Starting live activity monitor...');
+    console.log('🔄 Starting live activity monitor...');
     
-    // Load initial activities
+    // Load initial activities immediately
     this.loadLiveActivities();
     
-    // Refresh activities every 10 seconds
-    setInterval(() => {
+    // Refresh live activities every 10 seconds
+    this.activityRefreshInterval = setInterval(() => {
+      console.log('🔄 Refreshing live activities (interval tick)...');
       this.loadLiveActivities();
-    }, 10000);
+    }, 10000); // 10 seconds
+
+    console.log('✅ Live activity monitor started with 10-second refresh interval');
   }
 
   loadLiveActivities() {
+    console.log('🔄 Loading live activities...');
+    
     // Fetch real-time activities from the database
     this.apiService.getDashboardStats().subscribe({
       next: (response) => {
+        console.log('✅ Live activities API response:', response);
+        console.log('📊 Activities before update:', this.liveActivities.length);
+        
         if (response && response.success && response.data) {
           const data = response.data;
           
@@ -430,7 +464,7 @@ export class DashboardComponent implements OnInit {
                 color: '#3b82f6',
                 title: 'New Booking',
                 description: `${booking.customer_name || 'Customer'} booked ${booking.tour_name || 'tour'}`,
-                timestamp: new Date(booking.created_at || Date.now())
+                timestamp: this.ensureDate(booking.created_at)
               };
               
               // Check if this activity already exists
@@ -441,6 +475,7 @@ export class DashboardComponent implements OnInit {
               
               if (!exists) {
                 this.liveActivities.unshift(activity);
+                console.log('➕ New activity added:', activity.description);
               }
             });
           }
@@ -460,8 +495,10 @@ export class DashboardComponent implements OnInit {
             const customerIndex = this.liveActivities.findIndex(a => a.title === 'Active Customers');
             if (customerIndex >= 0) {
               this.liveActivities[customerIndex] = customerActivity;
+              console.log('🔄 Customer activity updated');
             } else if (this.liveActivities.length < 5) {
               this.liveActivities.push(customerActivity);
+              console.log('➕ Customer activity added');
             }
           }
           
@@ -479,8 +516,10 @@ export class DashboardComponent implements OnInit {
             const revenueIndex = this.liveActivities.findIndex(a => a.title === 'Revenue Update');
             if (revenueIndex >= 0) {
               this.liveActivities[revenueIndex] = revenueActivity;
+              console.log('🔄 Revenue activity updated');
             } else if (this.liveActivities.length < 5) {
               this.liveActivities.push(revenueActivity);
+              console.log('➕ Revenue activity added');
             }
           }
           
@@ -488,12 +527,75 @@ export class DashboardComponent implements OnInit {
           if (this.liveActivities.length > 5) {
             this.liveActivities = this.liveActivities.slice(0, 5);
           }
+          
+          // Sort activities by timestamp - NEWEST FIRST
+          this.liveActivities.sort((a, b) => {
+            const timeA = new Date(a.timestamp).getTime();
+            const timeB = new Date(b.timestamp).getTime();
+            return timeB - timeA; // Descending order (newest first)
+          });
+          
+          console.log('📊 Activities after update:', this.liveActivities.length);
+          console.log('📋 Final activities list:', this.liveActivities);
         }
       },
       error: (error) => {
-        console.error('Error loading live activities:', error);
+        console.error('❌ Error loading live activities:', error);
       }
     });
+  }
+
+  /**
+   * Ensure value is properly converted to Date object with timezone awareness
+   */
+  private ensureDate(dateValue: any): Date {
+    if (!dateValue) return new Date();
+    if (dateValue instanceof Date) return dateValue;
+    if (typeof dateValue === 'string') {
+      // Handle ISO strings and other formats
+      let parsed = new Date(dateValue);
+      // If parsing failed, try without UTC conversion
+      if (isNaN(parsed.getTime())) {
+        // Try alternative parsing
+        const match = dateValue.match(/(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
+        if (match) {
+          parsed = new Date(`${match[0]}Z`); // Add Z for UTC
+        }
+      }
+      return isNaN(parsed.getTime()) ? new Date() : parsed;
+    }
+    if (typeof dateValue === 'number') {
+      return new Date(dateValue);
+    }
+    return new Date();
+  }
+
+  /**
+   * Set tour start time to 7:00 AM (tours always start at 7:00 AM)
+   */
+  private setTourStartTime(dateValue: any): Date {
+    const date = this.ensureDate(dateValue);
+    // Set the time to 7:00 AM
+    date.setHours(7, 0, 0, 0);
+    return date;
+  }
+
+  /**
+   * Get human-readable relative time (e.g., "2 minutes ago")
+   */
+  getRelativeTime(date: Date): string {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffSecs = Math.floor(diffMs / 1000);
+    const diffMins = Math.floor(diffSecs / 60);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffSecs < 60) return 'just now';
+    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    return date.toLocaleDateString();
   }
 
   // Utility methods

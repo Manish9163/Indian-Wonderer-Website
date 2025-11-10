@@ -57,11 +57,9 @@ const TourBooking: React.FC = () => {
       });
 
       if (response.success) {
-        // Ensure tours is always an array, even if undefined
         const toursData = response.data?.tours || [];
         setTours(toursData);
         
-        // Extract categories from tours if not provided separately
         const categoriesData = response.data?.categories || 
           Array.from(new Set(toursData.map((tour: any) => tour.category).filter(Boolean)));
         setCategories(categoriesData);
@@ -71,7 +69,6 @@ const TourBooking: React.FC = () => {
     } catch (err) {
       setError('Network error. Please try again.');
       console.error('Fetch tours error:', err);
-      // Ensure tours is set to empty array on error
       setTours([]);
     } finally {
       setLoading(false);
@@ -119,7 +116,6 @@ const TourBooking: React.FC = () => {
       return;
     }
 
-    // Get authenticated user data
     const userDataStr = localStorage.getItem('userData');
     if (!userDataStr) {
       setError('Please login to book a tour');
@@ -133,7 +129,6 @@ const TourBooking: React.FC = () => {
     }
 
     try {
-      // Get first tour from cart (support single tour booking)
       const tourId = Object.keys(cart)[0];
       const quantity = cart[parseInt(tourId)];
       const tour = tours.find(t => t.id === parseInt(tourId));
@@ -143,17 +138,14 @@ const TourBooking: React.FC = () => {
         return;
       }
 
-      // Calculate total amount
       const totalAmount = tour.price * quantity;
       
-      // Calculate travel dates
       const travelDate = new Date();
-      travelDate.setDate(travelDate.getDate() + 7); // Default to 1 week from now
+      travelDate.setDate(travelDate.getDate() + 7); 
       
       const endDate = new Date(travelDate);
       endDate.setDate(endDate.getDate() + (tour.duration_days || 3));
 
-      // Create proper booking payload
       const bookingPayload = {
         user_id: userData.id,
         tour_id: parseInt(tourId),
@@ -211,13 +203,11 @@ const TourBooking: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">Book Your Dream Tour</h1>
         <p className="text-lg text-gray-600">Discover amazing destinations with our curated tour packages</p>
       </div>
 
-      {/* Alerts */}
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
           {error}
@@ -230,7 +220,6 @@ const TourBooking: React.FC = () => {
         </div>
       )}
 
-      {/* Filters */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-8">
         <div className="grid md:grid-cols-3 gap-4">
           <div>
@@ -270,7 +259,6 @@ const TourBooking: React.FC = () => {
         </div>
       </div>
 
-      {/* Cart Summary */}
       {Object.keys(cart).length > 0 && (
         <div className="bg-blue-50 rounded-lg p-4 mb-6">
           <h3 className="font-semibold text-blue-900 mb-2">Your Cart</h3>
@@ -291,7 +279,6 @@ const TourBooking: React.FC = () => {
         </div>
       )}
 
-      {/* Tours Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {(tours || []).map(tour => (
           <div key={tour.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
@@ -353,7 +340,6 @@ const TourBooking: React.FC = () => {
         </div>
       )}
 
-      {/* Booking Modal */}
       {showBookingForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-md w-full p-6 max-h-96 overflow-y-auto">

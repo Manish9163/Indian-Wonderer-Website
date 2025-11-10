@@ -1,5 +1,5 @@
 import React from 'react'
-import { MapPin, Sun, Moon, User, LogOut, ChevronDown, Compass, Heart, Calendar, Package } from "lucide-react"
+import { MapPin, Sun, Moon, User, LogOut, ChevronDown, Compass, Heart, Calendar, Package, Wallet as WalletIcon } from "lucide-react"
 import * as avatars from '@dicebear/avatars';
 import * as style from '@dicebear/avatars-avataaars-sprites';
 
@@ -12,6 +12,7 @@ interface HeaderProps {
   userDetails?: any;
   onLogout: () => void;
   onShowProfile: () => void;
+  onShowWallet?: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
@@ -22,11 +23,11 @@ const Header: React.FC<HeaderProps> = ({
   myItineraries, 
   userDetails,
   onLogout,
-  onShowProfile 
+  onShowProfile,
+  onShowWallet
 }) => {
   const [showUserMenu, setShowUserMenu] = React.useState(false);
 
-  // Avatar function
   const getAvatarSvg = (seed: string) => avatars.createAvatar(style, { seed });
 
   const handleLogout = () => {
@@ -112,6 +113,20 @@ const Header: React.FC<HeaderProps> = ({
           </nav>
 
           <div className="flex items-center space-x-3">
+            {onShowWallet && (
+              <button
+                onClick={onShowWallet}
+                className={`p-3 rounded-xl transition-all duration-300 transform hover:scale-110 flex items-center space-x-2 ${
+                  darkMode 
+                    ? 'bg-gradient-to-r from-green-700 to-emerald-700 hover:from-green-600 hover:to-emerald-600 text-green-100 shadow-lg shadow-green-700/50' 
+                    : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg shadow-green-500/50'
+                }`}
+              >
+                <WalletIcon size={20} />
+                <span className="text-sm font-semibold">Wallet</span>
+              </button>
+            )}
+            
             <button
               onClick={() => setDarkMode(!darkMode)}
               className={`p-3 rounded-xl transition-all duration-300 transform hover:scale-110 ${
@@ -123,7 +138,6 @@ const Header: React.FC<HeaderProps> = ({
               {darkMode ? <Sun size={20} className="animate-spin" /> : <Moon size={20} className="animate-pulse" />}
             </button>
 
-            {/* User Menu */}
             {userDetails && (
               <div className="relative">
                 <button
@@ -164,7 +178,6 @@ const Header: React.FC<HeaderProps> = ({
                   <ChevronDown size={16} className={`transform transition-transform duration-300 ${showUserMenu ? 'rotate-180' : ''}`} />
                 </button>
 
-                {/* Enhanced Dropdown Menu */}
                 {showUserMenu && (
                   <div className={`absolute right-0 mt-3 w-80 rounded-2xl shadow-2xl backdrop-blur-xl border transition-all duration-300 animate-fadeIn ${
                     darkMode 
@@ -292,7 +305,6 @@ const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Click outside to close menu */}
       {showUserMenu && (
         <div 
           className="fixed inset-0 z-40" 

@@ -22,7 +22,10 @@ class Database {
             $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
             
         } catch(PDOException $exception) {
-            echo "Connection error: " . $exception->getMessage();
+            // Log the error but don't output it
+            error_log("Database Connection Error: " . $exception->getMessage());
+            // Return null and let the calling code handle it
+            return null;
         }
         
         return $this->conn;

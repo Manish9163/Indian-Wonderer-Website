@@ -13,10 +13,8 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({ darkMode, activeTab
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [performanceMode, setPerformanceMode] = useState<'high' | 'low'>('high');
 
-  // AI: Detect device performance
   useEffect(() => {
     const checkPerformance = () => {
-      // Check connection speed
       if ('connection' in navigator) {
         const conn = (navigator as any).connection;
         if (conn && (conn.effectiveType === '2g' || conn.effectiveType === 'slow-2g')) {
@@ -24,7 +22,6 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({ darkMode, activeTab
         }
       }
       
-      // Check device memory
       if ('deviceMemory' in navigator && (navigator as any).deviceMemory < 4) {
         setPerformanceMode('low');
       }
@@ -33,22 +30,19 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({ darkMode, activeTab
     checkPerformance();
   }, []);
 
-  // AI: Haptic Feedback
   const vibrate = (pattern: number | number[]) => {
     if ('vibrate' in navigator) {
       navigator.vibrate(pattern);
     }
   };
 
-  // AI: Handle tab change with haptics
   const handleTabChange = (tab: string) => {
     if (tab !== activeTab) {
-      vibrate(10); // Short haptic feedback
+      vibrate(10); 
       setActiveTab(tab);
     }
   };
 
-  // AI: Gesture-based navigation (swipe)
   const minSwipeDistance = 50;
   
   const onTouchStart = (e: React.TouchEvent) => {
@@ -71,7 +65,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({ darkMode, activeTab
     const currentIndex = tabs.indexOf(activeTab);
     
     if (isLeftSwipe && currentIndex < tabs.length - 1) {
-      vibrate([5, 10]); // Double tap vibration
+      vibrate([5, 10]); 
       setActiveTab(tabs[currentIndex + 1]);
     } else if (isRightSwipe && currentIndex > 0) {
       vibrate([5, 10]);
@@ -85,7 +79,6 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({ darkMode, activeTab
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      {/* AI: Performance indicator (dev only - can be removed in production) */}
       {performanceMode === 'low' && (
         <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 bg-orange-500 text-white text-xs px-2 py-0.5 rounded-t opacity-60">
           ⚡ Optimized Mode

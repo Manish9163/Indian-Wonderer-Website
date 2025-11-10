@@ -84,7 +84,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ darkMode, searchQuery,
 
   return (
     <section className="relative h-[700px] overflow-hidden">
-      {/* Background Image with Transition */}
       <div 
         className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-1000 ease-in-out ${
           isAnimating ? 'scale-100 blur-sm' : 'scale-110 blur-none'
@@ -94,13 +93,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ darkMode, searchQuery,
         }}
       />
       
-      {/* Enhanced Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-purple-900/20 to-black/60"></div>
       
-      {/* Main Content */}
       <div className="relative z-10 h-full flex items-center justify-center">
         <div className="text-center text-white max-w-6xl mx-auto px-4">
-          {/* Tour Stats Bar */}
           <div className={`transition-all duration-800 ease-in-out transform mb-8 ${
             isAnimating ? 'translate-y-8 opacity-0' : 'translate-y-0 opacity-100'
           }`}>
@@ -124,7 +120,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ darkMode, searchQuery,
             </div>
           </div>
 
-          {/* Main Content with Slide Animation */}
           <div className={`transition-all duration-800 ease-in-out transform ${
             isAnimating ? 'translate-y-8 opacity-0' : 'translate-y-0 opacity-100'
           }`}>
@@ -139,7 +134,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ darkMode, searchQuery,
                 {currentTour.description}
               </p>
               
-              {/* CTA Section */}
               <div className="mb-8">
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 max-w-2xl mx-auto">
                   <p className="text-xl font-bold text-white mb-2">
@@ -153,7 +147,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ darkMode, searchQuery,
             </div>
           </div>
 
-          {/* Search Box */}
           <div className="flex justify-center mb-8">
             <div className={`${darkMode ? 'bg-gray-900/95' : 'bg-white/95'} p-16 px-32 bg-transparent opacity-80 rounded-3xl shadow-2xl max-w-4xl w-full backdrop-blur-xl border-2 ${darkMode ? 'border-gray-700/50' : 'border-white/30'} transform hover:scale-105 transition-all duration-300`}>
               <div className="flex flex-row gap-4">
@@ -177,7 +170,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ darkMode, searchQuery,
                 </button>
               </div>
               
-              {/* Quick Suggestions */}
               <div className="mt-4 flex flex-wrap gap-2 justify-center">
                 {['Taj Mahal', 'Kerala', 'Goa', 'Rajasthan', 'Himalayas'].map((suggestion) => (
                   <button
@@ -196,7 +188,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ darkMode, searchQuery,
             </div>
           </div>
 
-          {/* Enhanced Slide Indicators */}
           <div className="flex justify-center space-x-4">
             {tourSlides.map((_, index) => (
               <button

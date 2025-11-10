@@ -7,16 +7,15 @@ interface BookingModalProps {
   darkMode: boolean;
   onClose: () => void;
   onConfirmBooking: (bookingData: any) => void;
-  userDetails: any; // Add userDetails prop
+  userDetails: any; 
 }
 
 const BookingModal: React.FC<BookingModalProps> = ({ selectedTour, darkMode, onClose, onConfirmBooking, userDetails }) => {
 
-  // Helper function to extract phone number
   const getPhoneFromUserDetails = () => {
     if (userDetails?.phone) return userDetails.phone;
     if (userDetails?.identifier && /^\d{10}$/.test(userDetails.identifier)) {
-      return userDetails.identifier; // identifier is a phone number
+      return userDetails.identifier; 
     }
     return '';
   };
@@ -32,7 +31,6 @@ const BookingModal: React.FC<BookingModalProps> = ({ selectedTour, darkMode, onC
   });
 
   const handleBooking = () => {
-    // Validate required fields
     if (!bookingData.firstName || !bookingData.lastName) {
       alert('Please enter your first and last name');
       return;
@@ -54,7 +52,6 @@ const BookingModal: React.FC<BookingModalProps> = ({ selectedTour, darkMode, onC
       return;
     }
 
-    // Pass validated booking data to parent
     onConfirmBooking(bookingData);
   };
 
@@ -69,7 +66,6 @@ const BookingModal: React.FC<BookingModalProps> = ({ selectedTour, darkMode, onC
         </div>
 
         <div className="space-y-4">
-          {/* Show a helpful message if user data is auto-filled */}
           {(userDetails?.firstName || userDetails?.lastName || userDetails?.email || userDetails?.identifier) && (
             <div className={`text-sm p-3 rounded-lg ${darkMode ? 'bg-green-900/20 text-green-300' : 'bg-green-50 text-green-700'}`}>
               ✅ Your profile details have been auto-filled. You can edit them if booking for someone else.

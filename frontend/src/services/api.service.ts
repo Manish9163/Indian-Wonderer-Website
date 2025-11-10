@@ -1,9 +1,4 @@
-/**
- * Unified API Service for React Frontend
- * Connects with PHP Backend through unified routing bridge
- */
 
-// Check if configuration was injected by PHP bridge
 declare global {
   interface Window {
     APP_CONFIG?: {
@@ -17,10 +12,8 @@ declare global {
   }
 }
 
-// Get configuration from injected window object or environment variables
 const getConfig = () => {
   if (typeof window !== 'undefined' && window.APP_CONFIG) {
-    console.log('🔗 Using injected configuration from PHP bridge:', window.APP_CONFIG);
     return {
       apiUrl: window.APP_CONFIG.API_BASE_URL,
       backendUrl: window.APP_CONFIG.BACKEND_URL,
@@ -29,8 +22,6 @@ const getConfig = () => {
     };
   }
 
-  // Fallback to environment variables for development
-  console.log('🔧 Using environment variables for configuration');
   return {
     apiUrl: process.env.REACT_APP_API_BASE_URL || 'http://localhost/fu/backend/api',
     backendUrl: process.env.REACT_APP_BACKEND_URL || 'http://localhost/fu/backend',
@@ -60,20 +51,9 @@ class ApiService {
     this.backendURL = config.backendUrl;
     this.adminURL = config.adminUrl;
     
-    // Load token from localStorage
     this.authToken = localStorage.getItem('authToken');
-    
-    console.log('✅ API Service initialized:', {
-      baseURL: this.baseURL,
-      backendURL: this.backendURL,
-      adminURL: this.adminURL,
-      hasToken: !!this.authToken
-    });
   }
 
-  /**
-   * Set authentication token
-   */
   setAuthToken(token: string | null): void {
     this.authToken = token;
     if (token) {
@@ -83,11 +63,7 @@ class ApiService {
     }
   }
 
-  /**
-   * Get authentication token
-   */
   getAuthToken(): string | null {
-    // Always get the freshest token from localStorage
     const storedToken = localStorage.getItem('authToken');
     if (storedToken && storedToken !== this.authToken) {
       this.authToken = storedToken;
@@ -95,9 +71,6 @@ class ApiService {
     return this.authToken || storedToken;
   }
 
-  /**
-   * Get request headers with authentication
-   */
   private getHeaders(includeAuth: boolean = true): HeadersInit {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
@@ -107,24 +80,14 @@ class ApiService {
     const token = this.getAuthToken();
     if (includeAuth && token) {
       headers['Authorization'] = `Bearer ${token}`;
-      console.log('🔑 Adding Authorization header with token:', token.substring(0, 20) + '...');
-    } else if (includeAuth) {
-      console.warn('⚠️ No auth token available for request');
     }
 
     return headers;
   }
 
-  /**
-   * Generic request method with improved error handling
-   */
   private async request(endpoint: string, options: RequestInit = {}): Promise<ApiResponse> {
-    // Always use absolute URL to avoid proxy issues
     const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}/${endpoint}`;
-    
-    // Log the actual URL being called for debugging
-    console.log('🌐 API Request:', url);
-    
+        
     const defaultOptions: RequestInit = {
       headers: this.getHeaders(),
       credentials: 'include',
@@ -136,14 +99,12 @@ class ApiService {
     try {
       const response = await fetch(url, mergedOptions);
       
-      // Handle CORS preflight
       if (response.status === 0) {
         throw new Error('CORS preflight failed - check server CORS configuration');
       }
       
       const contentType = response.headers.get('content-type');
       
-      // Check if response is JSON
       if (!contentType || !contentType.includes('application/json')) {
         const text = await response.text();
         throw new Error(`Server returned non-JSON response: ${text.substring(0, 100)}...`);
@@ -157,21 +118,14 @@ class ApiService {
 
       return data;
     } catch (error) {
-      console.error('❌ API Request failed:', error);
       throw error;
     }
   }
 
-  /**
-   * GET request
-   */
   async get(endpoint: string): Promise<ApiResponse> {
     return this.request(endpoint, { method: 'GET' });
   }
 
-  /**
-   * POST request
-   */
   async post(endpoint: string, data: any): Promise<ApiResponse> {
     return this.request(endpoint, {
       method: 'POST',
@@ -179,9 +133,6 @@ class ApiService {
     });
   }
 
-  /**
-   * PUT request
-   */
   async put(endpoint: string, data: any): Promise<ApiResponse> {
     return this.request(endpoint, {
       method: 'PUT',
@@ -189,17 +140,11 @@ class ApiService {
     });
   }
 
-  /**
-   * DELETE request
-   */
   async delete(endpoint: string): Promise<ApiResponse> {
     return this.request(endpoint, { method: 'DELETE' });
   }
 
-  // Connection Testing Methods
-  /**
-   * Test backend server connection
-   */
+
   async testBackendConnection(): Promise<any> {
     try {
       const response = await fetch(`${this.backendURL}/health-check.php`, {
@@ -210,14 +155,10 @@ class ApiService {
       });
       return await response.json();
     } catch (error) {
-      console.error('Backend connection test failed:', error);
       throw error;
     }
   }
 
-  /**
-   * Test database connection
-   */
   async testDatabaseConnection(): Promise<any> {
     try {
       const response = await fetch(`${this.backendURL}/db-test.php`, {
@@ -228,15 +169,10 @@ class ApiService {
       });
       return await response.json();
     } catch (error) {
-      console.error('Database connection test failed:', error);
       throw error;
     }
   }
-
-  // Authentication Methods
-  /**
-   * Login user
-   */
+  // Authentication methods
   async login(email: string, password: string): Promise<ApiResponse> {
     const response = await this.post('auth.php?action=login', { email, password });
     
@@ -248,16 +184,10 @@ class ApiService {
     return response;
   }
 
-  /**
-   * Register user
-   */
   async register(userData: any): Promise<ApiResponse> {
     return this.post('auth.php?action=register', userData);
   }
 
-  /**
-   * Logout user
-   */
   async logout(): Promise<ApiResponse> {
     try {
       const response = await this.post('auth.php?action=logout', {});
@@ -265,36 +195,25 @@ class ApiService {
       localStorage.removeItem('current_user');
       return response;
     } catch (error) {
-      // Clear local data even if server request fails
       this.setAuthToken(null);
       localStorage.removeItem('current_user');
       throw error;
     }
   }
 
-  /**
-   * Get user profile
-   */
   async getProfile(): Promise<ApiResponse> {
     return this.get('auth.php?action=profile');
   }
 
-  /**
-   * Check if user is authenticated
-   */
   isAuthenticated(): boolean {
     return !!this.getAuthToken();
   }
 
-  /**
-   * Get current user from localStorage
-   */
   getCurrentUser(): any {
     const userStr = localStorage.getItem('current_user');
     return userStr ? JSON.parse(userStr) : null;
   }
 
-  // Tours methods
   async getTours(filters?: {
     category?: string;
     min_price?: number;
@@ -336,8 +255,6 @@ class ApiService {
   // Booking methods
   async createBooking(bookingData: any) {
     const token = this.getAuthToken();
-    console.log('📤 Creating booking with auth token:', token ? 'Present (' + token.substring(0, 20) + '...)' : '❌ MISSING');
-    console.log('📤 Booking data:', bookingData);
     
     if (!token) {
       throw new Error('No authentication token found. Please log in again.');
@@ -346,7 +263,7 @@ class ApiService {
     return this.post('bookings.php?action=create', bookingData);
   }
 
-  // Agent application methods
+  // Agent application
   async submitAgentApplication(formData: FormData) {
     try {
       const response = await fetch(`${this.baseURL}/agent_application.php`, {
@@ -367,12 +284,11 @@ class ApiService {
         timestamp: new Date().toISOString()
       };
     } catch (error) {
-      console.error('Error submitting agent application:', error);
       throw error;
     }
   }
 
-  // Itineraries methods
+  // Itineraries 
   async getItineraries() {
     return this.get('itineraries.php');
   }
@@ -393,12 +309,11 @@ class ApiService {
     return this.delete(`itineraries.php?action=delete&id=${id}`);
   }
 
-  // Bookings methods
+  // Booking
   async getBookings() {
     return this.get('bookings.php');
   }
 
-  // createBooking method is defined above in the unified section
 
   async updateBooking(id: number, bookingData: any) {
     return this.put(`bookings.php?action=update&id=${id}`, bookingData);
@@ -408,7 +323,6 @@ class ApiService {
     return this.delete(`bookings.php?action=cancel&id=${id}`);
   }
 
-  // Customers methods
   async getCustomers() {
     return this.get('customers.php');
   }
@@ -417,7 +331,7 @@ class ApiService {
     return this.get(`customers.php?id=${id}`);
   }
 
-  // Payment methods
+  // Payment
   async getPayments() {
     return this.get('payments.php');
   }
@@ -426,7 +340,7 @@ class ApiService {
     return this.post('payments.php?action=process', paymentData);
   }
 
-  // Analytics methods
+  // Analytics 
   async getAnalytics() {
     return this.get('analytics.php');
   }
@@ -440,6 +354,5 @@ class ApiService {
   }
 }
 
-// Export singleton instance
 const apiService = new ApiService();
 export default apiService;

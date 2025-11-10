@@ -8,7 +8,6 @@ interface FooterProps {
 const Footer: React.FC<FooterProps> = ({ darkMode }) => {
   return (
     <footer className={`relative ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} border-t ${darkMode ? 'border-gray-700/50' : 'border-gray-200'} mt-20 overflow-hidden`}>
-      {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-10 left-10 w-32 h-32 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-10 right-10 w-40 h-40 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
@@ -17,7 +16,6 @@ const Footer: React.FC<FooterProps> = ({ darkMode }) => {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           
-          {/* Company Info - Enhanced */}
           <div className="lg:col-span-2">
             <div className="flex items-center mb-6 group">
               <div className="relative">
@@ -42,7 +40,6 @@ const Footer: React.FC<FooterProps> = ({ darkMode }) => {
               Your trusted partner in exploring the incredible diversity of India. From heritage tours to adventure expeditions, we craft unforgettable experiences that create memories for a lifetime.
             </p>
             
-            {/* Contact Info - Enhanced */}
             <div className="space-y-4">
               <div className={`flex items-center space-x-4 p-4 rounded-2xl backdrop-blur-sm border transition-all duration-300 hover:scale-105 ${
                 darkMode ? 'bg-gray-800/50 border-gray-700/50' : 'bg-white/50 border-gray-200/50'
@@ -67,14 +64,13 @@ const Footer: React.FC<FooterProps> = ({ darkMode }) => {
                 <div>
                   <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Email us</p>
                   <a href="mailto:info@indianwonderer.com" className={`font-bold text-lg ${darkMode ? 'text-white' : 'text-gray-900'} hover:text-blue-500 transition-colors`}>
-                    info@indianwonderer.com
+                    IndianWonderer.ac@gmail.com
                   </a>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Quick Links - Enhanced */}
           <div>
             <h4 className={`font-black text-xl mb-6 flex items-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
               <Compass className="mr-2 text-purple-500" size={24} />
@@ -95,7 +91,6 @@ const Footer: React.FC<FooterProps> = ({ darkMode }) => {
             </ul>
           </div>
 
-          {/* Destinations - Enhanced */}
           <div>
             <h4 className={`font-black text-xl mb-6 flex items-center ${darkMode ? 'text-white' : 'text-gray-900'}`}>
               <MapPin className="mr-2 text-red-500" size={24} />
@@ -117,11 +112,9 @@ const Footer: React.FC<FooterProps> = ({ darkMode }) => {
           </div>
         </div>
 
-        {/* Enhanced Bottom Section */}
         <div className={`mt-12 pt-8 border-t ${darkMode ? 'border-gray-700/50' : 'border-gray-300/50'}`}>
           <div className="flex flex-col lg:flex-row items-center justify-between space-y-6 lg:space-y-0">
             
-            {/* Social Media - Enhanced */}
             <div className="flex items-center space-x-6">
               <span className={`font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Follow us:</span>
               <div className="flex space-x-4">
@@ -142,7 +135,6 @@ const Footer: React.FC<FooterProps> = ({ darkMode }) => {
               </div>
             </div>
 
-            {/* Stats */}
             <div className="flex items-center space-x-8 text-center">
               <div>
                 <div className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>50K+</div>

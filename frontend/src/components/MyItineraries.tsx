@@ -41,14 +41,12 @@ const MyItineraries: React.FC<MyItinerariesProps> = ({
   const [destinationPlaylists, setDestinationPlaylists] = useState<Record<string, {spotify: string; youtube: string}>>(DEFAULT_PLAYLISTS);
   const [availableDestinations, setAvailableDestinations] = useState<string[]>([]);
 
-  // Load destination playlists from database on component mount
   useEffect(() => {
     loadDestinationPlaylists();
   }, []);
 
   const loadDestinationPlaylists = async () => {
     try {
-      // Fetch all tours to get unique destinations from database
       const response = await apiService.get('tours.php?action=all');
       
       if (response.success && response.data) {
@@ -57,14 +55,12 @@ const MyItineraries: React.FC<MyItinerariesProps> = ({
         const uniqueDestinations = Array.from(destinationSet) as string[];
         setAvailableDestinations(uniqueDestinations);
         
-        // Generate dynamic playlist names based on actual destinations
         const playlists: Record<string, {spotify: string; youtube: string}> = {};
         
         uniqueDestinations.forEach((destination: string) => {
           const destLower = destination.toLowerCase();
           const destName = destination;
           
-          // Create intelligent playlist names based on destination characteristics
           if (destLower.includes('goa') || destLower.includes('beach')) {
             playlists[destLower] = {
               spotify: `${destName} Beach Party Songs`,
@@ -96,7 +92,6 @@ const MyItineraries: React.FC<MyItinerariesProps> = ({
               youtube: `${destName} City Vibes Playlist`
             };
           } else {
-            // Generic travel playlist for other destinations
             playlists[destLower] = {
               spotify: `${destName} Travel Songs`,
               youtube: `${destName} Journey Playlist`
@@ -109,7 +104,7 @@ const MyItineraries: React.FC<MyItinerariesProps> = ({
       }
     } catch (error) {
       console.error('Error loading destination playlists:', error);
-      // Keep default playlists if API fails
+      setDestinationPlaylists(DEFAULT_PLAYLISTS);
     }
   };
 
@@ -145,7 +140,6 @@ const MyItineraries: React.FC<MyItinerariesProps> = ({
     const startDate = new Date(travelDate);
     startDate.setHours(0, 0, 0, 0);
     
-    // If no end date, calculate from duration
     let endDate: Date;
     if (tourEndDate) {
       endDate = new Date(tourEndDate);
@@ -154,22 +148,18 @@ const MyItineraries: React.FC<MyItinerariesProps> = ({
       endDate = new Date(startDate);
       endDate.setDate(endDate.getDate() + parseInt(duration.toString()));
     }
-    endDate.setHours(23, 59, 59, 999); // End of day
+    endDate.setHours(23, 59, 59, 999);
     
-    // Check if today is within the tour period
     return today >= startDate && today <= endDate;
   };
 
-  // Function to get playlist for tour destination from real database data
   const getPlaylistDestination = (tour: any): string => {
     const destination = (tour?.destination || tour?.location || tour?.title || '').toLowerCase();
     
-    // First, try exact match with available destinations
     if (destinationPlaylists[destination]) {
       return destination;
     }
     
-    // Try partial match with available destinations from database
     for (const availableDest of availableDestinations) {
       const availableDestLower = availableDest.toLowerCase();
       if (destination.includes(availableDestLower) || availableDestLower.includes(destination)) {
@@ -177,14 +167,12 @@ const MyItineraries: React.FC<MyItinerariesProps> = ({
       }
     }
     
-    // Try matching with generated playlist keys
     for (const playlistKey of Object.keys(destinationPlaylists)) {
       if (destination.includes(playlistKey) || playlistKey.includes(destination)) {
         return playlistKey;
       }
     }
     
-    // Fallback to default
     return 'default';
   };
 
@@ -231,7 +219,6 @@ const MyItineraries: React.FC<MyItinerariesProps> = ({
           <div className="space-y-6">
             {myItineraries.map((itinerary, index) => (
               <div key={`booking-${itinerary.bookingData?.booking_reference || itinerary.id}-${index}`} className="relative">
-                {/* Agent Summary Badge */}
                 {itinerary.selectedAgent && (
                   <div className={`mb-3 p-3 rounded-lg ${darkMode ? 'bg-blue-900/20 border border-blue-800' : 'bg-blue-50 border border-blue-200'}`}>
                     <div className="flex items-center space-x-3">
@@ -263,9 +250,7 @@ const MyItineraries: React.FC<MyItinerariesProps> = ({
                   showInfo={showInfo}
                 />
                 
-                {/* Action Buttons */}
                 <div className="absolute top-4 right-4 flex flex-col space-y-2 z-10">
-                  {/* Track Guide Button - Only show during tour period (start date to end date) */}
                   {isTrackingAvailable(itinerary) && (
                     <button
                       className="bg-blue-600 text-white px-3 py-2 rounded-lg shadow hover:bg-blue-700 flex items-center space-x-2 transition-all duration-300"
@@ -277,7 +262,6 @@ const MyItineraries: React.FC<MyItinerariesProps> = ({
                     </button>
                   )}
                   
-                  {/* Playlist Button */}
                   <button
                     className="bg-green-600 text-white px-3 py-2 rounded-lg shadow hover:bg-green-700 flex items-center space-x-2 transition-all duration-300"
                     onClick={() => {
@@ -304,7 +288,6 @@ const MyItineraries: React.FC<MyItinerariesProps> = ({
         )}
       </main>
 
-      {/* Payment Receipt Modal */}
       {showReceiptModal && selectedItinerary && (
         <PaymentReceipt
           darkMode={darkMode}
@@ -314,7 +297,6 @@ const MyItineraries: React.FC<MyItinerariesProps> = ({
         />
       )}
 
-      {/* Live Tracking Modal */}
       {showLiveTracking && trackingBookingId && (
         <LiveTracking
           bookingId={trackingBookingId}

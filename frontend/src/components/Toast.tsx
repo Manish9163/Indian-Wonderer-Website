@@ -27,10 +27,8 @@ const Toast: React.FC<ToastProps> = ({ toast, onRemove, darkMode = false }) => {
   }, [onRemove, toast.id]);
 
   useEffect(() => {
-    // Show animation
     const showTimer = setTimeout(() => setIsVisible(true), 50);
     
-    // Auto remove
     let removeTimer: NodeJS.Timeout;
     if (toast.duration && toast.duration > 0) {
       removeTimer = setTimeout(() => {
@@ -190,7 +188,6 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove
   );
 };
 
-// Toast hook
 export const useToast = () => {
   const [toasts, setToasts] = useState<ToastData[]>([]);
   

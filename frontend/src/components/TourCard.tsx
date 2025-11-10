@@ -2,16 +2,20 @@
 import { MapPin, Star, Heart, Share2, Clock, Users, Camera, Award, Sparkles, ArrowRight } from 'lucide-react';
 import React, { useState } from 'react';
 import { Tour } from '../types/data';
+import TourGalleryModal from './TourGalleryModal';
+import TourReviewsModal from './TourReviewsModal';
 
 type TourCardProps = {
   tour: Tour;
   darkMode: boolean;
-  onBookTour: (tour: Tour) => void;
+  onBookTour: (tour: Tour, action?: 'view' | 'book') => void;
 };
 
 const TourCard: React.FC<TourCardProps> = ({ tour, darkMode, onBookTour }) => {
   const [isLiked, setIsLiked] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [showGallery, setShowGallery] = useState(false);
+  const [showReviews, setShowReviews] = useState(false);
 
   return (
     <div 
@@ -19,7 +23,6 @@ const TourCard: React.FC<TourCardProps> = ({ tour, darkMode, onBookTour }) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Enhanced glowing border effect on hover */}
       <div className="absolute inset-0 bg-gradient-to-r from-gray-300/15 to-stone-300/15 dark:from-gray-200/15 dark:to-gray-200/15 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl"></div>
       
       <div className="relative">
@@ -30,20 +33,17 @@ const TourCard: React.FC<TourCardProps> = ({ tour, darkMode, onBookTour }) => {
             className={`w-full h-48 object-cover transition-all duration-700 ${isHovered ? 'scale-110' : 'scale-100'}`}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-              target.onerror = null; // Prevent infinite loop
-              target.src = '/goa.avif'; // Fallback to existing image
+              target.onerror = null; 
+              target.src = '/goa.avif'; 
             }}
           />
           
-          {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
           
-          {/* Price badge */}
           <div className="absolute top-3 right-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-3 py-1.5 rounded-xl font-bold shadow-lg backdrop-blur-sm border border-white/20">
             <span className="text-sm">₹{tour.price.toLocaleString()}</span>
           </div>
           
-          {/* Duration badge */}
           <div className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-sm text-white px-3 py-1.5 rounded-xl font-medium border border-white/20">
             <div className="flex items-center space-x-1.5">
               <Clock size={14} />
@@ -51,7 +51,6 @@ const TourCard: React.FC<TourCardProps> = ({ tour, darkMode, onBookTour }) => {
             </div>
           </div>
           
-          {/* Action buttons */}
           <div className="absolute top-3 left-3 flex space-x-1.5">
             <button
               onClick={() => setIsLiked(!isLiked)}
@@ -69,9 +68,7 @@ const TourCard: React.FC<TourCardProps> = ({ tour, darkMode, onBookTour }) => {
           </div>
         </div>
 
-        {/* Enhanced Content Section */}
         <div className="p-5">
-          {/* Title and Location */}
           <div className="mb-4">
             <h3 className={`text-xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'} group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-600 group-hover:bg-clip-text transition-all duration-300`}>
               {tour.title}
@@ -84,7 +81,6 @@ const TourCard: React.FC<TourCardProps> = ({ tour, darkMode, onBookTour }) => {
             </div>
           </div>
 
-          {/* Rating and Reviews */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
               <div className="flex items-center space-x-0.5">
@@ -107,7 +103,6 @@ const TourCard: React.FC<TourCardProps> = ({ tour, darkMode, onBookTour }) => {
             </div>
           </div>
 
-          {/* Enhanced Highlights */}
           <div className="mb-4">
             <h4 className={`font-bold mb-2 flex items-center text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
               <Sparkles className="mr-1.5 text-yellow-500" size={16} />
@@ -163,21 +158,22 @@ const TourCard: React.FC<TourCardProps> = ({ tour, darkMode, onBookTour }) => {
             </div>
           </div>
 
-          {/* Enhanced Action Buttons */}
           <div className="space-y-2">
             <button
-              onClick={() => onBookTour(tour)}
+              onClick={() => onBookTour(tour, 'view')}
               className="group w-full bg-gradient-to-r from-purple-600 via-pink-600 to-red-500 text-white py-3 rounded-xl font-bold hover:from-purple-700 hover:via-pink-700 hover:to-red-600 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-2xl hover:shadow-purple-500/25 relative overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
               <div className="relative flex items-center justify-center space-x-2">
-                <span className="text-base">Book Your Adventure</span>
+                <span className="text-base">View Details</span>
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform duration-300" />
               </div>
             </button>
             
             <div className="grid grid-cols-2 gap-2">
-              <button className={`flex items-center justify-center space-x-1.5 py-2.5 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 border-2 text-sm ${
+              <button 
+                onClick={() => setShowGallery(true)}
+                className={`flex items-center justify-center space-x-1.5 py-2.5 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 border-2 text-sm ${
                 darkMode 
                   ? 'border-gray-600 text-gray-300 hover:bg-gray-700/50 hover:border-gray-500' 
                   : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
@@ -185,7 +181,9 @@ const TourCard: React.FC<TourCardProps> = ({ tour, darkMode, onBookTour }) => {
                 <Camera size={16} />
                 <span>Gallery</span>
               </button>
-              <button className={`flex items-center justify-center space-x-1.5 py-2.5 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 border-2 text-sm ${
+              <button 
+                onClick={() => setShowReviews(true)}
+                className={`flex items-center justify-center space-x-1.5 py-2.5 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 border-2 text-sm ${
                 darkMode 
                   ? 'border-gray-600 text-gray-300 hover:bg-gray-700/50 hover:border-gray-500' 
                   : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
@@ -196,6 +194,20 @@ const TourCard: React.FC<TourCardProps> = ({ tour, darkMode, onBookTour }) => {
             </div>
           </div>
         </div>
+
+      {/* Modals */}
+      <TourGalleryModal 
+        tour={tour} 
+        isOpen={showGallery} 
+        onClose={() => setShowGallery(false)} 
+        darkMode={darkMode}
+      />
+      <TourReviewsModal 
+        tour={tour} 
+        isOpen={showReviews} 
+        onClose={() => setShowReviews(false)} 
+        darkMode={darkMode}
+      />
       </div>
     </div>
   );

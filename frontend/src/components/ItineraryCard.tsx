@@ -22,7 +22,7 @@ interface BookingData {
   date?: string;
   firstName: string;
   lastName: string;
-  name?: string; // Keep for backward compatibility
+  name?: string; 
   email: string;
   phone: string;
   requirements?: string;
@@ -106,7 +106,6 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
   const [showCancellationModal, setShowCancellationModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  // Safety checks to prevent undefined errors
   if (!itinerary || !itinerary.tour) {
     return null;
   }
@@ -126,19 +125,15 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
         })
       });
 
-      // First, get the response text
       const responseText = await response.text();
       console.log('Raw response:', responseText);
 
-      // Check if response is not OK
       if (!response.ok) {
         console.log('Response not OK, status:', response.status);
-        // Try to parse as JSON first
         try {
           const errorData = JSON.parse(responseText);
           console.error('Error response:', errorData);
           
-          // Check for specific error types
           if (response.status === 401 || errorData.message?.includes('Authorization')) {
             if (showWarning) {
               showWarning('Session Expired', 'Your session has expired. Please log out and log in again to continue.', 6000);
@@ -153,7 +148,6 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
             }
           }
         } catch {
-          // If not JSON, show HTML error
           console.error('Server returned HTML error:', responseText);
           if (showError) {
             showError('Server Error', 'The booking cancellation failed. Please check if the database tables exist and try again.', 5000);
@@ -164,14 +158,12 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
         return;
       }
 
-      // Parse successful response
       let data;
       try {
         data = JSON.parse(responseText);
       } catch (parseError) {
         console.error('Failed to parse response as JSON:', responseText);
         
-        // Check if the response contains success indicators even if JSON parsing failed
         if (responseText.includes('"success":true') || responseText.includes('Booking cancelled successfully')) {
           if (showSuccess) {
             showSuccess('Booking Cancelled Successfully! ✅', 'The page will reload to reflect the changes.', 3000);
@@ -200,7 +192,6 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
         
         setShowCancellationModal(false);
         
-        // Remove from UI immediately for better UX
         setTimeout(() => {
           window.location.reload();
         }, 2000);
@@ -245,7 +236,7 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
       if (data.success) {
         alert('Booking updated successfully! Our team will confirm the changes within 24 hours.');
         setShowEditModal(false);
-        window.location.reload(); // Refresh to show updated details
+        window.location.reload(); 
       } else {
         alert('Failed to update booking: ' + (data.message || 'Unknown error'));
       }
@@ -259,7 +250,6 @@ const ItineraryCard: React.FC<ItineraryCardProps> = ({
     if (onShowReceipt) {
       onShowReceipt(itinerary);
     } else {
-      // Fallback: generate a simple receipt text
       const receiptText = `
 🏛️ INDIAN WONDERER - BOOKING RECEIPT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -453,7 +443,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳
             </div>
           </div>
 
-          {/* Guide Information from Backend */}
           {(itinerary as any).guide_info ? (
             <div className={`p-4 rounded-xl mb-4 ${darkMode ? 'bg-gray-700/50' : 'bg-green-50'}`}>
               <h4 className="font-semibold mb-3 flex items-center space-x-2">
@@ -497,7 +486,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳
             </div>
           )}
 
-          {/* Refund Status Banner */}
           {itinerary.status === 'cancelled' && itinerary.refundData && (
             <div className={`p-4 rounded-xl mb-4 border-2 ${
               itinerary.refundData.refund_status === 'pending' 
@@ -587,7 +575,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳
             </div>
           )}
 
-          {/* Traveler Details */}
           <div className={`p-4 rounded-xl mb-4 ${darkMode ? 'bg-gray-700/50' : 'bg-blue-50'}`}>
             <h4 className="font-semibold mb-3 flex items-center space-x-2">
               <Users className={`w-5 h-5 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
@@ -596,7 +583,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳
             
             {(itinerary as any).bookingData?.traveler_details ? (
               <>
-                {/* Primary Traveler */}
                 {(itinerary as any).bookingData.traveler_details.primary_traveler && (
                   <div className="mb-4">
                     <h5 className="font-medium mb-2 text-green-600 dark:text-green-400">Primary Traveler</h5>
@@ -624,7 +610,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳
                   </div>
                 )}
                 
-                {/* Additional Travelers */}
                 {(itinerary as any).bookingData.traveler_details.additional_travelers && 
                  (itinerary as any).bookingData.traveler_details.additional_travelers.length > 0 && (
                   <div className="mb-4">
@@ -639,7 +624,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳
                   </div>
                 )}
                 
-                {/* Emergency Contact */}
                 {(itinerary as any).bookingData.traveler_details.emergency_contact && (
                   <div className="mb-4">
                     <h5 className="font-medium mb-2 text-red-600 dark:text-red-400">Emergency Contact</h5>
@@ -665,7 +649,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳
               </div>
             )}
             
-            {/* Basic booking info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-gray-300 dark:border-gray-600 mt-4">
               <div>
                 <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -694,7 +677,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳
             )}
           </div>
 
-          {/* Agent Information */}
           {itinerary.selectedAgent ? (
             <div className={`p-4 rounded-xl mb-4 ${darkMode ? 'bg-gray-700/50' : 'bg-blue-50'}`}>
               <h4 className="font-semibold mb-3 flex items-center space-x-2">
@@ -738,7 +720,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳
             </div>
           )}
 
-          {/* Payment Information Summary */}
           {itinerary.paymentData && (
             <div className={`mb-4 p-3 rounded-lg ${
               darkMode ? 'bg-gray-700/50 border border-gray-600' : 'bg-blue-50 border border-blue-200'
@@ -764,7 +745,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳
           {expandedItinerary === itinerary.id && (
             <div className="border-t dark:border-gray-700 pt-4 space-y-6">
               
-              {/* Day-by-day Itinerary */}
               <div>
                 <h4 className="font-semibold mb-3 flex items-center space-x-2">
                   <Calendar className="w-5 h-5 text-blue-600" />
@@ -786,7 +766,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳
                 </div>
               </div>
 
-              {/* Booking Details */}
               <div>
                 <h4 className="font-semibold mb-3 flex items-center space-x-2">
                   <Users className="w-5 h-5 text-blue-600" />
@@ -820,7 +799,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳
                 </div>
               </div>
 
-              {/* Payment Details */}
               {itinerary.paymentData && (
                 <div>
                   <h4 className="font-semibold mb-3 flex items-center space-x-2">
@@ -864,7 +842,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳
                       </div>
                     </div>
                     
-                    {/* Quick Receipt Action */}
                     <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
                       <button
                         onClick={handleShowReceipt}
@@ -880,7 +857,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳
             </div>
           )}
 
-          {/* Action Buttons */}
           <div className="flex gap-2 mt-3">
             {itinerary.status === 'cancelled' ? (
               <>
@@ -947,7 +923,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳
         </div>
       </div>
 
-      {/* Cancellation Modal */}
       {showCancellationModal && (
         <CancellationModal
           darkMode={darkMode}
@@ -958,7 +933,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳
         />
       )}
 
-      {/* Edit Booking Modal */}
       {showEditModal && (
         <EditBookingModal
           darkMode={darkMode}

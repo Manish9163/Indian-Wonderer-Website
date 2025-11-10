@@ -38,7 +38,6 @@ const PaymentFailure: React.FC<PaymentFailureProps> = ({
         darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
       } rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto`}>
         
-        {/* Header */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex justify-between items-center">
             <h3 className="text-xl font-bold text-red-600">Payment Failed</h3>
@@ -51,9 +50,7 @@ const PaymentFailure: React.FC<PaymentFailureProps> = ({
           </div>
         </div>
 
-        {/* Content */}
         <div className="p-6">
-          {/* Error Icon and Message */}
           <div className="text-center mb-6">
             <div className="mx-auto w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mb-4">
               <AlertCircle className="w-8 h-8 text-red-600" />
@@ -64,7 +61,6 @@ const PaymentFailure: React.FC<PaymentFailureProps> = ({
             </p>
           </div>
 
-          {/* Booking Summary */}
           <div className={`p-4 rounded-lg mb-6 ${
             darkMode ? 'bg-gray-700/50' : 'bg-gray-50'
           }`}>
@@ -85,7 +81,6 @@ const PaymentFailure: React.FC<PaymentFailureProps> = ({
             </div>
           </div>
 
-          {/* Common Reasons */}
           <div className={`p-4 rounded-lg mb-6 ${
             darkMode ? 'bg-yellow-900/20 border border-yellow-800' : 'bg-yellow-50 border border-yellow-200'
           }`}>
@@ -102,7 +97,6 @@ const PaymentFailure: React.FC<PaymentFailureProps> = ({
             </ul>
           </div>
 
-          {/* Action Buttons */}
           <div className="space-y-3">
             <button
               onClick={onRetry}
@@ -128,7 +122,6 @@ const PaymentFailure: React.FC<PaymentFailureProps> = ({
             </button>
           </div>
 
-          {/* Help Text */}
           <div className={`mt-6 text-center text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             <p>Need help? Contact our support team</p>
             <p className="font-medium text-blue-600">+91 98765 43210</p>

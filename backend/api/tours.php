@@ -238,6 +238,26 @@ class ToursController {
         $stats = $this->tours->getTourStats();
         ApiResponse::success($stats);
     }
+
+    public function getGalleryImages() {
+        $tourId = $_GET['tourId'] ?? null;
+        
+        if (!$tourId) {
+            ApiResponse::error("Tour ID is required", 400);
+        }
+        
+        // Return fallback gallery images
+        $images = [
+            '/goa.avif',
+            '/shimla.avif',
+            '/rajasthan.avif',
+            '/kerala.avif',
+            '/ladakh.avif',
+            '/tajmahal.avif'
+        ];
+        
+        ApiResponse::success($images);
+    }
 }
 
 $tours_controller = new ToursController();
@@ -261,6 +281,9 @@ switch ($method) {
                 break;
             case 'stats':
                 $tours_controller->getTourStats();
+                break;
+            case 'gallery':
+                $tours_controller->getGalleryImages();
                 break;
             default:
                 $tours_controller->getAllTours();

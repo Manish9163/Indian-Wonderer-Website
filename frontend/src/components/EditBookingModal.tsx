@@ -47,7 +47,6 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
     numberOfTravelers !== currentData.numberOfTravelers ||
     specialRequirements !== currentData.specialRequirements;
 
-  // Get minimum date (tomorrow)
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toISOString().split('T')[0];
@@ -55,7 +54,6 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
-        {/* Header */}
         <div className="flex justify-between items-center p-6 border-b dark:border-gray-700">
           <div className="flex items-center space-x-3">
             <Calendar className="w-6 h-6 text-blue-500" />
@@ -74,16 +72,13 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
           </button>
         </div>
 
-        {/* Content */}
         <div className="p-6 space-y-6">
-          {/* Info Message */}
           <div className={`p-4 rounded-lg ${darkMode ? 'bg-blue-900/20 border border-blue-800' : 'bg-blue-50 border border-blue-200'}`}>
             <p className={`text-sm ${darkMode ? 'text-blue-300' : 'text-blue-800'}`}>
               ℹ️ You can modify your travel date, number of travelers, and special requirements. Contact us for major changes.
             </p>
           </div>
 
-          {/* Travel Date */}
           <div>
             <label className="block font-semibold mb-2 flex items-center space-x-2">
               <Calendar className="w-5 h-5 text-blue-500" />
@@ -107,7 +102,6 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
             )}
           </div>
 
-          {/* Number of Travelers */}
           <div>
             <label className="block font-semibold mb-2 flex items-center space-x-2">
               <Users className="w-5 h-5 text-green-500" />
@@ -147,7 +141,6 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
             )}
           </div>
 
-          {/* Special Requirements */}
           <div>
             <label className="block font-semibold mb-2 flex items-center space-x-2">
               <FileText className="w-5 h-5 text-purple-500" />
@@ -169,7 +162,6 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
             </p>
           </div>
 
-          {/* Summary of Changes */}
           {hasChanges && (
             <div className={`p-4 rounded-lg ${darkMode ? 'bg-yellow-900/20 border border-yellow-800' : 'bg-yellow-50 border border-yellow-200'}`}>
               <h4 className="font-semibold mb-2 text-yellow-700 dark:text-yellow-400">📝 Changes Summary</h4>
@@ -187,20 +179,18 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({
             </div>
           )}
 
-          {/* Important Notes */}
           <div className={`p-4 rounded-lg text-sm ${darkMode ? 'bg-gray-700/50' : 'bg-gray-100'}`}>
             <h4 className="font-semibold mb-2">📋 Important Notes</h4>
             <ul className="space-y-1 text-xs list-disc list-inside">
               <li>Changes are subject to availability confirmation</li>
               <li>Price adjustments (if any) will be communicated within 24 hours</li>
-              <li>Date changes more than 7 days before travel are usually free</li>
-              <li>Changes within 7 days may incur modification fees</li>
+              <li>Date changes more than 4 days before travel are usually free</li>
+              <li>Changes within 4 days may incur modification fees</li>
               <li>Our team will contact you to confirm the changes</li>
             </ul>
           </div>
         </div>
 
-        {/* Footer Actions */}
         <div className={`p-6 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'} flex space-x-4`}>
           <button
             onClick={onClose}

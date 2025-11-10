@@ -11,17 +11,18 @@ import Payment from "./components/Payment";
 import DestinationPlaylist from "./components/PlayList";
 import PaymentReceipt from "./components/PaymentRecipt";
 import AgentSelector from "./components/AgentSelector";
-import ChatBot from "./components/ChatBot";
+import ChatBotAI from "./components/ChatBotAI";
 import UserProfile from "./components/UserProfile";
 import TourBooking from "./components/TourBooking";
 import AgentApplication from "./components/AgentApplication";
+import Wallet from "./components/Wallet";
+import TourItineraryPage from "./components/TourItineraryPage";
 import { ToastContainer, useToast } from "./components/Toast";
 
 import { Tour, transformTourData } from "./types/data";
 import apiService from "./services/api.service";
 
 const App = () => {
-  // Toast notifications
   const { toasts, removeToast, showSuccess, showError, showWarning, showInfo } = useToast();
 
   // Authentication state
@@ -29,17 +30,16 @@ const App = () => {
   const [userDetails, setUserDetails] = useState(null);
   const [authInitialized, setAuthInitialized] = useState(false);
   
-  // Existing states
   const [darkMode, setDarkMode] = useState(false);
   const [activeTab, setActiveTab] = useState('explore');
   const [selectedTour, setSelectedTour] = useState<Tour | null>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showTourItinerary, setShowTourItinerary] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [currentBookingData, setCurrentBookingData] = useState<BookingData | null>(null);
   const [currentItinerary, setCurrentItinerary] = useState<Itinerary | null>(null);
   const [myItineraries, setMyItineraries] = useState<Itinerary[]>(() => {
-    // Initialize from localStorage if available
     try {
       const cached = localStorage.getItem('myItineraries');
       return cached ? JSON.parse(cached) : [];
@@ -50,12 +50,13 @@ const App = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [expandedItinerary, setExpandedItinerary] = useState<string | null>(null);
-  const [tours, setTours] = useState<Tour[]>([]); // Initialize with empty array, load from API
+  const [tours, setTours] = useState<Tour[]>([]); 
   const [showUserProfile, setShowUserProfile] = useState(false);
+  const [showWalletModal, setShowWalletModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  // Fetch tours from API
+  // Fetch tours
   useEffect(() => {
     const fetchTours = async () => {
       try {
@@ -64,7 +65,6 @@ const App = () => {
         
         const response = await apiService.getTours();
         if (response.success && response.data && response.data.tours) {
-          // Transform the tour data to match frontend expectations
           const transformedTours = response.data.tours.map(transformTourData);
           setTours(transformedTours);
         } else {
@@ -84,7 +84,6 @@ const App = () => {
     fetchTours();
   }, []);
 
-  // Initialize authentication state from localStorage
   useEffect(() => {
     const token = localStorage.getItem('authToken');
     const userProfile = localStorage.getItem('userData');
@@ -96,20 +95,17 @@ const App = () => {
         setUserDetails(parsedUser);
         apiService.setAuthToken(token);
       } catch (error) {
-        // Invalid stored data, clear it
         localStorage.removeItem('authToken');
         localStorage.removeItem('userData');
       }
     }
     
-    // Mark authentication as initialized
     setAuthInitialized(true);
   }, []);
 
   // Fetch user bookings when authenticated
   useEffect(() => {
     const fetchBookings = async () => {
-      // Don't fetch bookings until auth is initialized
       if (!authInitialized) {
         console.log('⏳ Auth not initialized yet, skipping bookings fetch');
         return;
@@ -130,9 +126,7 @@ const App = () => {
           console.log(`✅ Found ${response.data.bookings.length} bookings for user`);
           console.log('📋 Raw bookings data:', response.data.bookings);
           
-          // Transform bookings to itineraries format
           const transformedItineraries = response.data.bookings.map((booking: any) => {
-            // Parse traveler details if it's a JSON string
             let travelerDetails = booking.traveler_details;
             if (typeof travelerDetails === 'string') {
               try {
@@ -142,10 +136,8 @@ const App = () => {
               }
             }
 
-            // Extract phone from traveler details or use empty string
             const phone = travelerDetails?.[0]?.phone || travelerDetails?.phone || '';
 
-            // Reconstruct tour object from flattened booking data
             const tourData = {
               id: booking.tour_id,
               title: booking.tour_title,
@@ -155,7 +147,7 @@ const App = () => {
               category: booking.category,
               description: booking.description,
               image: booking.image_url,
-              itinerary: booking.itinerary || [] // Include itinerary if available
+              itinerary: booking.itinerary || [] 
             };
 
             console.log(`🔄 Transforming booking #${booking.id}:`, { booking, tourData, travelerDetails });
@@ -163,30 +155,28 @@ const App = () => {
             return {
               id: booking.id,
               tourId: booking.tour_id,
-              tour: transformTourData(tourData), // Transform the reconstructed tour data
+              tour: transformTourData(tourData), 
               bookingData: {
-                // Fields expected by ItineraryCard component
-                name: `${booking.first_name} ${booking.last_name}`, // Primary contact name
+                name: `${booking.first_name} ${booking.last_name}`, 
                 firstName: booking.first_name,
                 lastName: booking.last_name,
                 email: booking.email,
-                phone: phone, // Phone from traveler details
-                travelers: booking.number_of_travelers || 1, // Number of travelers
-                date: booking.travel_date, // Travel date
-                requirements: booking.special_requirements, // Special requirements
+                phone: phone, 
+                travelers: booking.number_of_travelers || 1, 
+                date: booking.travel_date, 
+                requirements: booking.special_requirements, 
                 
-                // Additional fields for backend compatibility
                 booking_reference: booking.booking_reference,
                 number_of_travelers: booking.number_of_travelers,
                 total_amount: booking.total_amount,
                 booking_date: booking.booking_date,
                 travel_date: booking.travel_date,
                 special_requirements: booking.special_requirements,
-                traveler_details: travelerDetails, // Parsed traveler details
+                traveler_details: travelerDetails, 
                 customer_name: `${booking.first_name} ${booking.last_name}`,
                 customer_email: booking.email
               },
-              guide_info: booking.guide_info, // Include guide information
+              guide_info: booking.guide_info, 
               selectedAgent: booking.guide_info ? {
                 id: booking.guide_info.id || 0,
                 name: booking.guide_info.name || 'Not Assigned',
@@ -208,7 +198,7 @@ const App = () => {
               bookedAt: booking.created_at,
               paymentData: booking.payment_status ? {
                 paymentId: booking.booking_reference || booking.id,
-                method: 'card', // Default, you may want to store this in bookings table
+                method: 'card', 
                 amount: booking.total_amount,
                 currency: 'INR',
                 status: booking.payment_status,
@@ -232,7 +222,6 @@ const App = () => {
           
           console.log('✨ Transformed itineraries:', transformedItineraries);
           
-          // Remove duplicates based on booking_reference (keep cancelled bookings visible)
           const uniqueItineraries = transformedItineraries.filter((itinerary: any, index: number, self: any[]) => {
             const bookingRef = itinerary.bookingData?.booking_reference || itinerary.id;
             return index === self.findIndex((t: any) => 
@@ -243,25 +232,19 @@ const App = () => {
           console.log('🎯 All unique itineraries (including cancelled):', uniqueItineraries);
           setMyItineraries(uniqueItineraries);
         } else {
-          // No bookings found or API returned empty data
           setMyItineraries([]);
         }
       } catch (error) {
         console.error('Error fetching bookings:', error);
-        // For new users or authentication issues, just set empty itineraries
-        // Don't show error to user since they might not have any bookings yet
         setMyItineraries([]);
       }
     };
 
-    // Only fetch bookings if user is properly authenticated
-    // For new signups, this will gracefully handle the case where no bookings exist yet
     if (isAuthenticated && userDetails) {
       fetchBookings();
     }
   }, [authInitialized, isAuthenticated, userDetails]);
 
-  // Persist myItineraries to localStorage whenever it changes
   useEffect(() => {
     try {
       localStorage.setItem('myItineraries', JSON.stringify(myItineraries));
@@ -319,9 +302,16 @@ const App = () => {
     selectedAgent?: Agent | null;
   }
 
-  const handleBookTour = (tour: Tour) => {
-    setSelectedTour(tour);
-    setShowBookingModal(true);
+  const handleBookTour = (tour: Tour, action?: 'view' | 'book') => {
+    if (action === 'view') {
+      // Show the full itinerary page
+      setSelectedTour(tour);
+      setShowTourItinerary(true);
+    } else {
+      // Default: show booking modal
+      setSelectedTour(tour);
+      setShowBookingModal(true);
+    }
   };
   const [showPlaylist, setShowPlaylist] = useState(false);
   const [playlistDestination, setPlaylistDestination] = useState<string>("");
@@ -332,14 +322,12 @@ const App = () => {
     console.log('📝 Booking data confirmed:', bookingData);
     setCurrentBookingData(bookingData);
     
-    // Store in localStorage as backup to prevent data loss
     localStorage.setItem('pendingBookingData', JSON.stringify(bookingData));
     if (selectedTour) {
       localStorage.setItem('pendingTourData', JSON.stringify(selectedTour));
     }
     
     setShowBookingModal(false);
-    // Show agent selector before payment
     setShowAgentSelector(true);
   };
 
@@ -351,7 +339,7 @@ const App = () => {
 
   const handleCloseAgentSelector = () => {
     setShowAgentSelector(false);
-    setShowBookingModal(true); // Go back to booking modal
+    setShowBookingModal(true); 
   };
 
   const handleShowProfile = () => {
@@ -359,18 +347,15 @@ const App = () => {
   };
 
   const handleUpdateProfile = (profileData: any) => {
-    // Merge the new profile data with existing user details
     const updatedUserDetails = {
       ...(userDetails || {}),
       ...profileData,
-      // Ensure avatar data is properly updated
       avatar: profileData.avatar || (userDetails as any)?.avatar,
       avatarSvg: profileData.avatarSvg || (userDetails as any)?.avatarSvg,
       profilePhoto: profileData.profilePhoto || (userDetails as any)?.profilePhoto
     };
     
     setUserDetails(updatedUserDetails);
-    // Save to localStorage with correct key (userData, not userProfile)
     localStorage.setItem('userData', JSON.stringify(updatedUserDetails));
   };
 
@@ -379,11 +364,9 @@ const App = () => {
   };
 
   const handlePaymentSuccess = async (paymentData: PaymentData) => {
-    // Create booking in backend after successful payment
     try {
       const userId = (userDetails as any)?.id;
       
-      // Try to recover from localStorage if state data is missing
       let bookingData = currentBookingData;
       let tourData = selectedTour;
       
@@ -431,12 +414,10 @@ const App = () => {
         return;
       }
 
-      // Calculate dates
       const bookingDate = new Date().toISOString().split('T')[0];
       const travelDate = bookingData.date || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       const endDate = new Date(new Date(travelDate).getTime() + ((tourData.duration_days || 3) * 24 * 60 * 60 * 1000)).toISOString().split('T')[0];
 
-      // Prepare booking payload for backend
       const bookingPayload = {
         user_id: userId,
         tour_id: tourData.id,
@@ -448,22 +429,20 @@ const App = () => {
         number_of_travelers: bookingData.travelers || 1,
         total_amount: tourData.price * (bookingData.travelers || 1),
         special_requirements: bookingData.requirements || null,
-        status: 'confirmed', // Payment completed, so confirmed
+        status: 'confirmed', 
         payment_status: 'paid',
-        payment_method: paymentData?.method || 'credit_card', // Include payment method
-        guide_id: selectedAgent?.id || null // Include selected guide
+        payment_method: paymentData?.method || 'credit_card', 
+        guide_id: selectedAgent?.id || null 
       };
 
       console.log('📤 Creating booking in backend:', bookingPayload);
       console.log('📤 Selected guide:', selectedAgent);
 
-      // Call backend API to create booking
       const response = await apiService.createBooking(bookingPayload);
 
       if (response.success) {
         console.log('✅ Booking created in backend:', response.data);
         
-        // If guide was selected, assign the guide to the booking
         if (selectedAgent && response.data.id) {
           try {
             const assignResponse = await apiService.post('guides.php?action=assign', {
@@ -474,49 +453,42 @@ const App = () => {
             console.log('✅ Guide assigned:', assignResponse);
           } catch (error) {
             console.error('Failed to assign guide:', error);
-            // Don't fail the whole booking if guide assignment fails
           }
         }
 
-        // Create itinerary for frontend display
         const newItinerary: Itinerary = {
-          id: response.data.id || Date.now(), // Use backend booking ID
+          id: response.data.id || Date.now(), 
           tourId: tourData.id,
           tour: tourData,
           bookingData: bookingData,
           status: 'confirmed',
           bookedAt: new Date().toLocaleDateString(),
           paymentData: paymentData,
-          selectedAgent: selectedAgent // Include selected agent
+          selectedAgent: selectedAgent 
         };
         
         setMyItineraries([...myItineraries, newItinerary]);
         setCurrentItinerary(newItinerary);
         setShowPaymentModal(false);
         
-        // Show success feedback
         showSuccess(
           'Booking Confirmed! 🎉', 
           `Your tour has been booked successfully. Reference: ${response.data.booking_reference || response.data.id}`
         );
         
-        // Show playlist popup after payment with proper destination mapping
         setShowPlaylist(true);
         setPlaylistDestination(getPlaylistDestination(tourData));
         
-        // Show receipt immediately after successful payment
         setTimeout(() => {
           setShowReceiptModal(true);
         }, 500);
         
-        // Clean up state and localStorage
         setSelectedTour(null);
         setCurrentBookingData(null);
         setSelectedAgent(null);
         localStorage.removeItem('pendingBookingData');
         localStorage.removeItem('pendingTourData');
         
-        // Switch to itineraries tab
         setTimeout(() => {
           setActiveTab('itineraries');
         }, 3000);
@@ -529,7 +501,6 @@ const App = () => {
       showError('Booking Error', error.message || 'An unexpected error occurred. Please try again.');
     }
   };
-  // Close playlist popup
   const handleClosePlaylist = () => {
     setShowPlaylist(false);
     setPlaylistDestination("");
@@ -540,12 +511,14 @@ const App = () => {
     setSelectedTour(null);
   };
 
+  const handleCloseTourItinerary = () => {
+    setShowTourItinerary(false);
+    setSelectedTour(null);
+  };
+
   const handleClosePaymentModal = () => {
-    // Only clear if user explicitly closes, not during payment processing
     console.log('⚠️ Payment modal closed by user');
     setShowPaymentModal(false);
-    // Don't clear selectedTour and currentBookingData immediately
-    // in case payment is still processing
   };
 
   const handleBackToBooking = () => {
@@ -558,30 +531,25 @@ const App = () => {
     setCurrentItinerary(null);
   };
 
-  // Handle successful login/signup
   const handleAuthSuccess = (userData: any) => {
     setUserDetails(userData);
     setIsAuthenticated(true);
     
-    // Store authentication data
     if (userData.token) {
       localStorage.setItem('authToken', userData.token);
       apiService.setAuthToken(userData.token);
     }
     localStorage.setItem('userData', JSON.stringify(userData));
     
-    // Show welcome toast
     const userName = userData.name || userData.first_name || 'there';
     showSuccess('Welcome Back! 👋', `Great to see you again, ${userName}!`);
   };
 
-  // Handle logout
   const handleLogout = () => {
     setIsAuthenticated(false);
     setUserDetails(null);
     setActiveTab('explore');
     setMyItineraries([]);
-    // Clear any open modals
     setShowBookingModal(false);
     setShowPaymentModal(false);
     setShowReceiptModal(false);
@@ -591,17 +559,14 @@ const App = () => {
     setCurrentItinerary(null);
     setSelectedAgent(null);
     
-    // Clear stored authentication data
     localStorage.removeItem('authToken');
     localStorage.removeItem('userData');
-    localStorage.removeItem('myItineraries'); // Clear cached itineraries
+    localStorage.removeItem('myItineraries'); 
     apiService.setAuthToken(null);
     
-    // Set flag to show logout toast on login page
     localStorage.setItem('justLoggedOut', 'true');
   };
 
-  // Listen for playlist popup events from child components
   React.useEffect(() => {
     const handler = (e: any) => {
       setShowPlaylist(true);
@@ -611,7 +576,6 @@ const App = () => {
     return () => window.removeEventListener('showPlaylist', handler);
   }, []);
 
-  // Function to map tour data to valid playlist destination
   const getPlaylistDestination = (tour: Tour) => {
     const DESTINATION_MAP: Record<string, string> = {
       'goa': 'goa',
@@ -629,25 +593,22 @@ const App = () => {
       'kolkata': 'kolkata',
       'varanasi': 'varanasi',
       'mumbai': 'mumbai',
-      'delhi': 'mumbai', // Default to mumbai for delhi
-      'manali': 'shimla', // Default to shimla for hill stations
+      'delhi': 'mumbai', 
+      'manali': 'shimla', 
       'darjeeling': 'shimla',
     };
 
     const searchText = (tour.destination || tour.location || tour.title || '').toLowerCase();
     
-    // Find matching destination key
     for (const [key, value] of Object.entries(DESTINATION_MAP)) {
       if (searchText.includes(key)) {
         return value;
       }
     }
     
-    // Default fallback
     return 'goa';
   };
 
-  // Show loading state while auth is initializing
   if (!authInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -659,7 +620,6 @@ const App = () => {
     );
   }
 
-  // If not authenticated, show the UserAuth component
   if (!isAuthenticated) {
     return (
       <div>
@@ -676,7 +636,6 @@ const App = () => {
     );
   }
 
-  // If authenticated, show the main application
   return (
     <div className={`min-h-screen transition-all duration-300 ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
       <Header 
@@ -688,6 +647,7 @@ const App = () => {
         userDetails={userDetails}
         onLogout={handleLogout}
         onShowProfile={handleShowProfile}
+        onShowWallet={() => setShowWalletModal(true)}
       />
 
       {activeTab === 'explore' && (
@@ -755,6 +715,20 @@ const App = () => {
         />
       )}
 
+      {/* Tour Itinerary Page */}
+      {showTourItinerary && selectedTour && (
+        <TourItineraryPage
+          tour={selectedTour as any}
+          darkMode={darkMode}
+          onClose={handleCloseTourItinerary}
+          onBookNow={(tour: any) => {
+            setShowTourItinerary(false);
+            handleBookTour(tour, 'book');
+          }}
+          userDetails={userDetails}
+        />
+      )}
+
       {/* Agent Selector Modal */}
       {showAgentSelector && selectedTour && (
         <AgentSelector
@@ -812,8 +786,21 @@ const App = () => {
         />
       )}
 
-      {/* ChatBot */}
-      <ChatBot darkMode={darkMode} />
+      {/* Wallet Modal */}
+      {showWalletModal && userDetails && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`${darkMode ? 'bg-gray-900' : 'bg-white'} rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-auto shadow-2xl`}>
+            <Wallet
+              darkMode={darkMode}
+              userId={(userDetails as any)?.id}
+              onClose={() => setShowWalletModal(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ChatBot AI */}
+      <ChatBotAI darkMode={darkMode} />
 
       {/* Toast Notifications */}
       <ToastContainer 

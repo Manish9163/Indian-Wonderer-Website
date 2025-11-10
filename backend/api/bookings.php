@@ -767,7 +767,7 @@ function cancelBooking($conn, $booking_id) {
     
     $input = json_decode(file_get_contents('php://input'), true);
     
-    $booking_query = "SELECT b.*, u.email, u.first_name, u.last_name, t.title as tour_name 
+    $booking_query = "SELECT b.*, u.email, u.first_name, u.last_name, u.id as user_db_id, t.title as tour_name 
                       FROM bookings b 
                       LEFT JOIN users u ON b.user_id = u.id 
                       LEFT JOIN tours t ON b.tour_id = t.id
@@ -793,6 +793,9 @@ function cancelBooking($conn, $booking_id) {
     $refund_type = $input['refund_type'] ?? 'refund'; 
     $cancellation_reason = $input['cancellation_reason'] ?? '';
     
+    // Use user_db_id (INT) for database operations, user_id (could be either)
+    $user_id_str = (string)$booking['user_db_id'] ?: (string)$booking['user_id'];
+    
     $amount = (float)($booking['total_amount'] ?? $booking['total_price'] ?? 0);
     $booking_fee = 500; 
     $refund_amount = max(0, $amount - $booking_fee);
@@ -800,21 +803,63 @@ function cancelBooking($conn, $booking_id) {
     $conn->beginTransaction();
     
     try {
+        // 1. Mark booking as cancelled
         $query = "UPDATE bookings SET status = 'cancelled', updated_at = NOW() WHERE id = ?";
         $stmt = $conn->prepare($query);
         $stmt->execute([$booking_id]);
         
+        $giftcard_code = null;
+        $giftcard_amount = 0;
+        $application_id = null;
+        
         if ($refund_type === 'giftcard') {
-            $giftcard_amount = $refund_amount * 1.1;
-            $giftcard_code = 'GC-' . strtoupper(substr(md5(uniqid()), 0, 12));
-            $expiry_date = date('Y-m-d', strtotime('+1 year'));
+            $giftcard_amount = $refund_amount * 1.1; // 10% bonus
             
-            $giftcard_query = "INSERT INTO gift_cards (code, user_id, amount, balance, expiry_date, status, created_at) 
-                              VALUES (?, ?, ?, ?, ?, 'active', NOW())";
-            $giftcard_stmt = $conn->prepare($giftcard_query);
-            $giftcard_stmt->execute([$giftcard_code, $booking['user_id'], $giftcard_amount, $giftcard_amount, $expiry_date]);
+            // 2. Create giftcard_application entry (approved status since auto-approved on cancellation)
+            $app_query = "INSERT INTO giftcard_applications (user_id, booking_id, amount, reason, status, admin_notes, processed_at, processed_by) 
+                          VALUES (?, ?, ?, ?, 'approved', ?, NOW(), 'system-cancellation')";
+            $app_stmt = $conn->prepare($app_query);
+            $app_stmt->execute([
+                $user_id_str,
+                $booking_id,
+                $giftcard_amount,
+                'Cancellation refund for booking #' . $booking['booking_reference'],
+                'Automated from booking cancellation'
+            ]);
+            $application_id = $conn->lastInsertId();
             
-            $refund_message = "Gift card issued: {$giftcard_code} worth ₹{$giftcard_amount}";
+            // 3. Generate unique giftcard code
+            $giftcard_code = 'GC-' . strtoupper(substr(md5($booking_id . time() . uniqid()), 0, 12));
+            
+            // 4. Create giftcard entry in gift_cards table (PRIMARY TABLE)
+            // Convert user_id to INT for gift_cards
+            $user_id_int = is_numeric($user_id_str) ? (int)$user_id_str : 1;
+            $gc_query = "INSERT INTO gift_cards (code, user_id, amount, balance, status, created_at) 
+                         VALUES (?, ?, ?, ?, 'active', NOW())";
+            $gc_stmt = $conn->prepare($gc_query);
+            $gc_stmt->execute([$giftcard_code, $user_id_int, $giftcard_amount, $giftcard_amount]);
+            
+            // 5. Ensure wallet exists for user
+            $wallet_insert = "INSERT IGNORE INTO wallets (user_id, total_balance) VALUES (?, 0)";
+            $wallet_insert_stmt = $conn->prepare($wallet_insert);
+            $wallet_insert_stmt->execute([$user_id_str]);
+            
+            // 6. Add giftcard amount to wallet
+            $wallet_update = "UPDATE wallets SET total_balance = total_balance + ? WHERE user_id = ?";
+            $wallet_update_stmt = $conn->prepare($wallet_update);
+            $wallet_update_stmt->execute([$giftcard_amount, $user_id_str]);
+            
+            // 7. Record transaction in wallet_transactions
+            $transaction_query = "INSERT INTO wallet_transactions (user_id, type, amount, description, status) 
+                                  VALUES (?, 'credit', ?, ?, 'completed')";
+            $transaction_stmt = $conn->prepare($transaction_query);
+            $transaction_stmt->execute([
+                $user_id_str,
+                $giftcard_amount,
+                'Booking Cancellation Refund - ' . $giftcard_code
+            ]);
+            
+            $refund_message = "Gift card issued: {$giftcard_code} worth ₹{$giftcard_amount} and added to wallet";
         } else {
             $refund_query = "INSERT INTO refunds (booking_id, amount, status, method, initiated_at) 
                             VALUES (?, ?, 'pending', 'bank', NOW())";
@@ -824,18 +869,23 @@ function cancelBooking($conn, $booking_id) {
             $refund_message = "Bank refund of ₹{$refund_amount} initiated";
         }
         
+        // 8. Log the cancellation
         $log_query = "INSERT INTO booking_logs (booking_id, action, reason, details, created_at) 
                      VALUES (?, 'cancel', ?, ?, NOW())";
         $log_stmt = $conn->prepare($log_query);
         $log_details = json_encode([
             'refund_type' => $refund_type,
             'refund_amount' => $refund_type === 'giftcard' ? $giftcard_amount : $refund_amount,
-            'booking_fee_deducted' => $booking_fee
+            'booking_fee_deducted' => $booking_fee,
+            'giftcard_code' => $giftcard_code,
+            'application_id' => $application_id,
+            'wallet_updated' => $refund_type === 'giftcard'
         ]);
         $log_stmt->execute([$booking_id, $cancellation_reason, $log_details]);
         
         $conn->commit();
         
+        // Send email notification
         $booking_details = [
             'booking_reference' => $booking['booking_reference'],
             'customer_name' => ($booking['first_name'] ?? '') . ' ' . ($booking['last_name'] ?? ''),
@@ -847,8 +897,8 @@ function cancelBooking($conn, $booking_id) {
         $refund_details = [
             'type' => $refund_type,
             'amount' => $refund_type === 'giftcard' ? $giftcard_amount : $refund_amount,
-            'code' => $refund_type === 'giftcard' ? $giftcard_code : null,
-            'expiry' => $refund_type === 'giftcard' ? date('Y-m-d', strtotime('+1 year')) : null
+            'code' => $giftcard_code,
+            'expiry' => null
         ];
         
         if ($emailService !== null) {
@@ -867,7 +917,9 @@ function cancelBooking($conn, $booking_id) {
             'refund_type' => $refund_type,
             'refund_amount' => $refund_type === 'giftcard' ? $giftcard_amount : $refund_amount,
             'refund_message' => $refund_message,
-            'giftcard_code' => $refund_type === 'giftcard' ? $giftcard_code : null
+            'giftcard_code' => $giftcard_code,
+            'application_id' => $application_id,
+            'wallet_updated' => $refund_type === 'giftcard'
         ]);
     } catch (Exception $e) {
         $conn->rollBack();

@@ -1,6 +1,135 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Bot, User, HelpCircle, Clock, MapPin, CreditCard, Shield, ThumbsUp, ThumbsDown, Sparkles, TrendingUp, Brain } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, User, HelpCircle, Clock, MapPin, CreditCard, Shield, ThumbsUp, ThumbsDown, Sparkles, TrendingUp, Brain, Heart, Zap, BookOpen } from 'lucide-react';
 import apiService from '../services/api.service';
+import { SmartChatbotService } from '../services/smartChatbot.service';
+
+// Weather/Season/Mood mappings for smart suggestions
+const WEATHER_KEYWORDS = {
+  sunny: ['sunny', 'bright', 'clear', 'sun', 'clear sky', 'hot'],
+  rainy: ['rainy', 'rain', 'wet', 'monsoon', 'showers', 'wet weather'],
+  cold: ['cold', 'freezing', 'snow', 'winter', 'chilly', 'cool'],
+  hot: ['hot', 'heat', 'warm', 'scorching', 'humid', 'temperature'],
+  windy: ['windy', 'wind', 'breezy', 'stormy', 'breeze'],
+  moderate: ['moderate', 'mild', 'pleasant', 'nice', 'cool weather']
+};
+
+const SEASON_KEYWORDS = {
+  spring: ['spring', 'march', 'april', 'may', 'blooming', 'flowers'],
+  summer: ['summer', 'june', 'july', 'august', 'hot season'],
+  monsoon: ['monsoon', 'september', 'october', 'rains', 'rainy season'],
+  autumn: ['autumn', 'fall', 'november', 'october', 'october'],
+  winter: ['winter', 'december', 'january', 'february', 'cold season']
+};
+
+const MOOD_KEYWORDS = {
+  adventurous: ['adventure', 'thrill', 'excitement', 'adrenaline', 'action', 'extreme', 'explore', 'daring'],
+  relaxed: ['relax', 'chill', 'peace', 'calm', 'rest', 'slow', 'leisure', 'peaceful'],
+  romantic: ['romance', 'couple', 'love', 'special', 'sweetheart', 'partner', 'honeymoon'],
+  cultural: ['culture', 'history', 'heritage', 'tradition', 'learning', 'museum', 'historical'],
+  family: ['family', 'kids', 'children', 'group', 'together', 'fun', 'kids friendly'],
+  budget: ['cheap', 'budget', 'affordable', 'economical', 'save', 'inexpensive'],
+  luxury: ['luxury', 'premium', 'expensive', 'exclusive', 'lavish', 'high-end'],
+  spiritual: ['spiritual', 'meditation', 'yoga', 'peace', 'soul', 'enlightenment', 'sacred'],
+  party: ['party', 'nightlife', 'fun', 'social', 'celebrate', 'event', 'nightclub'],
+  nature_lover: ['nature', 'outdoor', 'trekking', 'wildlife', 'hiking', 'mountains', 'forest'],
+  // Emotional moods
+  happy: ['happy', 'joy', 'excited', 'cheerful', 'delighted', 'glad', 'awesome', 'amazing', 'wonderful'],
+  sad: ['sad', 'down', 'depressed', 'blue', 'unhappy', 'gloomy', 'stressed', 'frustrated', 'upset'],
+  energetic: ['energy', 'energetic', 'active', 'dynamic', 'vigorous', 'lively', 'pumped', 'motivated'],
+  peaceful: ['peaceful', 'serene', 'tranquil', 'calm', 'quiet', 'zen', 'meditative', 'silent', 'mindful']
+};
+
+// Response templates based on mood and weather
+const RESPONSE_TEMPLATES = {
+  adventurous: {
+    sunny: '🌞 Perfect! The sun is calling your adventurous spirit! I found some thrilling tours that\'ll get your adrenaline pumping!',
+    rainy: '🌧️ Rain won\'t stop a true adventurer! Check out these amazing water sports and jungle trek options!',
+    cold: '❄️ Brrr! Bundle up and experience the adrenaline rush of snow-based adventures!',
+    hot: '🔥 Hot weather, hot adventures! These desert and tropical expeditions are perfect for you!',
+    windy: '💨 Windy conditions make for thrilling experiences! Check these epic adventures!',
+    moderate: '🌤️ Perfect conditions for an adventure! Let me show you some amazing options!'
+  },
+  relaxed: {
+    sunny: '☀️ Time to unwind! I\'ve found some beautiful sunny beach getaways perfect for relaxation.',
+    rainy: '🌧️ Cozy rainy days deserve cozy wellness retreats. Let me suggest some peaceful escapes.',
+    cold: '❄️ Nothing beats relaxing by a fireplace with scenic mountain views!',
+    hot: '🌴 Kick back and cool off! These tropical paradise destinations are your sanctuary.',
+    windy: '💨 Windy days are perfect for peaceful coastal retreats!',
+    moderate: '🌤️ Perfect weather for a relaxing getaway!'
+  },
+  romantic: {
+    sunny: '💕 Romance is in the air! These sunset destinations are absolutely magical.',
+    rainy: '🌧️ Nothing says romance like rain-soaked gardens and cozy getaways!',
+    cold: '❄️ Romantic snowy escapes where you can snuggle up with your special someone!',
+    hot: '🌹 Heat up your romance! These tropical beaches are perfect for couples!',
+    windy: '💕 Windy seashores perfect for romantic walks!',
+    moderate: '💑 Perfect weather for a romantic escape!'
+  },
+  cultural: {
+    sunny: '🏛️ Explore ancient wonders under clear skies! These cultural treasures await!',
+    rainy: '🌧️ Rain adds mystery to historic sites! Discover India\'s cultural heritage.',
+    cold: '❄️ Perfect weather for temple hopping and cultural exploration!',
+    hot: '🎭 Immerse yourself in vibrant cultures despite the heat!',
+    windy: '🏛️ Explore cultural sites with windy breezes!',
+    moderate: '🏛️ Great conditions to explore cultural heritage!'
+  },
+  family: {
+    sunny: '👨‍👩‍👧‍👦 Fun in the sun! These family-friendly tours have activities for everyone!',
+    rainy: '🌧️ Indoor and covered attractions perfect for your family adventure!',
+    cold: '❄️ Snow fun and family activities! Your kids will love this!',
+    hot: '🎪 Family entertainment and cool water activities await!',
+    windy: '🎡 Family fun with outdoor activities!',
+    moderate: '👨‍👩‍👧‍👦 Perfect conditions for family fun!'
+  },
+  spiritual: {
+    sunny: '🙏 Enlightenment awaits under the bright sun! Sacred destinations call.',
+    rainy: '🌧️ Monsoon blessings! Perfect time for spiritual retreats.',
+    cold: '❄️ Meditate in serene mountain monasteries surrounded by snow.',
+    hot: '✨ Feel the spiritual energy in these sacred places!',
+    windy: '🙏 Spiritual connection with nature\'s winds!',
+    moderate: '🧘 Perfect conditions for spiritual exploration!'
+  },
+  luxury: {
+    sunny: '👑 Luxury awaits under the perfect sun! Exclusive experiences await!',
+    rainy: '☔ Cozy luxury - perfect for 5-star indoor experiences!',
+    cold: '❄️ Luxury mountain retreats with world-class amenities!',
+    hot: '🌴 Exclusive tropical luxury - the ultimate indulgence!',
+    windy: '💎 Premium beachfront luxury experiences!',
+    moderate: '👑 Perfect conditions for luxury travel!'
+  },
+  happy: {
+    sunny: '😊 Your happiness shines brighter than the sun! Let\'s celebrate with amazing adventures!',
+    rainy: '🌧️ Even rainy days can\'t dampen your joy! Let\'s explore cozy indoor attractions!',
+    cold: '❄️ Joy in every snowflake! Winter adventures await your cheerful spirit!',
+    hot: '🔥 Your energy matches this hot weather! Vibrant destinations call!',
+    windy: '💨 Your positive vibes match the breeze! Scenic escapes await!',
+    moderate: '😄 Perfect weather to spread your happiness! Beautiful destinations await!'
+  },
+  sad: {
+    sunny: '💙 I sense you\'re feeling down. Let me suggest uplifting destinations to brighten your mood! Sometimes a change of scenery is exactly what you need.',
+    rainy: '💙 Rainy days can feel heavy, but travel can heal! Let me find peaceful retreats where you can rest and rejuvenate.',
+    cold: '💙 Cold times call for warm connections. Let me suggest cozy destinations with warm hospitality to lift your spirits!',
+    hot: '💙 I\'m here for you. Let me find soul-soothing destinations that can help you find peace and comfort.',
+    windy: '💙 Sometimes we all need a breeze of change. Let me suggest transformative journeys to help you feel better.',
+    moderate: '💙 I sense you need a break. Let me find calming destinations where you can relax and find peace.'
+  },
+  energetic: {
+    sunny: '⚡ Your energy is contagious! Let\'s channel it into thrilling adventures under the sun!',
+    rainy: '⚡ Rain won\'t slow you down! Check out high-energy water sports and adventure activities!',
+    cold: '⚡ Dynamic you! Let\'s explore adrenaline-pumping cold weather activities!',
+    hot: '🔥 You\'re on fire! These intense, high-energy destinations are perfect for you!',
+    windy: '💨 Your vigor matches the wind! Let\'s find exhilarating outdoor adventures!',
+    moderate: '⚡ Your energy is amazing! Let\'s find action-packed tours to keep that momentum going!'
+  },
+  peaceful: {
+    sunny: '🕊️ Your peaceful energy is beautiful. Let me find serene sunny destinations for quiet contemplation.',
+    rainy: '🕊️ Rainy days are perfect for peaceful retreats. Let me suggest tranquil places to find inner calm.',
+    cold: '🕊️ Snow-covered mountains and silence... Let me find peaceful winter retreats for your soul.',
+    hot: '🕊️ Even in warmth, peace is possible. Let me find serene destinations with spiritual essence.',
+    windy: '🕊️ Wind whispers peace. Let me suggest tranquil natural escapes for your meditative journey.',
+    moderate: '🕊️ Perfect conditions for inner peace. Let me find the most serene destinations for you.'
+  }
+};
 
 type Message = {
   id: string;
@@ -54,6 +183,47 @@ type TourData = {
 type ChatBotProps = {
   darkMode: boolean;
 };
+
+// Helper function to extract weather, season, mood from message
+function extractWeatherSeasonMood(text: string) {
+  const lower = text.toLowerCase();
+  let weather = null;
+  let season = null;
+  let mood = null;
+
+  // Extract weather
+  Object.entries(WEATHER_KEYWORDS).forEach(([w, keywords]) => {
+    if (keywords.some(k => lower.includes(k))) {
+      weather = w;
+    }
+  });
+
+  // Extract season
+  Object.entries(SEASON_KEYWORDS).forEach(([s, keywords]) => {
+    if (keywords.some(k => lower.includes(k))) {
+      season = s;
+    }
+  });
+
+  // Extract mood
+  Object.entries(MOOD_KEYWORDS).forEach(([m, keywords]) => {
+    if (keywords.some(k => lower.includes(k))) {
+      mood = m;
+    }
+  });
+
+  return { weather, season, mood };
+}
+
+// Helper function to get appropriate response
+function getSmartResponse(mood: string | null, weather: string | null): string {
+  if (!mood || !weather) {
+    return '🤔 I need a bit more info! Could you tell me:\n- Weather (sunny, rainy, cold, hot, etc.)\n- Season (spring, summer, monsoon, autumn, winter)\n- Your mood (adventurous, relaxed, romantic, cultural, family, etc.)';
+  }
+
+  const templates = (RESPONSE_TEMPLATES as any)[mood] || RESPONSE_TEMPLATES.relaxed;
+  return templates[weather as keyof typeof templates] || '✨ I found some amazing tours tailored just for you!';
+}
 
 const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -264,28 +434,25 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
     suggestions: ['Show me popular tours', 'Beach destinations under ₹20,000', 'Adventure tours in Himalayas', 'What payment methods do you accept?']
   };
 
-  // Advanced NLP: Load tour data on initialization
+  const quickSuggestions = [
+    '☀️ Sunny weather, adventurous mood',
+    '🌧️ Rainy season, family trip',
+    '❄️ Cold winter, romantic getaway',
+    '🏛️ Cultural interest, moderate budget',
+    '🧘 Spiritual retreat, peaceful vibes',
+    '🎉 Party mode, summer adventure'
+  ];
+
   useEffect(() => {
     loadTourData();
   }, []);
 
   const loadTourData = async () => {
-    try {
-      const response = await apiService.get('tours.php?action=all');
-      if (response.success && response.data) {
-        setAvailableTours(response.data);
-      }
-      
-      const statsResponse = await apiService.get('tours.php?action=stats');
-      if (statsResponse.success) {
-        setTourStats(statsResponse.data);
-      }
-    } catch (error) {
-      console.error('Error loading tour data:', error);
-    }
+    // Note: Tour data is loaded dynamically when user provides weather/season/mood
+    // No need to preload - chatbot API provides tours with packages on demand
+    // This prevents unnecessary admin API calls that require authentication
   };
 
-  // Enhanced Intent Detection with NLP
   const detectIntent = (query: string): ConversationContext['userIntent'] => {
     const lowercaseQuery = query.toLowerCase();
     const urgentWords = ['urgent', 'emergency', 'asap', 'immediately', 'problem', 'issue', 'stuck', 'help now', 'critical'];
@@ -304,17 +471,14 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
     return 'inquiry';
   };
 
-  // Extract entities from user query
   const extractEntities = (query: string): Partial<ConversationContext> => {
     const lowercaseQuery = query.toLowerCase();
     const entities: Partial<ConversationContext> = {};
     
-    // Extract destinations
     const destinations = ['rajasthan', 'goa', 'kerala', 'himalayas', 'kashmir', 'varanasi', 'agra', 'jaipur', 
                          'delhi', 'mumbai', 'bangalore', 'udaipur', 'jaisalmer', 'shimla', 'manali', 'ladakh'];
     entities.mentionedDestinations = destinations.filter(d => lowercaseQuery.includes(d));
     
-    // Extract budget (₹ or rupees)
     const budgetMatch = query.match(/₹\s*(\d+(?:,\d+)*)/g) || query.match(/(\d+(?:,\d+)*)\s*(?:rupees|rs|inr)/gi);
     if (budgetMatch) {
       const amounts = budgetMatch.map(m => parseInt(m.replace(/[^\d]/g, '')));
@@ -325,13 +489,11 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
       }
     }
     
-    // Extract duration (days)
     const durationMatch = query.match(/(\d+)\s*(?:day|days|night|nights)/i);
     if (durationMatch) {
       entities.mentionedDuration = parseInt(durationMatch[1]);
     }
     
-    // Extract preferences
     const preferences = ['adventure', 'cultural', 'historical', 'beach', 'mountain', 'wildlife', 'spiritual', 
                         'food', 'photography', 'trekking', 'camping', 'luxury', 'budget'];
     entities.userPreferences = preferences.filter(p => lowercaseQuery.includes(p));
@@ -435,9 +597,12 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
     const intent = detectIntent(currentQuery);
     const sentiment = analyzeSentiment(currentQuery);
 
+    // Extract weather, season, mood from the message
+    const { weather, season, mood } = extractWeatherSeasonMood(currentQuery);
+
     setConversationContext(prev => ({
       ...prev,
-      previousQueries: [...prev.previousQueries, currentQuery].slice(-5), // Keep last 5
+      previousQueries: [...prev.previousQueries, currentQuery].slice(-5),
       userIntent: intent,
       sentiment: sentiment
     }));
@@ -449,35 +614,72 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
     setTypingSuggestions([]);
     setShowFAQs(false);
 
-    const cached = getCachedResponse(currentQuery);
-    if (cached) {
+    // If mood is extracted, call the chatbot API in GREETING stage first
+    if (mood) {
+      try {
+        setIsTyping(true);
+        
+        // STAGE 1: Get greeting message to ask if user wants to go on a trip
+        const greetingResponse = await fetch('http://localhost/fu/backend/api/chatbot_suggestions.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            mood,
+            stage: 'greeting'  // Request greeting stage
+          })
+        });
+
+        const greetingData = await greetingResponse.json();
+
+        if (greetingData.success) {
+          // Show greeting message with YES/NO options
+          const botGreeting: Message = {
+            id: (Date.now() + 1).toString(),
+            text: greetingData.data.chatbot_message,
+            sender: 'bot',
+            timestamp: new Date(),
+            userQuery: currentQuery,
+            suggestions: ['Yes, suggest tours! 🎉', 'Maybe later', 'Tell me more', 'Different mood']
+          };
+          setMessages(prev => [...prev, botGreeting]);
+          cacheResponse(currentQuery, greetingData.data.chatbot_message);
+          
+          // Store mood in context for next interaction (for button tap detection)
+          setConversationContext(prev => ({
+            ...prev,
+            topic: `tour_recommendations_${mood}`,
+            previousQueries: [...prev.previousQueries, currentQuery].slice(-5)
+          }));
+        } else {
+          throw new Error(greetingData.message);
+        }
+      } catch (error) {
+        console.error('API Error:', error);
+        // Fallback to local response
+        const fallbackGreeting = `Hi! 👋 I love your ${mood} mood! Would you like me to suggest some amazing tours tailored to your energy? 🌍`;
+        const botMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: fallbackGreeting,
+          sender: 'bot',
+          timestamp: new Date(),
+          userQuery: currentQuery,
+          suggestions: ['Yes, let\'s go! 🎉', 'Maybe later', 'Tell me more', 'Different mood']
+        };
+        setMessages(prev => [...prev, botMessage]);
+      } finally {
+        setIsTyping(false);
+      }
+    } else {
+      // Only ask for mood if it's missing
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: cached,
+        text: `I'd love to help you find the perfect tour! 😊\n\nCould you tell me about your current mood or how you're feeling?\n\n� Some examples:\n- Adventurous, Relaxed, Romantic\n- Cultural, Family, Budget, Luxury\n- Spiritual, Party, Nature Lover\n- Happy, Sad, Energetic, Peaceful, Stressed\n\nWeather and season are optional - just let me know your mood!`,
         sender: 'bot',
         timestamp: new Date(),
-        userQuery: currentQuery
+        suggestions: quickSuggestions
       };
       setMessages(prev => [...prev, botMessage]);
-      return;
     }
-
-    const responseData = await generateResponse(currentQuery, intent, sentiment);
-    await simulateTyping(responseData.text);
-    
-    const botMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      text: responseData.text,
-      sender: 'bot',
-      timestamp: new Date(),
-      userQuery: currentQuery,
-      suggestions: responseData.suggestions,
-      tourRecommendations: responseData.tourRecommendations
-    };
-    
-    setMessages(prev => [...prev, botMessage]);
-    
-    cacheResponse(currentQuery, responseData.text);
   };
 
   const learnFromUserQuery = (query: string) => {
@@ -514,11 +716,9 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
     }
   };
 
-  // Intelligent Tour Recommendation Engine
   const recommendTours = (entities: Partial<ConversationContext>): any[] => {
     let filtered = [...availableTours];
     
-    // Filter by destination
     if (entities.mentionedDestinations && entities.mentionedDestinations.length > 0) {
       filtered = filtered.filter(tour => 
         entities.mentionedDestinations!.some(dest => 
@@ -528,7 +728,6 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
       );
     }
     
-    // Filter by budget
     if (entities.mentionedBudget) {
       if (entities.mentionedBudget.max) {
         filtered = filtered.filter(tour => tour.price <= entities.mentionedBudget!.max!);
@@ -538,14 +737,12 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
       }
     }
     
-    // Filter by duration
     if (entities.mentionedDuration) {
       filtered = filtered.filter(tour => 
         Math.abs(tour.duration_days - entities.mentionedDuration!) <= 2
       );
     }
     
-    // Filter by preferences
     if (entities.userPreferences && entities.userPreferences.length > 0) {
       filtered = filtered.filter(tour =>
         entities.userPreferences!.some(pref =>
@@ -556,11 +753,9 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
       );
     }
     
-    // Sort by relevance and popularity
     return filtered.sort((a, b) => b.price - a.price).slice(0, 3);
   };
 
-  // Advanced Response Generation with Context Awareness
   const generateResponse = async (
     input: string, 
     intent?: ConversationContext['userIntent'], 
@@ -569,10 +764,8 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
     const lowercaseInput = input.toLowerCase();
     conversationHistory.current.push(input);
     
-    // Extract entities from query
     const entities = extractEntities(input);
     
-    // Update conversation stage
     let stage: ConversationContext['conversationStage'] = 'exploring';
     if (intent === 'booking') stage = 'booking';
     else if (intent === 'support' || intent === 'complaint') stage = 'support';
@@ -584,7 +777,6 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
       conversationStage: stage
     }));
     
-    // Handle urgent/negative sentiment
     if (intent === 'urgent' || sentiment === 'negative') {
       return {
         text: `🚨 I understand this is ${intent === 'urgent' ? 'urgent' : 'frustrating'}. Let me connect you with our priority support team immediately.\n\n📞 Call: +91-9876543210\n💬 WhatsApp: Available 24/7\n✉️ Email: support@traveler.com\n\nOur team will resolve this within minutes! 💪`,
@@ -592,7 +784,6 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
       };
     }
 
-    // Handle positive sentiment
     if (sentiment === 'positive' && conversationHistory.current.length > 2) {
       return {
         text: '😊 I\'m thrilled to hear that! Your satisfaction is our priority. Need anything else to make your trip unforgettable?',
@@ -600,7 +791,6 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
       };
     }
     
-    // Intelligent tour browsing with recommendations
     if (intent === 'browsing' && availableTours.length > 0) {
       const recommendations = recommendTours(entities);
       
@@ -642,7 +832,6 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
       }
     }
     
-    // Compare tours
     if (intent === 'comparing' && conversationContext.mentionedDestinations && conversationContext.mentionedDestinations.length >= 2) {
       const dest1 = conversationContext.mentionedDestinations[0];
       const dest2 = conversationContext.mentionedDestinations[1];
@@ -655,7 +844,6 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
       };
     }
     
-    // Check FAQ matching with improved NLP
     const similarUnhelpfulResponse = learningData.unhelpfulResponses.find(ur => 
       ur.query.toLowerCase().includes(lowercaseInput.substring(0, 10)) ||
       lowercaseInput.includes(ur.query.toLowerCase().substring(0, 10))
@@ -688,7 +876,6 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
       }
     }
 
-    // Context-aware quick responses
     if (lowercaseInput.includes('book') || lowercaseInput.includes('reservation') || lowercaseInput.includes('how to book')) {
       const bookingQueries = learningData.userQueries['booking'] || 0;
       return {
@@ -727,7 +914,6 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
       };
     }
 
-    // Additional intelligent responses
     const quickResponses: Record<string, { text: string; suggestions: string[] }> = {
       pickup: {
         text: 'We provide complimentary hotel pickup and drop-off within city limits for most tours. Pickup times will be confirmed in your booking! 🚗',
@@ -787,14 +973,12 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
       }
     };
 
-    // Match quick responses
     for (const [key, response] of Object.entries(quickResponses)) {
       if (lowercaseInput.includes(key)) {
         return response;
       }
     }
 
-    // Learning-based response with contextual help
     const commonUserKeywords = Object.keys(learningData.commonKeywords)
       .filter(keyword => userKeywords.includes(keyword))
       .sort((a, b) => learningData.commonKeywords[b] - learningData.commonKeywords[a]);
@@ -806,7 +990,6 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
       };
     }
     
-    // Default intelligent fallback
     return {
       text: `🤖 I'm continuously learning to help you better! I can assist with:\n\n📅 Bookings & Reservations\n💳 Payments & Refunds\n🗺️ Tour Recommendations\n❓ Travel Questions\n💬 Customer Support\n\nWhat would you like to know?`,
       suggestions: ['Popular tours', 'Best destinations', 'Payment help', 'Speak to human']
@@ -835,6 +1018,141 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
 
     setMessages(prev => [...prev, userMessage, botMessage]);
     setShowFAQs(false);
+  };
+
+  // Handle suggestion button clicks - triggers Stage 2 for tours
+  const handleSuggestionClick = async (suggestion: string) => {
+    // Add user's button click as a message
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: suggestion,
+      sender: 'user',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, userMessage]);
+
+    // Check if this is a "Yes, suggest tours!" type button and we have mood context
+    if (
+      (suggestion.includes('Yes') || suggestion.includes('suggest') || suggestion.includes("let's go")) &&
+      conversationContext.topic?.startsWith('tour_recommendations_')
+    ) {
+      // STAGE 2: User confirmed via button - show tours
+      const moodFromContext = conversationContext.topic?.replace('tour_recommendations_', '');
+      
+      if (moodFromContext) {
+        try {
+          setIsTyping(true);
+          const response = await fetch('http://localhost/fu/backend/api/chatbot_suggestions.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              mood: moodFromContext,
+              weather: undefined,
+              season: undefined,
+              stage: 'recommendations'
+            })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            const botResponse: Message = {
+              id: (Date.now() + 1).toString(),
+              text: data.data.chatbot_message,
+              sender: 'bot',
+              timestamp: new Date(),
+              tourRecommendations: data.data.suggested_tours,
+              suggestions: ['Show more tours', 'Different mood', 'Change season', 'Help me choose']
+            };
+            setMessages(prev => [...prev, botResponse]);
+            
+            // Clear the topic after showing tours
+            setConversationContext(prev => ({
+              ...prev,
+              topic: undefined
+            }));
+          } else {
+            throw new Error(data.message);
+          }
+        } catch (error) {
+          console.error('API Error:', error);
+          const botMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            text: '😔 Oops! I had trouble fetching tours. Please try again or contact support!',
+            sender: 'bot',
+            timestamp: new Date(),
+            suggestions: ['Try again', 'Contact support', 'Different mood']
+          };
+          setMessages(prev => [...prev, botMessage]);
+        } finally {
+          setIsTyping(false);
+        }
+      }
+    } else if (suggestion.includes('Show more') || suggestion.includes('more tours')) {
+      // User clicked "Show more tours" button - just show same tours again with different message
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: '📍 Here are our best tour recommendations for you! Browse through and find your perfect adventure:',
+        sender: 'bot',
+        timestamp: new Date(),
+        suggestions: ['Different mood', 'Change season', 'Help me choose', 'Contact support']
+      };
+      setMessages(prev => [...prev, botMessage]);
+    } else if (suggestion.includes('Maybe later')) {
+      // User said maybe later
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: 'No problem! I\'m here whenever you\'re ready. Feel free to ask anytime! 😊',
+        sender: 'bot',
+        timestamp: new Date(),
+        suggestions: ['Tell me a mood', 'Browse FAQs', 'Contact support']
+      };
+      setMessages(prev => [...prev, botMessage]);
+    } else if (suggestion.includes('Different mood')) {
+      // User wants to try a different mood
+      setConversationContext(prev => ({
+        ...prev,
+        topic: undefined
+      }));
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: 'Of course! What\'s your new mood? 😊\n\nTell me: Adventurous, Relaxed, Happy, Sad, Romantic, Cultural, Family, Spiritual, Party, Energetic, Peaceful, Budget, Luxury, or Nature Lover?',
+        sender: 'bot',
+        timestamp: new Date(),
+        suggestions: ['Adventurous', 'Relaxed', 'Happy', 'Sad']
+      };
+      setMessages(prev => [...prev, botMessage]);
+    } else if (suggestion.includes('Change season')) {
+      // User wants to change season
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: 'Great! Which season interests you?\n\n🌸 Spring (March-May)\n☀️ Summer (June-August)\n🌧️ Monsoon (September-October)\n🍂 Autumn (November)\n❄️ Winter (December-February)',
+        sender: 'bot',
+        timestamp: new Date(),
+        suggestions: ['Spring', 'Summer', 'Monsoon', 'Winter']
+      };
+      setMessages(prev => [...prev, botMessage]);
+    } else if (suggestion.includes('Change weather')) {
+      // User wants to change weather
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: 'Which weather condition do you prefer?\n\n☀️ Sunny\n🌧️ Rainy\n❄️ Cold\n🔥 Hot\n💨 Windy\n🌤️ Moderate',
+        sender: 'bot',
+        timestamp: new Date(),
+        suggestions: ['Sunny', 'Rainy', 'Cold', 'Moderate']
+      };
+      setMessages(prev => [...prev, botMessage]);
+    } else {
+      // For other suggestions, treat them as regular messages
+      const botMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: `You selected: ${suggestion}. Let me help you with that! 😊`,
+        sender: 'bot',
+        timestamp: new Date(),
+        suggestions: ['Show tours', 'Ask something else', 'Contact support']
+      };
+      setMessages(prev => [...prev, botMessage]);
+    }
   };
 
   const getPopularFAQs = () => {
@@ -955,7 +1273,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
                       {message.suggestions.map((suggestion, idx) => (
                         <button
                           key={idx}
-                          onClick={() => setInputMessage(suggestion)}
+                          onClick={() => handleSuggestionClick(suggestion)}
                           className={`text-xs px-2 py-1 rounded-full border transition-colors ${
                             darkMode
                               ? 'border-purple-500 text-purple-300 hover:bg-purple-900/30'
@@ -968,33 +1286,76 @@ const ChatBot: React.FC<ChatBotProps> = ({ darkMode }) => {
                     </div>
                   )}
                   {message.tourRecommendations && message.tourRecommendations.length > 0 && (
-                    <div className="mt-2 space-y-2">
-                      {message.tourRecommendations.map((tour, idx) => (
-                        <div
-                          key={idx}
-                          className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                            darkMode
-                              ? 'border-gray-700 bg-gray-800 hover:bg-gray-700'
-                              : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
-                          }`}
-                          onClick={() => setInputMessage(`Tell me more about ${tour.title}`)}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-sm">{tour.title}</h4>
-                              <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                📍 {tour.destination} • ⏱ {tour.duration_days} days
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-bold text-sm text-purple-600">₹{tour.price.toLocaleString()}</p>
-                              <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                                {tour.difficulty_level}
-                              </span>
+                    <div className="mt-3 space-y-2 border-t pt-3" style={{ borderColor: darkMode ? '#444' : '#ddd' }}>
+                      <p className={`text-xs font-medium mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        🎯 Recommended Tours:
+                      </p>
+                      {message.tourRecommendations.map((tour, idx) => {
+                        // Helper function to safely parse JSON fields
+                        const parseJsonField = (field: any) => {
+                          if (!field) return [];
+                          try {
+                            if (typeof field === 'string') {
+                              const parsed = JSON.parse(field);
+                              return Array.isArray(parsed) ? parsed : [];
+                            }
+                            return Array.isArray(field) ? field : [];
+                          } catch (e) {
+                            return [];
+                          }
+                        };
+
+                        const inclusions = parseJsonField(tour.inclusions);
+                        const features = parseJsonField(tour.features);
+                        const inclusionText = inclusions.length > 0 
+                          ? inclusions.slice(0, 2).join(', ') 
+                          : 'Standard package';
+                        const featureText = features.length > 0 
+                          ? features.slice(0, 2).join(', ') 
+                          : 'Various activities';
+
+                        return (
+                          <div
+                            key={idx}
+                            className={`p-3 rounded-lg border cursor-pointer transition-all hover:shadow-md ${
+                              darkMode
+                                ? 'border-purple-600/30 bg-gray-800 hover:bg-gray-750'
+                                : 'border-purple-200 bg-purple-50/40 hover:bg-purple-50'
+                            }`}
+                            onClick={() => setInputMessage(`Tell me more about ${tour.title}`)}
+                            title="Click to learn more about this package"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h4 className={`font-semibold text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                                  #{idx + 1} {tour.title}
+                                </h4>
+                                <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                  📍 {tour.destination} • ⏱ {tour.duration_days} days • 💪 {tour.difficulty_level}
+                                </p>
+                                
+                                {/* Package Details Summary */}
+                                <div className="mt-2 text-xs space-y-1">
+                                  <p className={`font-medium ${darkMode ? 'text-green-400' : 'text-green-700'}`}>
+                                    ✅ Includes: {inclusionText}
+                                  </p>
+                                  <p className={`font-medium ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                                    ⭐ Features: {featureText}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-right ml-3 flex-shrink-0">
+                                <p className={`font-bold text-sm ${darkMode ? 'text-purple-400' : 'text-purple-600'}`}>
+                                  ₹{parseInt(tour.price).toLocaleString()}
+                                </p>
+                                <span className={`text-xs block mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                                  per person
+                                </span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>

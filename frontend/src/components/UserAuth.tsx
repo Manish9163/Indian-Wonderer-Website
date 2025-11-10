@@ -59,7 +59,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
   ];
 
   const avatarOptions = [
-    // Travel & Adventure
     { name: 'Explorer', seed: 'explorer' },
     { name: 'Adventurer', seed: 'adventurer' },
     { name: 'Traveler', seed: 'traveler' },
@@ -71,7 +70,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
     { name: 'Voyager', seed: 'voyager' },
     { name: 'Navigator', seed: 'navigator' },
     
-    // Nature & Landscapes
     { name: 'Mountain', seed: 'mountain' },
     { name: 'Ocean', seed: 'ocean' },
     { name: 'Forest', seed: 'forest' },
@@ -88,7 +86,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
     { name: 'Jungle', seed: 'jungle' },
     { name: 'Rainforest', seed: 'rainforest' },
     
-    // Journey & Discovery
     { name: 'Journey', seed: 'journey' },
     { name: 'Discovery', seed: 'discovery' },
     { name: 'Adventure', seed: 'adventure' },
@@ -99,7 +96,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
     { name: 'Cruise', seed: 'cruise' },
     { name: 'Roadtrip', seed: 'roadtrip' },
     
-    // Animals & Wildlife
     { name: 'Eagle', seed: 'eagle' },
     { name: 'Tiger', seed: 'tiger' },
     { name: 'Lion', seed: 'lion' },
@@ -111,7 +107,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
     { name: 'Fox', seed: 'fox' },
     { name: 'Deer', seed: 'deer' },
     
-    // Cultural & Historical
     { name: 'Taj Mahal', seed: 'tajmahal' },
     { name: 'Rajasthan', seed: 'rajasthan' },
     { name: 'Kerala', seed: 'kerala' },
@@ -123,7 +118,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
     { name: 'Varanasi', seed: 'varanasi' },
     { name: 'Kashmir', seed: 'kashmir' },
     
-    // Seasons & Weather
     { name: 'Spring', seed: 'spring' },
     { name: 'Summer', seed: 'summer' },
     { name: 'Autumn', seed: 'autumn' },
@@ -133,7 +127,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
     { name: 'Thunder', seed: 'thunder' },
     { name: 'Breeze', seed: 'breeze' },
     
-    // Activities
     { name: 'Hiking', seed: 'hiking' },
     { name: 'Camping', seed: 'camping' },
     { name: 'Swimming', seed: 'swimming' },
@@ -143,7 +136,6 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
     { name: 'Diving', seed: 'diving' },
     { name: 'Kayaking', seed: 'kayaking' },
     
-    // Cosmic & Sky
     { name: 'Star', seed: 'star' },
     { name: 'Moon', seed: 'moon' },
     { name: 'Sky', seed: 'sky' },
@@ -151,14 +143,12 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
     { name: 'Aurora', seed: 'aurora' },
     { name: 'Comet', seed: 'comet' },
     
-    // Mythical & Fantasy
     { name: 'Phoenix', seed: 'phoenix' },
     { name: 'Dragon', seed: 'dragon' },
     { name: 'Unicorn', seed: 'unicorn' },
     { name: 'Pegasus', seed: 'pegasus' },
     { name: 'Griffin', seed: 'griffin' },
     
-    // Colors & Vibes
     { name: 'Amber', seed: 'amber' },
     { name: 'Azure', seed: 'azure' },
     { name: 'Crimson', seed: 'crimson' },

@@ -26,12 +26,10 @@ const PaymentReceipt: React.FC<PaymentReceiptProps> = ({
   itinerary,
   userDetails
 }) => {
-  // Safety checks to prevent undefined errors
   if (!itinerary) {
     return null;
   }
 
-  // Function to map tour data to valid playlist destination
   const getPlaylistDestination = (tour: any) => {
     const DESTINATION_MAP: Record<string, string> = {
       'goa': 'goa',
@@ -62,7 +60,7 @@ const PaymentReceipt: React.FC<PaymentReceiptProps> = ({
       }
     }
     
-    return 'goa'; // Default fallback
+    return 'goa'; 
   };
 
   const tour = itinerary.tour || {};
@@ -193,7 +191,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳`;
         darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
       } rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto`}>
         
-        {/* Header */}
         <div className="sticky top-0 bg-inherit p-6 border-b border-gray-200 dark:border-gray-700 rounded-t-2xl">
           <div className="flex justify-between items-center">
             <div>
@@ -214,10 +211,8 @@ Thank you for choosing Indian Wonderer! 🇮🇳`;
           </div>
         </div>
 
-        {/* Receipt Content */}
         <div className="p-6 space-y-6">
           
-          {/* Receipt Header */}
           <div className="text-center pb-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-center mb-4">
               <img src="./WhatsApp.jpg" alt="Indian Wonderer" className="h-16 w-16 rounded-2xl" />
@@ -237,7 +232,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳`;
             </div>
           </div>
 
-          {/* Refund Status Banner */}
           {itinerary.status === 'cancelled' && (itinerary as any).refundData && (
             <div className={`p-4 rounded-xl border-2 ${
               (itinerary as any).refundData.refund_status === 'pending' 
@@ -327,7 +321,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳`;
             </div>
           )}
 
-          {/* Booking Information */}
           <div className={`p-4 rounded-xl ${
             darkMode ? 'bg-gray-700/50' : 'bg-gray-50'
           }`}>
@@ -375,7 +368,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳`;
             </div>
           </div>
 
-          {/* Traveler Details */}
           <div className={`p-4 rounded-xl ${
             darkMode ? 'bg-gray-700/50' : 'bg-gray-50'
           }`}>
@@ -423,7 +415,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳`;
             )}
           </div>
 
-          {/* Payment Details */}
           <div className={`p-4 rounded-xl ${
             darkMode ? 'bg-gray-700/50' : 'bg-gray-50'
           }`}>
@@ -461,7 +452,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳`;
             </div>
           </div>
 
-          {/* Amount Breakdown */}
           <div className={`p-4 rounded-xl border-2 ${
             darkMode ? 'bg-green-900/20 border-green-800' : 'bg-green-50 border-green-200'
           }`}>
@@ -485,7 +475,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳`;
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 pt-4">
             <button
               onClick={handleDownloadReceipt}
@@ -513,7 +502,6 @@ Thank you for choosing Indian Wonderer! 🇮🇳`;
             </button>
           </div>
 
-          {/* Footer */}
           <div className={`text-center text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} pt-6 border-t border-gray-200 dark:border-gray-700`}>
             <p>Thank you for choosing Indian Wonderer!</p>
             <p>For support, contact us at: support@indianwonderer.com | +91 98765 43210</p>

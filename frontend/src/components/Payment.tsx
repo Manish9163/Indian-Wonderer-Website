@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {  X, CreditCard, Smartphone, Building2, Wallet, Shield, CheckCircle, ArrowLeft, Lock, Info } from 'lucide-react';
+import walletService from '../services/wallet.service';
 
 interface PaymentProps {
   selectedTour: any;
@@ -20,21 +21,19 @@ const Payment: React.FC<PaymentProps> = ({
 }) => {
   const [selectedMethod, setSelectedMethod] = useState<string>('card');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentStep, setPaymentStep] = useState<'selection' | 'details' | 'processing' | 'success'>('selection');
+  const [paymentStep, setPaymentStep] = useState<'selection' | 'details' | 'processing' | 'success' | 'error'>('selection');
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [errorMessage, setErrorMessage] = useState('');
   const [paymentDetails, setPaymentDetails] = useState({
-    // Card details
     cardNumber: '',
     expiryDate: '',
     cvv: '',
     cardName: '',
     
-    // UPI details
     upiId: '',
     
-    // Net Banking
     bankName: '',
     
-    // Wallet
     walletProvider: '',
     walletNumber: ''
   });
@@ -42,6 +41,21 @@ const Payment: React.FC<PaymentProps> = ({
   const totalAmount = selectedTour?.price * bookingData?.travelers || 0;
   const taxes = Math.round(totalAmount * 0.18); // 18% GST
   const finalAmount = totalAmount + taxes;
+
+  // Load wallet balance when wallet method is selected
+  useEffect(() => {
+    if (selectedMethod === 'wallet') {
+      const userId = localStorage.getItem('userId') || 'guest-user';
+      walletService.getWalletData(userId)
+        .then((data: any) => {
+          setWalletBalance(data.totalBalance || 0);
+        })
+        .catch((error: any) => {
+          console.error('Error loading wallet balance:', error);
+          setWalletBalance(0);
+        });
+    }
+  }, [selectedMethod]);
 
   const paymentMethods = [
     {
@@ -124,15 +138,25 @@ const Payment: React.FC<PaymentProps> = ({
       case 'netbanking':
         return paymentDetails.bankName.length > 0;
       case 'wallet':
-        return paymentDetails.walletProvider.length > 0 && 
-               paymentDetails.walletNumber.length >= 10;
+        if (walletBalance !== null && walletBalance < finalAmount) {
+          setErrorMessage(`Not enough money to proceed the payment, add money to proceed. Current balance: ₹${walletBalance}, Required: ₹${finalAmount}`);
+          setPaymentStep('error');
+          return false;
+        }
+        return true;
       default:
         return false;
     }
   };
 
   const processPayment = async () => {
+    setErrorMessage('');
+    
     if (!validatePaymentDetails()) {
+      if (selectedMethod === 'wallet' && walletBalance !== null && walletBalance < finalAmount) {
+        // Error already set in validatePaymentDetails
+        return;
+      }
       alert('Please fill in all required payment details');
       return;
     }
@@ -140,24 +164,61 @@ const Payment: React.FC<PaymentProps> = ({
     setIsProcessing(true);
     setPaymentStep('processing');
 
-    // Simulate payment processing
-    setTimeout(() => {
-      const paymentData = {
-        paymentId: `PAY_${Date.now()}`,
-        method: selectedMethod,
-        amount: finalAmount,
-        currency: 'INR',
-        status: 'success',
-        timestamp: new Date().toISOString(),
-        details: paymentDetails
-      };
-      
-      setPaymentStep('success');
-      setIsProcessing(false); // Reset processing state
-      setTimeout(() => {
-        onPaymentSuccess(paymentData);
-      }, 2000);
-    }, 3000);
+    try {
+      if (selectedMethod === 'wallet') {
+        // Process wallet payment
+        const userId = localStorage.getItem('userId') || 'guest-user';
+        const bookingId = `BK_${Date.now()}`;
+        
+        const result = await walletService.useWalletForBooking(userId, bookingId, finalAmount);
+        
+        if (!result.success) {
+          setErrorMessage(result.message || 'Payment failed');
+          setPaymentStep('error');
+          setIsProcessing(false);
+          return;
+        }
+
+        const paymentData = {
+          paymentId: `PAY_${Date.now()}`,
+          method: selectedMethod,
+          amount: finalAmount,
+          currency: 'INR',
+          status: 'success',
+          timestamp: new Date().toISOString(),
+          details: paymentDetails
+        };
+        
+        setPaymentStep('success');
+        setIsProcessing(false);
+        setTimeout(() => {
+          onPaymentSuccess(paymentData);
+        }, 2000);
+      } else {
+        // Process other payment methods
+        setTimeout(() => {
+          const paymentData = {
+            paymentId: `PAY_${Date.now()}`,
+            method: selectedMethod,
+            amount: finalAmount,
+            currency: 'INR',
+            status: 'success',
+            timestamp: new Date().toISOString(),
+            details: paymentDetails
+          };
+          
+          setPaymentStep('success');
+          setIsProcessing(false);
+          setTimeout(() => {
+            onPaymentSuccess(paymentData);
+          }, 2000);
+        }, 3000);
+      }
+    } catch (error: any) {
+      setErrorMessage(error.message || 'Payment failed');
+      setPaymentStep('error');
+      setIsProcessing(false);
+    }
   };
 
   const renderPaymentMethodSelection = () => (
@@ -217,7 +278,7 @@ const Payment: React.FC<PaymentProps> = ({
         <div className="flex items-center space-x-3">
           <button title='paymentSection'
             onClick={() => setPaymentStep('selection')}
-            disabled={isProcessing} // Disable back button during processing
+            disabled={isProcessing} 
             className={`p-2 rounded-lg transition-colors ${
               darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
             } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -377,47 +438,86 @@ const Payment: React.FC<PaymentProps> = ({
 
         {selectedMethod === 'wallet' && (
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Wallet Provider</label>
-              <select title='paymentDetails'
-                value={paymentDetails.walletProvider}
-                onChange={(e) => setPaymentDetails({
-                  ...paymentDetails, 
-                  walletProvider: e.target.value
-                })}
-                disabled={isProcessing}
-                className={`w-full p-3 rounded-lg border ${
-                  darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
-                } focus:ring-2 focus:ring-blue-500 ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                <option value="">Choose wallet</option>
-                {walletProviders.map((provider) => (
-                  <option key={provider} value={provider}>{provider}</option>
-                ))}
-              </select>
+            <div className={`p-4 rounded-lg border-2 ${
+              walletBalance !== null && walletBalance >= finalAmount
+                ? (darkMode ? 'bg-green-900/20 border-green-600' : 'bg-green-50 border-green-300')
+                : (darkMode ? 'bg-red-900/20 border-red-600' : 'bg-red-50 border-red-300')
+            }`}>
+              <div className="flex items-start space-x-3">
+                <Wallet className={`w-5 h-5 mt-0.5 ${
+                  walletBalance !== null && walletBalance >= finalAmount
+                    ? 'text-green-600'
+                    : 'text-red-600'
+                }`} />
+                <div className="flex-1">
+                  <p className={`text-sm font-semibold ${
+                    walletBalance !== null && walletBalance >= finalAmount
+                      ? 'text-green-700 dark:text-green-300'
+                      : 'text-red-700 dark:text-red-300'
+                  }`}>
+                    Wallet Balance
+                  </p>
+                  {walletBalance !== null ? (
+                    <>
+                      <p className={`text-2xl font-bold mt-1 ${
+                        walletBalance !== null && walletBalance >= finalAmount
+                          ? 'text-green-700 dark:text-green-300'
+                          : 'text-red-700 dark:text-red-300'
+                      }`}>
+                        ₹{walletBalance.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                      </p>
+                      <p className={`text-sm mt-2 ${
+                        walletBalance !== null && walletBalance >= finalAmount
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-red-600 dark:text-red-400'
+                      }`}>
+                        Payment Required: ₹{finalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-sm mt-1 text-gray-500">Loading balance...</p>
+                  )}
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Mobile Number</label>
-              <input
-                type="text"
-                placeholder="Enter mobile number"
-                value={paymentDetails.walletNumber}
-                onChange={(e) => setPaymentDetails({
-                  ...paymentDetails, 
-                  walletNumber: e.target.value.replace(/\D/g, '')
-                })}
-                disabled={isProcessing}
-                className={`w-full p-3 rounded-lg border ${
-                  darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'
-                } focus:ring-2 focus:ring-blue-500 ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-              />
-            </div>
+
+            {walletBalance !== null && walletBalance < finalAmount && (
+              <div className={`p-4 rounded-lg ${
+                darkMode ? 'bg-red-900/20 border border-red-800' : 'bg-red-50 border border-red-200'
+              }`}>
+                <div className="flex items-start space-x-2">
+                  <Info size={16} className="text-red-600 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-red-700 dark:text-red-300 mb-1">
+                      Insufficient Balance
+                    </p>
+                    <p className="text-sm text-red-700 dark:text-red-300">
+                      Not enough money to proceed the payment, add money to proceed. 
+                      Shortfall: ₹{(finalAmount - walletBalance).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {walletBalance !== null && walletBalance >= finalAmount && (
+              <div className={`p-4 rounded-lg ${
+                darkMode ? 'bg-green-900/20 border border-green-800' : 'bg-green-50 border border-green-200'
+              }`}>
+                <div className="flex items-start space-x-2">
+                  <CheckCircle size={16} className="text-green-600 mt-0.5" />
+                  <p className="text-sm text-green-700 dark:text-green-300">
+                    You have sufficient balance. Click below to complete payment from your wallet.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
         <button
           onClick={processPayment}
-          disabled={!validatePaymentDetails() || isProcessing} // Also disable during processing
+          disabled={!validatePaymentDetails() || isProcessing} 
           className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-lg font-semibold hover:from-green-700 hover:to-emerald-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
         >
           {isProcessing ? (
@@ -480,13 +580,49 @@ const Payment: React.FC<PaymentProps> = ({
     </div>
   );
 
+  const renderError = () => (
+    <div className="text-center py-8">
+      <div className="mx-auto w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mb-4">
+        <X className="w-8 h-8 text-red-600" />
+      </div>
+      <h3 className="text-xl font-bold mb-2">Payment Failed</h3>
+      <div className={`p-4 rounded-lg ${
+        darkMode ? 'bg-red-900/20 border border-red-800' : 'bg-red-50 border border-red-200'
+      } text-left mb-6`}>
+        <p className={`text-sm ${darkMode ? 'text-red-300' : 'text-red-700'}`}>
+          {errorMessage || 'An error occurred while processing your payment'}
+        </p>
+      </div>
+      <div className="space-y-3">
+        <button
+          onClick={() => {
+            setErrorMessage('');
+            setPaymentStep('selection');
+          }}
+          className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-300"
+        >
+          Try Again
+        </button>
+        <button
+          onClick={onClose}
+          className={`w-full py-3 rounded-lg font-semibold transition-all duration-300 ${
+            darkMode 
+              ? 'bg-gray-700 hover:bg-gray-600 text-white'
+              : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
+          }`}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className={`${
         darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
       } rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto`}>
         
-        {/* Header */}
         <div className="sticky top-0 bg-inherit p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex justify-between items-center">
             <h3 className="text-xl font-bold">
@@ -494,7 +630,7 @@ const Payment: React.FC<PaymentProps> = ({
             </h3>
             <button title='Close'
               onClick={onClose}
-              disabled={isProcessing} // Disable close button during processing
+              disabled={isProcessing} 
               className={`p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ${
                 isProcessing ? 'opacity-50 cursor-not-allowed' : ''
               }`}
@@ -504,15 +640,14 @@ const Payment: React.FC<PaymentProps> = ({
           </div>
         </div>
 
-        {/* Content */}
         <div className="p-6">
           {paymentStep === 'selection' && renderPaymentMethodSelection()}
           {paymentStep === 'details' && renderPaymentDetails()}
           {paymentStep === 'processing' && renderProcessing()}
           {paymentStep === 'success' && renderSuccess()}
+          {paymentStep === 'error' && renderError()}
         </div>
 
-        {/* Amount Summary - Show only during selection and details */}
         {(paymentStep === 'selection' || paymentStep === 'details') && (
           <div className={`sticky bottom-0 p-6 border-t border-gray-200 dark:border-gray-700 ${
             darkMode ? 'bg-gray-800' : 'bg-white'

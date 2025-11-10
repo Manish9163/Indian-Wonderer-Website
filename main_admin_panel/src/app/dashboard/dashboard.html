@@ -129,7 +129,8 @@
                     <tr>
                       <th>Customer</th>
                       <th>Tour</th>
-                      <th>Date</th>
+                      <th>Created At</th>
+                      <th>Travel Date</th>
                       <th>Status</th>
                       <th>Amount</th>
                       <th>Actions</th>
@@ -149,7 +150,14 @@
                         <strong>{{ booking.tour }}</strong>
                         <small class="text-muted d-block">{{ booking.destination || 'International' }}</small>
                       </td>
-                      <td>{{ booking.date | date:'short' }}</td>
+                      <td>
+                        <small class="text-muted d-block">Booked on</small>
+                        {{ booking.createdAt | date:'medium' }}
+                      </td>
+                      <td>
+                        <small class="text-muted d-block">Travel on</small>
+                        {{ booking.date | date:'medium' }}
+                      </td>
                       <td>
                         <span class="badge" 
                               [ngClass]="{
@@ -293,21 +301,30 @@
       </div>
 
       <!-- Live Activity Monitor -->
-      <div class="card-modern fade-in-up" *ngIf="liveActivities.length > 0">
+      <div class="card-modern fade-in-up">
         <div class="panel-header">
           <h5 class="mb-0"><i class="fas fa-broadcast-tower pulse"></i> Live Activity Monitor</h5>
         </div>
         <div class="panel-body">
           <div class="live-activities">
-            <div class="activity-item" *ngFor="let activity of liveActivities">
-              <div class="activity-icon">
-                <i [class]="activity.icon" [style.color]="activity.color"></i>
+            <div *ngIf="liveActivities.length > 0">
+              <div class="activity-item" *ngFor="let activity of liveActivities">
+                <div class="activity-icon">
+                  <i [class]="activity.icon" [style.color]="activity.color"></i>
+                </div>
+                <div class="activity-content">
+                  <strong>{{ activity.title }}</strong>
+                  <span class="activity-description">{{ activity.description }}</span>
+                  <small class="activity-time">
+                    {{ activity.timestamp | relativeTime }} • {{ activity.timestamp | date:'short' }}
+                  </small>
+                </div>
               </div>
-              <div class="activity-content">
-                <strong>{{ activity.title }}</strong>
-                <span class="activity-description">{{ activity.description }}</span>
-                <small class="activity-time">{{ activity.timestamp | date:'short' }}</small>
-              </div>
+            </div>
+            <div *ngIf="liveActivities.length === 0" class="text-center text-secondary p-4">
+              <i class="fas fa-inbox fa-2x mb-3" style="opacity: 0.3;"></i>
+              <p class="mb-0">Waiting for activity updates...</p>
+              <small>Activities will appear here as bookings and updates occur</small>
             </div>
           </div>
         </div>

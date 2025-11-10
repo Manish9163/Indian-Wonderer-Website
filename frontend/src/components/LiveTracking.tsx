@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Navigation, Phone, MessageCircle, AlertTriangle, Battery, Signal, X, Send } from 'lucide-react';
 
-// Declare Google Maps types
 declare global {
   interface Window {
     google: any;
@@ -84,9 +83,7 @@ const LiveTracking: React.FC<Props> = ({ bookingId, onClose, darkMode = false })
   // Google Maps API Key - Replace 'YOUR_API_KEY_HERE' with your actual key for production
   const GOOGLE_MAPS_API_KEY = 'YOUR_API_KEY_HERE';
 
-  // Load Google Maps script
   useEffect(() => {
-    // Skip loading if no valid API key
     if (GOOGLE_MAPS_API_KEY === 'YOUR_API_KEY_HERE') {
       console.log('ℹ️ Google Maps API key not configured. Feature will be available in production.');
       setApiKeyError(true);
@@ -110,20 +107,17 @@ const LiveTracking: React.FC<Props> = ({ bookingId, onClose, darkMode = false })
     }
   }, []);
 
-  // Initialize map when loaded
   useEffect(() => {
     if (mapLoaded && location && !mapRef.current) {
       initializeMap();
     }
   }, [mapLoaded, location]);
 
-  // Fetch initial data
   useEffect(() => {
     fetchSessionData();
     fetchCurrentLocation();
     fetchChatMessages();
 
-    // Poll for updates every 5 seconds
     intervalRef.current = setInterval(() => {
       fetchCurrentLocation();
       fetchChatMessages();
@@ -162,7 +156,6 @@ const LiveTracking: React.FC<Props> = ({ bookingId, onClose, darkMode = false })
         setLocation(data.location);
         updateMap(data.location);
         
-        // Fetch trail if available
         fetchLocationTrail();
       }
       setLoading(false);
@@ -325,7 +318,6 @@ const LiveTracking: React.FC<Props> = ({ bookingId, onClose, darkMode = false })
     { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
     { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
     { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
-    // Add more dark mode styles...
   ];
 
   if (loading) {
@@ -339,11 +331,9 @@ const LiveTracking: React.FC<Props> = ({ bookingId, onClose, darkMode = false })
     );
   }
 
-  // Show placeholder when API key is not configured
   if (apiKeyError) {
     return (
       <div className={`fixed inset-0 z-50 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
-        {/* Header */}
         <div className={`flex items-center justify-between p-4 border-b ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
           <div className="flex items-center space-x-3">
             <Navigation className="text-indigo-600" size={24} />
@@ -364,7 +354,6 @@ const LiveTracking: React.FC<Props> = ({ bookingId, onClose, darkMode = false })
           </button>
         </div>
 
-        {/* Placeholder Content */}
         <div className="flex items-center justify-center h-[calc(100vh-80px)] p-8">
           <div className="max-w-2xl text-center">
             <div className="mb-6">
@@ -422,7 +411,6 @@ const LiveTracking: React.FC<Props> = ({ bookingId, onClose, darkMode = false })
 
   return (
     <div className={`fixed inset-0 z-50 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
-      {/* Header */}
       <div className={`flex items-center justify-between p-4 border-b ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
         <div className="flex items-center space-x-3">
           <Navigation className="text-indigo-600" size={24} />
@@ -443,13 +431,10 @@ const LiveTracking: React.FC<Props> = ({ bookingId, onClose, darkMode = false })
         </button>
       </div>
 
-      {/* Map Container */}
       <div className="relative h-[60vh]">
         <div id="tracking-map" className="w-full h-full"></div>
         
-        {/* Overlay Info Cards */}
         <div className="absolute top-4 left-4 right-4 space-y-2">
-          {/* Status Card */}
           {location && (
             <div className={`${darkMode ? 'bg-gray-800/95' : 'bg-white/95'} backdrop-blur-lg rounded-xl p-4 shadow-lg`}>
               <div className="flex items-center justify-between mb-3">
@@ -534,7 +519,6 @@ const LiveTracking: React.FC<Props> = ({ bookingId, onClose, darkMode = false })
         </div>
       </div>
 
-      {/* Checkpoints Section */}
       {session?.checkpoints && session.checkpoints.length > 0 && (
         <div className={`p-4 ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
           <h3 className={`text-sm font-semibold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -582,7 +566,6 @@ const LiveTracking: React.FC<Props> = ({ bookingId, onClose, darkMode = false })
         </div>
       )}
 
-      {/* Chat Panel */}
       {showChat && (
         <div className={`absolute bottom-0 left-0 right-0 ${darkMode ? 'bg-gray-800' : 'bg-white'} border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'} shadow-lg`}
              style={{ height: '300px' }}>

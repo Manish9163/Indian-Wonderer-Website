@@ -14,7 +14,6 @@ const Orders: React.FC<OrdersProps> = ({ darkMode, myItineraries, userDetails, o
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [expandedItinerary, setExpandedItinerary] = useState<string | null>(null);
 
-  // Filter itineraries based on status and search
   const filteredItineraries = myItineraries.filter(itinerary => {
     const matchesStatus = filterStatus === 'all' || itinerary.status === filterStatus;
     const matchesSearch = searchTerm === '' || 
@@ -25,7 +24,6 @@ const Orders: React.FC<OrdersProps> = ({ darkMode, myItineraries, userDetails, o
     return matchesStatus && matchesSearch;
   });
 
-  // Calculate stats
   const stats = {
     all: myItineraries.length,
     confirmed: myItineraries.filter(i => i.status === 'confirmed').length,
@@ -68,7 +66,6 @@ const Orders: React.FC<OrdersProps> = ({ darkMode, myItineraries, userDetails, o
     <div className="min-h-screen pt-24 pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-3 mb-2">
             <Package className={`w-8 h-8 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
@@ -81,7 +78,6 @@ const Orders: React.FC<OrdersProps> = ({ darkMode, myItineraries, userDetails, o
           </p>
         </div>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
           <button
             onClick={() => setFilterStatus('all')}
@@ -171,10 +167,8 @@ const Orders: React.FC<OrdersProps> = ({ darkMode, myItineraries, userDetails, o
           </button>
         </div>
 
-        {/* Search and Filter Bar */}
         <div className={`mb-6 p-4 rounded-xl ${darkMode ? 'bg-gray-800' : 'bg-white border border-gray-200'}`}>
           <div className="flex flex-col md:flex-row gap-4">
-            {/* Search */}
             <div className="flex-1 relative">
               <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
                 darkMode ? 'text-gray-400' : 'text-gray-500'
@@ -192,7 +186,6 @@ const Orders: React.FC<OrdersProps> = ({ darkMode, myItineraries, userDetails, o
               />
             </div>
 
-            {/* Filter Dropdown */}
             <div className="flex items-center space-x-2">
               <Filter className={`w-5 h-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
               <select
@@ -214,7 +207,6 @@ const Orders: React.FC<OrdersProps> = ({ darkMode, myItineraries, userDetails, o
           </div>
         </div>
 
-        {/* Orders List */}
         {filteredItineraries.length === 0 ? (
           <div className={`text-center py-16 rounded-xl ${
             darkMode ? 'bg-gray-800' : 'bg-white border border-gray-200'
@@ -242,7 +234,6 @@ const Orders: React.FC<OrdersProps> = ({ darkMode, myItineraries, userDetails, o
                   darkMode ? 'bg-gray-800' : 'bg-white border border-gray-200'
                 }`}
               >
-                {/* Order Header */}
                 <div className={`px-6 py-3 flex flex-wrap items-center justify-between gap-3 ${
                   darkMode ? 'bg-gray-750 border-b border-gray-700' : 'bg-gray-50 border-b border-gray-200'
                 }`}>
@@ -279,7 +270,6 @@ const Orders: React.FC<OrdersProps> = ({ darkMode, myItineraries, userDetails, o
                   </div>
                 </div>
 
-                {/* Order Content */}
                 <div className="p-2">
                   <ItineraryCard
                     itinerary={itinerary}

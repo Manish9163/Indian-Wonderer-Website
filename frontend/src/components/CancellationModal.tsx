@@ -37,7 +37,6 @@ const CancellationModal: React.FC<CancellationModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
-        {/* Header */}
         <div className="flex justify-between items-center p-6 border-b dark:border-gray-700">
           <div className="flex items-center space-x-3">
             <AlertTriangle className="w-6 h-6 text-red-500" />
@@ -51,16 +50,13 @@ const CancellationModal: React.FC<CancellationModalProps> = ({
           </button>
         </div>
 
-        {/* Content */}
         <div className="p-6 space-y-6">
-          {/* Warning Message */}
           <div className={`p-4 rounded-lg ${darkMode ? 'bg-red-900/20 border border-red-800' : 'bg-red-50 border border-red-200'}`}>
             <p className={`text-sm ${darkMode ? 'text-red-300' : 'text-red-800'}`}>
               <strong>⚠️ Important:</strong> Cancelling this booking will stop all tour arrangements. Please read the cancellation policy before proceeding.
             </p>
           </div>
 
-          {/* Booking Information */}
           <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
             <h3 className="font-semibold mb-2">Booking Details</h3>
             <div className="space-y-1 text-sm">
@@ -69,11 +65,9 @@ const CancellationModal: React.FC<CancellationModalProps> = ({
             </div>
           </div>
 
-          {/* Refund Type Selection */}
           <div>
             <h3 className="font-semibold mb-3">Choose Refund Method</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Bank Refund Option */}
               <button
                 onClick={() => setRefundType('refund')}
                 className={`p-4 rounded-xl border-2 transition-all ${
@@ -106,7 +100,6 @@ const CancellationModal: React.FC<CancellationModalProps> = ({
                 </p>
               </button>
 
-              {/* Gift Card Option */}
               <button
                 onClick={() => setRefundType('giftcard')}
                 className={`p-4 rounded-xl border-2 transition-all ${
@@ -141,7 +134,6 @@ const CancellationModal: React.FC<CancellationModalProps> = ({
             </div>
           </div>
 
-          {/* Refund Amount Display */}
           <div className={`p-4 rounded-lg ${refundType === 'giftcard' ? 'bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-300 dark:border-purple-700' : 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-300 dark:border-blue-700'}`}>
             <div className="flex justify-between items-center">
               <span className="font-medium">
@@ -158,7 +150,6 @@ const CancellationModal: React.FC<CancellationModalProps> = ({
             )}
           </div>
 
-          {/* Cancellation Reason */}
           <div>
             <label className="block font-semibold mb-2">
               Reason for Cancellation <span className="text-red-500">*</span>
@@ -180,7 +171,6 @@ const CancellationModal: React.FC<CancellationModalProps> = ({
             </p>
           </div>
 
-          {/* Cancellation Policy */}
           <div className={`p-4 rounded-lg text-sm ${darkMode ? 'bg-gray-700/50' : 'bg-gray-100'}`}>
             <h4 className="font-semibold mb-2">📋 Cancellation Policy</h4>
             <ul className="space-y-1 text-xs list-disc list-inside">
@@ -193,7 +183,6 @@ const CancellationModal: React.FC<CancellationModalProps> = ({
           </div>
         </div>
 
-        {/* Footer Actions */}
         <div className={`p-6 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'} flex space-x-4`}>
           <button
             onClick={onClose}

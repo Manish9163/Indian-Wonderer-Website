@@ -3,7 +3,9 @@ import { MapPin, Loader } from 'lucide-react';
 import { HeroSection } from './HeroSection';
 import TourCard from './TourCard';
 import FilterCategories from './FilterCategories';
-import { Tour } from '../types/data'; 
+import TourItineraryPage from './TourItineraryPage';
+import { Tour } from '../types/data';
+import { useState } from 'react'; 
 
 interface ExploreToursProps {
   darkMode: boolean;
@@ -12,7 +14,7 @@ interface ExploreToursProps {
   filterCategory: string;
   setFilterCategory: React.Dispatch<React.SetStateAction<string>>;
   tours: Tour[];
-  onBookTour: (tour: Tour) => void;
+  onBookTour: (tour: Tour, action?: 'view' | 'book') => void;
   loading?: boolean;
   apiError?: string | null;
 }
@@ -28,12 +30,24 @@ const ExploreTours: React.FC<ExploreToursProps> = ({
   loading = false,
   apiError = null
 }) => {
+  const [showItineraryDetails, setShowItineraryDetails] = useState(false);
+  const [selectedTourForDetails, setSelectedTourForDetails] = useState<Tour | null>(null);
+
   const filteredTours = tours.filter(tour => {
     const matchesSearch = tour.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          (tour.location || tour.destination).toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = filterCategory === 'all' || tour.category === filterCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const handleTourAction = (tour: Tour, action?: 'view' | 'book') => {
+    if (action === 'view') {
+      setSelectedTourForDetails(tour);
+      setShowItineraryDetails(true);
+    } else {
+      onBookTour(tour, action);
+    }
+  };
 
   return (
     <>
@@ -46,7 +60,6 @@ const ExploreTours: React.FC<ExploreToursProps> = ({
           onCategoryChange={setFilterCategory}
         />
 
-        {/* Loading state */}
         {loading && (
           <div className="text-center py-16">
             <Loader size={64} className="mx-auto text-blue-500 mb-4 animate-spin" />
@@ -55,7 +68,6 @@ const ExploreTours: React.FC<ExploreToursProps> = ({
           </div>
         )}
 
-        {/* Error state */}
         {!loading && apiError && (
           <div className="text-center py-16">
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-8 max-w-md mx-auto">
@@ -72,16 +84,14 @@ const ExploreTours: React.FC<ExploreToursProps> = ({
           </div>
         )}
 
-        {/* Tours grid */}
         {!loading && !apiError && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredTours.map(tour => (
-              <TourCard key={tour.id} tour={tour} darkMode={darkMode} onBookTour={onBookTour} />
+              <TourCard key={tour.id} tour={tour} darkMode={darkMode} onBookTour={handleTourAction} />
             ))}
           </div>
         )}
 
-        {/* No tours found */}
         {!loading && !apiError && filteredTours.length === 0 && tours.length > 0 && (
           <div className="text-center py-16">
             <MapPin size={64} className="mx-auto text-gray-400 mb-4" />
@@ -90,7 +100,6 @@ const ExploreTours: React.FC<ExploreToursProps> = ({
           </div>
         )}
 
-        {/* No tours available at all */}
         {!loading && !apiError && tours.length === 0 && (
           <div className="text-center py-16">
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-8 max-w-md mx-auto">
@@ -101,6 +110,25 @@ const ExploreTours: React.FC<ExploreToursProps> = ({
           </div>
         )}
       </main>
+
+      {showItineraryDetails && selectedTourForDetails && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <TourItineraryPage
+            tour={selectedTourForDetails as any}
+            darkMode={darkMode}
+            onClose={() => {
+              setShowItineraryDetails(false);
+              setSelectedTourForDetails(null);
+            }}
+            onBookNow={(tour: any) => {
+              setShowItineraryDetails(false);
+              setSelectedTourForDetails(null);
+              onBookTour(tour, 'book');
+            }}
+            userDetails={null}
+          />
+        </div>
+      )}
     </>
   );
 };
