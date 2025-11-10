@@ -1,5 +1,5 @@
 import React from 'react'
-import { MapPin, Sun, Moon, User, LogOut, ChevronDown, Compass, Heart, Calendar, Package, Wallet as WalletIcon } from "lucide-react"
+import { MapPin, Sun, Moon, User, LogOut, ChevronDown, Compass, Heart, Calendar, Package, Wallet as WalletIcon, Plane } from "lucide-react"
 import * as avatars from '@dicebear/avatars';
 import * as style from '@dicebear/avatars-avataaars-sprites';
 
@@ -109,6 +109,19 @@ const Header: React.FC<HeaderProps> = ({
                   {myItineraries.filter(i => i.status !== 'cancelled').length}
                 </span>
               )}
+            </button>
+            <button
+              onClick={() => setActiveTab('travel')}
+              className={`group px-6 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 ${
+                activeTab === 'travel'
+                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25'
+                  : `${darkMode ? 'hover:bg-gray-700/50 text-gray-300' : 'hover:bg-gray-100 text-gray-700'} hover:shadow-md`
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <Plane size={18} className={`${activeTab === 'travel' ? 'animate-bounce' : 'group-hover:animate-pulse'}`} />
+                <span>Book Travel</span>
+              </div>
             </button>
           </nav>
 

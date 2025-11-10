@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Search , Calendar, Globe, User, Package } from 'lucide-react';
+import { Search , Calendar, Globe, User, Package, Plane } from 'lucide-react';
 
 type MobileNavigationProps = {
   darkMode: boolean;
@@ -85,7 +85,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({ darkMode, activeTab
         </div>
       )}
       
-      <div className="grid grid-cols-5 gap-1 p-2">
+      <div className="grid grid-cols-6 gap-1 p-2">
         <button
           onClick={() => handleTabChange('explore')}
           className={`flex flex-col items-center p-2 rounded-lg touch-manipulation ${
@@ -111,6 +111,19 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({ darkMode, activeTab
         >
           <Globe size={20} className={activeTab === 'booking' && performanceMode === 'high' ? 'animate-pulse' : ''} />
           <span className="text-xs mt-1 font-medium">Book</span>
+        </button>
+        <button
+          onClick={() => handleTabChange('travel')}
+          className={`flex flex-col items-center p-2 rounded-lg touch-manipulation ${
+            performanceMode === 'high' ? 'transition-all duration-200' : ''
+          } ${
+            activeTab === 'travel'
+              ? 'bg-cyan-600 text-white scale-105 shadow-lg'
+              : `${darkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`
+          }`}
+        >
+          <Plane size={20} className={activeTab === 'travel' && performanceMode === 'high' ? 'animate-pulse' : ''} />
+          <span className="text-xs mt-1 font-medium">Travel</span>
         </button>
         <button
           onClick={() => handleTabChange('itineraries')}
