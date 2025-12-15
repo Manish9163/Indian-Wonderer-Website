@@ -6,7 +6,7 @@ return [
     'smtp_auth' => true,
     
     'smtp_username' => 'IndianWonderer.ac@gmail.com', 
-    'smtp_password' => 'zkrv bswh pchp albp', 
+    'smtp_password' => 'zkrv bswh pchp aljp', //enter your smtp password 
     
 
     'from_email' => 'IndianWonderer.ac@gmail.com', 
