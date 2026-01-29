@@ -1,0 +1,32 @@
+{
+    "user_id": 1,
+    "travel_id": 1,
+    "from_city": "Delhi",
+    "to_city": "Mumbai",
+    "travel_date": "2026-02-15",
+    "mode": "flight",
+    "operator_name": "Air India",
+    "vehicle_number": "AI-401",
+    "seat_class": "Economy",
+    "cost": 3570,
+    "tax": 630,
+    "selected_seats": ["7A", "7B"],
+    "total_with_seats": 8455,
+    "passengers": [
+        {
+            "passenger_name": "Test User",
+            "passenger_email": "test@example.com",
+            "passenger_phone": "9876543210",
+            "seat_number": "7A"
+        },
+        {
+            "passenger_name": "Test User 2",
+            "passenger_email": "test2@example.com",
+            "passenger_phone": "9876543211",
+            "seat_number": "7B"
+        }
+    ],
+    "payment_status": "paid",
+    "payment_id": "TEST123",
+    "payment_method": "card"
+}

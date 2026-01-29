@@ -133,6 +133,64 @@ class TravelBookingsAPI {
     }
 
     /**
+     * Get detailed information about a specific travel option
+     * GET ?action=details&id=travel_id
+     */
+    public function getTravelDetails() {
+        $id = $_GET['id'] ?? null;
+
+        if (!$id) {
+            return $this->error('Missing required parameter: id', 400);
+        }
+
+        try {
+            $query = "SELECT 
+                t.id, t.mode, t.operator_name, t.vehicle_number, t.seat_class,
+                t.from_city, t.to_city, t.travel_date, t.travel_time,
+                t.cost, t.tax, t.total_amount, t.status, t.operator_id,
+                t.total_seats, t.available_seats, t.amenities,
+                t.duration, t.type,
+                COALESCE(AVG(r.rating), 0) as avg_rating,
+                COUNT(DISTINCT r.id) as total_reviews,
+                COUNT(DISTINCT b.id) as total_bookings
+            FROM travel_options t
+            LEFT JOIN travel_reviews r ON r.travel_id = t.id
+            LEFT JOIN travel_bookings b ON b.travel_id = t.id
+            WHERE t.id = :id
+            GROUP BY t.id";
+
+            $stmt = $this->pdo->prepare($query);
+            $stmt->execute([':id' => $id]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$result) {
+                return $this->error('Travel option not found', 404);
+            }
+
+            // Format numeric values
+            $result['cost'] = (float)$result['cost'];
+            $result['tax'] = (float)$result['tax'];
+            $result['total_amount'] = (float)$result['total_amount'];
+            $result['avg_rating'] = round((float)$result['avg_rating'], 1);
+            $result['total_reviews'] = (int)$result['total_reviews'];
+            $result['total_bookings'] = (int)$result['total_bookings'];
+
+            // Parse amenities if JSON string
+            if (!empty($result['amenities'])) {
+                $amenities = json_decode($result['amenities'], true);
+                $result['amenities'] = is_array($amenities) ? $amenities : [$result['amenities']];
+            } else {
+                $result['amenities'] = [];
+            }
+
+            return $this->success($result);
+
+        } catch (Exception $e) {
+            return $this->error('Failed to get travel details: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
      * Get single travel booking
      * GET ?action=get&id=booking_id
      */
@@ -419,6 +477,9 @@ try {
             switch ($action) {
                 case 'search':
                     $api->search();
+                    break;
+                case 'details':
+                    $api->getTravelDetails();
                     break;
                 case 'get':
                     $api->getBooking();

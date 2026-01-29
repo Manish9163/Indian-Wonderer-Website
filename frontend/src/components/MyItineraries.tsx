@@ -49,8 +49,8 @@ const MyItineraries: React.FC<MyItinerariesProps> = ({
     try {
       const response = await apiService.get('tours.php?action=all');
       
-      if (response.success && response.data) {
-        const tours = response.data;
+      if (response.success && response.data && response.data.tours) {
+        const tours = response.data.tours;
         const destinationSet = new Set(tours.map((tour: any) => tour.destination));
         const uniqueDestinations = Array.from(destinationSet) as string[];
         setAvailableDestinations(uniqueDestinations);

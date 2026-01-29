@@ -5,7 +5,12 @@ import TourCard from './TourCard';
 import FilterCategories from './FilterCategories';
 import TourItineraryPage from './TourItineraryPage';
 import { Tour } from '../types/data';
-import { useState } from 'react'; 
+import { useState, useRef, useEffect } from 'react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useGSAP } from '@gsap/react';
+
+gsap.registerPlugin(ScrollTrigger); 
 
 interface ExploreToursProps {
   darkMode: boolean;
@@ -32,6 +37,9 @@ const ExploreTours: React.FC<ExploreToursProps> = ({
 }) => {
   const [showItineraryDetails, setShowItineraryDetails] = useState(false);
   const [selectedTourForDetails, setSelectedTourForDetails] = useState<Tour | null>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  const filterRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
 
   const filteredTours = tours.filter(tour => {
     const matchesSearch = tour.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -49,16 +57,71 @@ const ExploreTours: React.FC<ExploreToursProps> = ({
     }
   };
 
+  // 📜 ScrollTrigger animations for ExploreTours section
+  useGSAP(
+    () => {
+      // Filter categories slide in from top
+      if (filterRef.current) {
+        gsap.fromTo(
+          filterRef.current,
+          { y: -50, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.8,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: filterRef.current,
+              start: 'top 80%',
+              end: 'top 50%',
+              toggleActions: 'play none none reverse'
+            }
+          }
+        );
+      }
+
+      // Tour grid stagger animation
+      if (gridRef.current) {
+        const cards = gridRef.current.querySelectorAll('.tour-card-item');
+        gsap.fromTo(
+          cards,
+          {
+            y: 80,
+            opacity: 0,
+            scale: 0.9
+          },
+          {
+            y: 0,
+            opacity: 1,
+            scale: 1,
+            duration: 0.6,
+            stagger: 0.1,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: gridRef.current,
+              start: 'top 75%',
+              end: 'top 25%',
+              toggleActions: 'play none none reverse'
+            }
+          }
+        );
+      }
+    },
+    { scope: mainRef, dependencies: [filteredTours] }
+  );
+
   return (
     <>
       <HeroSection darkMode={darkMode} searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <FilterCategories
-          darkMode={darkMode}
-          selectedCategory={filterCategory}
-          onCategoryChange={setFilterCategory}
-        />
+      <main ref={mainRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div ref={filterRef}>
+          <FilterCategories
+            darkMode={darkMode}
+            selectedCategory={filterCategory}
+            onCategoryChange={setFilterCategory}
+          />
+        </div>
 
         {loading && (
           <div className="text-center py-16">
@@ -85,9 +148,11 @@ const ExploreTours: React.FC<ExploreToursProps> = ({
         )}
 
         {!loading && !apiError && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredTours.map(tour => (
-              <TourCard key={tour.id} tour={tour} darkMode={darkMode} onBookTour={handleTourAction} />
+              <div key={tour.id} className="tour-card-item">
+                <TourCard tour={tour} darkMode={darkMode} onBookTour={handleTourAction} />
+              </div>
             ))}
           </div>
         )}

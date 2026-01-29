@@ -25,6 +25,65 @@ interface SeatSelectionModalProps {
     basePrice?: number; // Base fare per person (before seat charges)
 }
 
+// Helper function to generate layout from seats array
+const generateLayoutFromSeats = (seats: Seat[], mode: string): SeatLayout => {
+    const layout: SeatLayout = {};
+    
+    if (mode === 'flight' || mode === 'bus') {
+        // Group seats by row number (extract from seat_no like "1A" -> row 1)
+        seats.forEach((seat) => {
+            const match = seat.seat_no.match(/^(\d+)([A-Z])$/);
+            if (match) {
+                const rowNum = match[1];
+                if (!layout[rowNum]) {
+                    layout[rowNum] = [];
+                }
+                layout[rowNum].push({
+                    seat_no: seat.seat_no,
+                    is_booked: seat.is_booked,
+                    seat_type: seat.seat_type,
+                    price: seat.price
+                });
+            }
+        });
+        
+        // Sort seats in each row by column letter
+        Object.keys(layout).forEach(row => {
+            layout[row].sort((a: any, b: any) => {
+                const colA = a.seat_no.slice(-1);
+                const colB = b.seat_no.slice(-1);
+                return colA.localeCompare(colB);
+            });
+        });
+    } else if (mode === 'train') {
+        // For train, divide into lower/upper berths
+        layout.lower = [];
+        layout.upper = [];
+        layout.side = [];
+        
+        seats.forEach((seat) => {
+            const seatData = {
+                seat_no: seat.seat_no,
+                is_booked: seat.is_booked,
+                seat_type: seat.seat_type,
+                price: seat.price
+            };
+            
+            // Distribute seats - this is a simple distribution
+            const seatNum = parseInt(seat.seat_no.match(/\d+/)?.[0] || '0');
+            if (seatNum % 8 === 1 || seatNum % 8 === 4) {
+                layout.lower.push(seatData);
+            } else if (seatNum % 8 === 2 || seatNum % 8 === 5) {
+                layout.upper.push(seatData);
+            } else {
+                layout.side.push(seatData);
+            }
+        });
+    }
+    
+    return layout;
+};
+
 const SeatSelectionModal: React.FC<SeatSelectionModalProps> = ({
     travel_id,
     travel_mode,
@@ -71,7 +130,14 @@ const SeatSelectionModal: React.FC<SeatSelectionModalProps> = ({
                 }
                 previousSeatsRef.current = currentSeatsJson;
 
-                setSeatLayout(data.data.layout);
+                // If layout is empty, generate it from seats array
+                let finalLayout = data.data.layout;
+                if (!finalLayout || Object.keys(finalLayout).length === 0 || 
+                    (finalLayout.lower && finalLayout.lower.length === 0 && finalLayout.upper && finalLayout.upper.length === 0)) {
+                    finalLayout = generateLayoutFromSeats(data.data.seats, travel_mode);
+                }
+
+                setSeatLayout(finalLayout);
                 setAllSeats(data.data.seats);
                 setLastUpdateTime(new Date());
                 

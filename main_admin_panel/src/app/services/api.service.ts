@@ -371,4 +371,183 @@ export class ApiService {
       withCredentials: true
     }).pipe(catchError(this.handleError));
   }
+
+  // ==================== TRAVEL MANAGEMENT ====================
+
+  // Travel Dashboard
+  getTravelDashboard(timeframe: number = 30): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin_travel.php?action=dashboard&timeframe=${timeframe}`, {
+      headers: this.getHeaders(),
+      withCredentials: true
+    }).pipe(catchError(this.handleError));
+  }
+
+  // Travel Analytics
+  getTravelAnalytics(timeframe: number = 30): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin_travel.php?action=analytics&timeframe=${timeframe}`, {
+      headers: this.getHeaders(),
+      withCredentials: true
+    }).pipe(catchError(this.handleError));
+  }
+
+  // Cancellation Analytics
+  getCancellationAnalytics(timeframe: number = 30): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin_travel.php?action=cancellation_analytics&timeframe=${timeframe}`, {
+      headers: this.getHeaders(),
+      withCredentials: true
+    }).pipe(catchError(this.handleError));
+  }
+
+  // Revenue Analytics
+  getTravelRevenueAnalytics(timeframe: number = 30): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin_travel.php?action=revenue_analytics&timeframe=${timeframe}`, {
+      headers: this.getHeaders(),
+      withCredentials: true
+    }).pipe(catchError(this.handleError));
+  }
+
+  // Travel Bookings
+  getTravelBookings(params: any = {}): Observable<any> {
+    const queryParams = new URLSearchParams();
+    queryParams.set('action', 'bookings');
+    Object.keys(params).forEach(key => {
+      if (params[key]) queryParams.set(key, params[key]);
+    });
+    return this.http.get(`${this.baseUrl}/admin_travel.php?${queryParams.toString()}`, {
+      headers: this.getHeaders(),
+      withCredentials: true
+    }).pipe(catchError(this.handleError));
+  }
+
+  // Get single booking details
+  getTravelBookingDetails(id: number): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin_travel.php?action=booking_details&id=${id}`, {
+      headers: this.getHeaders(),
+      withCredentials: true
+    }).pipe(catchError(this.handleError));
+  }
+
+  // Update travel booking
+  updateTravelBooking(id: number, data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin_travel.php?action=update_booking`, 
+      { id, ...data }, 
+      {
+        headers: this.getHeaders(),
+        withCredentials: true
+      }
+    ).pipe(catchError(this.handleError));
+  }
+
+  // Cancel travel booking
+  cancelTravelBooking(id: number, reason: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin_travel.php?action=cancel_booking`, 
+      { id, reason }, 
+      {
+        headers: this.getHeaders(),
+        withCredentials: true
+      }
+    ).pipe(catchError(this.handleError));
+  }
+
+  // Process refund for travel booking
+  processTravelRefund(id: number, amount?: number, method?: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin_travel.php?action=process_refund`, 
+      { id, amount, method }, 
+      {
+        headers: this.getHeaders(),
+        withCredentials: true
+      }
+    ).pipe(catchError(this.handleError));
+  }
+
+  // Get travel routes
+  getTravelRoutes(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin_travel.php?action=routes`, {
+      headers: this.getHeaders(),
+      withCredentials: true
+    }).pipe(catchError(this.handleError));
+  }
+
+  // Add travel route
+  addTravelRoute(data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin_travel.php?action=add_route`, data, {
+      headers: this.getHeaders(),
+      withCredentials: true
+    }).pipe(catchError(this.handleError));
+  }
+
+  // Update travel route
+  updateTravelRoute(id: number, data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin_travel.php?action=update_route`, 
+      { id, ...data }, 
+      {
+        headers: this.getHeaders(),
+        withCredentials: true
+      }
+    ).pipe(catchError(this.handleError));
+  }
+
+  // Delete travel route
+  deleteTravelRoute(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/admin_travel.php?action=delete_route&id=${id}`, {
+      headers: this.getHeaders(),
+      withCredentials: true
+    }).pipe(catchError(this.handleError));
+  }
+
+  // Get operators
+  getTravelOperators(): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin_travel.php?action=operators`, {
+      headers: this.getHeaders(),
+      withCredentials: true
+    }).pipe(catchError(this.handleError));
+  }
+
+  // Get schedules
+  getTravelSchedules(params: any = {}): Observable<any> {
+    const queryParams = new URLSearchParams();
+    queryParams.set('action', 'schedules');
+    Object.keys(params).forEach(key => {
+      if (params[key]) queryParams.set(key, params[key]);
+    });
+    return this.http.get(`${this.baseUrl}/admin_travel.php?${queryParams.toString()}`, {
+      headers: this.getHeaders(),
+      withCredentials: true
+    }).pipe(catchError(this.handleError));
+  }
+
+  // Get seat availability
+  getSeatAvailability(travelId: number): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin_travel.php?action=seat_availability&travel_id=${travelId}`, {
+      headers: this.getHeaders(),
+      withCredentials: true
+    }).pipe(catchError(this.handleError));
+  }
+
+  // Reset seats
+  resetSeats(travelId: number): Observable<any> {
+    return this.http.post(`${this.baseUrl}/admin_travel.php?action=reset_seats`, 
+      { travel_id: travelId }, 
+      {
+        headers: this.getHeaders(),
+        withCredentials: true
+      }
+    ).pipe(catchError(this.handleError));
+  }
+
+  // Export bookings
+  exportTravelBookings(fromDate: string, toDate: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin_travel.php?action=export_bookings&from_date=${fromDate}&to_date=${toDate}`, {
+      headers: this.getHeaders(),
+      withCredentials: true
+    }).pipe(catchError(this.handleError));
+  }
+
+  // Get daily report
+  getTravelDailyReport(date: string): Observable<any> {
+    return this.http.get(`${this.baseUrl}/admin_travel.php?action=daily_report&date=${date}`, {
+      headers: this.getHeaders(),
+      withCredentials: true
+    }).pipe(catchError(this.handleError));
+  }
 }

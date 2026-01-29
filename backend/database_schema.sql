@@ -72,10 +72,12 @@ CREATE TABLE bookings (
     user_id INT NOT NULL,
     tour_id INT NOT NULL,
     itinerary_id INT,
+    guide_id INT,
     number_of_travelers INT NOT NULL DEFAULT 1,
     total_amount DECIMAL(10,2) NOT NULL,
     booking_date DATE NOT NULL,
     travel_date DATE NOT NULL,
+    tour_end_date DATE,
     status ENUM('pending', 'confirmed', 'cancelled', 'completed') DEFAULT 'pending',
     payment_status ENUM('pending', 'paid', 'partial', 'refunded') DEFAULT 'pending',
     special_requirements TEXT,
@@ -84,7 +86,8 @@ CREATE TABLE bookings (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (tour_id) REFERENCES tours(id),
-    FOREIGN KEY (itinerary_id) REFERENCES itineraries(id)
+    FOREIGN KEY (itinerary_id) REFERENCES itineraries(id),
+    FOREIGN KEY (guide_id) REFERENCES guides(id)
 );
 
 CREATE TABLE payments (
@@ -292,3 +295,32 @@ CREATE INDEX idx_giftcard_applications_user_id ON giftcard_applications(user_id)
 CREATE INDEX idx_giftcard_applications_status ON giftcard_applications(status);
 CREATE INDEX idx_giftcards_user_id ON giftcards(user_id);
 CREATE INDEX idx_giftcards_status ON giftcards(status);
+
+-- Travel Booking System
+CREATE TABLE travel_options (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    mode ENUM('flight', 'train', 'bus') NOT NULL,
+    type VARCHAR(100) NOT NULL,
+    from_city VARCHAR(100) NOT NULL,
+    to_city VARCHAR(100) NOT NULL,
+    travel_date DATE NOT NULL,
+    travel_time TIME NOT NULL,
+    operator_name VARCHAR(100) NOT NULL,
+    operator_id INT,
+    vehicle_number VARCHAR(100),
+    seat_class VARCHAR(100),
+    total_seats INT NOT NULL,
+    available_seats INT NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    cost DECIMAL(10,2),
+    tax DECIMAL(10,2),
+    total_amount DECIMAL(10,2),
+    status VARCHAR(50) DEFAULT 'confirmed',
+    duration VARCHAR(50),
+    amenities TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_travel_route (from_city, to_city, travel_date),
+    INDEX idx_travel_mode (mode),
+    INDEX idx_travel_status (status)
+);

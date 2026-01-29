@@ -12,6 +12,7 @@ import { PaymentsComponent } from './payments/payments';
 import { SettingsComponent } from './settings/settings';
 import { GuidesComponent } from './guides/guides';
 import { PlaylistsComponent } from './playlists/playlists.component';
+import { TravelComponent } from './travel/travel';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -30,6 +31,7 @@ export const routes: Routes = [
       { path: 'payments', component: PaymentsComponent },
       { path: 'guides', component: GuidesComponent },
       { path: 'playlists', component: PlaylistsComponent },
+      { path: 'travel', component: TravelComponent },
       { path: 'settings', component: SettingsComponent }
     ]
   },

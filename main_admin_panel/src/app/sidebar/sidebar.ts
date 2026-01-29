@@ -64,6 +64,12 @@ export class SidebarComponent implements OnInit {
       active: false
     },
     {
+      icon: 'travel',
+      label: 'Travel',
+      route: '/travel',
+      active: false
+    },
+    {
       icon: 'customers',
       label: 'Customers',
       route: '/customers',

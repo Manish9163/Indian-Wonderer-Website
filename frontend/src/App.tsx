@@ -17,7 +17,7 @@ import TourBooking from "./components/TourBooking";
 import AgentApplication from "./components/AgentApplication";
 import Wallet from "./components/Wallet";
 import TourItineraryPage from "./components/TourItineraryPage";
-import TravelBooking from "./components/TravelBooking";
+import TravelBookingEnhanced from "./components/TravelBookingEnhanced";
 import { ToastContainer, useToast } from "./components/Toast";
 
 import { Tour, transformTourData } from "./types/data";
@@ -697,7 +697,7 @@ const App = () => {
       )}
 
       {activeTab === 'travel' && (
-        <TravelBooking />
+        <TravelBookingEnhanced />
       )}
 
       <Footer darkMode={darkMode} />

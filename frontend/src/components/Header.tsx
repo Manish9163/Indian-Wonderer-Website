@@ -39,10 +39,10 @@ const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className={`sticky top-0 z-40 backdrop-blur-xl border-b transition-all duration-300 ${
+    <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b transition-all duration-300 ${
       darkMode 
-        ? 'bg-gray-900/80 border-gray-700/50 shadow-lg shadow-purple-500/10' 
-        : 'bg-white/80 border-gray-200/50 shadow-lg shadow-blue-500/10'
+        ? 'bg-gray-900/95 border-gray-700/50 shadow-lg shadow-purple-500/10' 
+        : 'bg-white/95 border-gray-200/50 shadow-lg shadow-blue-500/10'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">

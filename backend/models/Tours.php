@@ -64,11 +64,10 @@ class Tours {
 
     public function getAllTours($filters = [], $limit = 20, $offset = 0) {
         $query = "SELECT t.*, 
-                         u.first_name as creator_name,
-                         (SELECT COUNT(*) FROM bookings WHERE tour_id = t.id) as total_bookings,
-                         (SELECT AVG(rating) FROM reviews WHERE tour_id = t.id) as avg_rating
+                         '' as creator_name,
+                         0 as total_bookings,
+                         0 as avg_rating
                   FROM " . $this->table_name . " t
-                  LEFT JOIN users u ON t.created_by = u.id
                   WHERE t.is_active = 1";
         
         $params = [];

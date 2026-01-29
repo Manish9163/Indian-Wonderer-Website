@@ -207,7 +207,7 @@ class TravelBookingAPI {
                 ':selected_seats' => is_array($input['selected_seats']) 
                     ? json_encode($input['selected_seats']) 
                     : $input['selected_seats'],
-                ':booking_status' => 'pending',
+                ':booking_status' => ($input['payment_status'] ?? 'pending') === 'paid' ? 'confirmed' : 'pending',
                 ':payment_status' => $input['payment_status'] ?? 'pending',
                 ':booking_reference' => $booking_reference,
                 ':created_at' => date('Y-m-d H:i:s')

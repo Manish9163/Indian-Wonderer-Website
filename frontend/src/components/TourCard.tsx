@@ -1,9 +1,11 @@
 "use client";
 import { MapPin, Star, Heart, Share2, Clock, Users, Camera, Award, Sparkles, ArrowRight } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Tour } from '../types/data';
 import TourGalleryModal from './TourGalleryModal';
 import TourReviewsModal from './TourReviewsModal';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 
 type TourCardProps = {
   tour: Tour;
@@ -16,10 +18,62 @@ const TourCard: React.FC<TourCardProps> = ({ tour, darkMode, onBookTour }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
   const [showReviews, setShowReviews] = useState(false);
+  const [mouse, setMouse] = useState({ x: 0, y: 0 });
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Global mouse tracking (same as HeroSection)
+  useEffect(() => {
+    const handleMove = (e: MouseEvent) => {
+      setMouse({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleMove);
+    return () => window.removeEventListener('mousemove', handleMove);
+  }, []);
+
+  // GSAP 3D tilt effect (same pattern as HeroSection)
+  useGSAP(
+    () => {
+      if (typeof window === 'undefined' || !cardRef.current) return;
+
+      const rect = cardRef.current.getBoundingClientRect();
+      const cardCenterX = rect.left + rect.width / 2;
+      const cardCenterY = rect.top + rect.height / 2;
+      const relX = mouse.x - cardCenterX;
+      const relY = mouse.y - cardCenterY;
+
+      // Calculate distance from card center
+      const distance = Math.sqrt(relX * relX + relY * relY);
+      const maxDistance = 300; // Proximity threshold
+
+      if (distance < maxDistance) {
+        // Apply tilt when mouse is near
+        const intensity = 1 - (distance / maxDistance);
+        gsap.to(cardRef.current, {
+          rotateY: relX * 0.02 * intensity,
+          rotateX: -relY * 0.02 * intensity,
+          transformPerspective: 1000,
+          transformOrigin: 'center center',
+          duration: 0.8,
+          ease: 'power3.out'
+        });
+      } else {
+        // Reset when mouse is far
+        gsap.to(cardRef.current, {
+          rotateY: 0,
+          rotateX: 0,
+          duration: 0.8,
+          ease: 'power3.out'
+        });
+      }
+    },
+    { scope: cardRef, dependencies: [mouse] }
+  );
 
   return (
     <div 
+      ref={cardRef}
       className={`group relative ${darkMode ? 'bg-gray-900/90' : 'bg-gray-200'} rounded-3xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 hover:scale-[1.02] backdrop-blur-sm border ${darkMode ? 'border-gray-700/50 hover:from-gray-800/30 hover:to-gray-700/30 hover:border-gray-600' : 'border-gray-200/50'} hover:bg-gradient-to-br hover:from-gray-50 hover:to-stone-100 hover:border-gray-200`}
+      style={{ transformStyle: 'preserve-3d' }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

@@ -5,6 +5,7 @@
   "dependencies": {
     "@dicebear/avatars": "^4.10.8",
     "@dicebear/avatars-avataaars-sprites": "^4.10.8",
+    "@gsap/react": "^2.1.2",
     "@types/gsap": "^1.20.2",
     "@types/node": "^16.18.126",
     "@types/react": "^19.1.8",
@@ -58,7 +59,7 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17"
   },
-  "description": "This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).",
+  "description": "This is the frontend part of the application.",
   "main": "postcss.config.js",
   "keywords": [],
   "author": "",
