@@ -1,13 +1,23 @@
 <?php
 
+require_once __DIR__ . '/config.php'; // loads .env
+
 class Database {
-    private $host = "localhost";
-    private $database_name = "indian_wonderer_base";
-    private $username = "root";
-    private $password = "";  
-    private $charset = "utf8mb4";
+    private $host;
+    private $database_name;
+    private $username;
+    private $password;
+    private $charset;
     
     public $conn;
+
+    public function __construct() {
+        $this->host          = Config::getDBHost();
+        $this->database_name = Config::getDBName();
+        $this->username      = Config::getDBUser();
+        $this->password      = Config::getDBPass();
+        $this->charset       = Config::getDBCharset();
+    }
     
     public function getConnection() {
         $this->conn = null;

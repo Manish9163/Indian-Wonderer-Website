@@ -9,11 +9,14 @@ ini_set('display_errors', 1);
 header('Content-Type: application/json');
 
 try {
-    // Database connection
-    $db_host = 'localhost';
-    $db_user = 'root';
-    $db_pass = '';
-    $db_name = 'indian_wonderer_base';
+    // Load configuration (includes .env)
+    require_once __DIR__ . '/../config/config.php';
+
+    // Database connection from .env
+    $db_host = Config::getDBHost();
+    $db_user = Config::getDBUser();
+    $db_pass = Config::getDBPass();
+    $db_name = Config::getDBName();
 
     $conn = new PDO("mysql:host=$db_host;dbname=$db_name", $db_user, $db_pass);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

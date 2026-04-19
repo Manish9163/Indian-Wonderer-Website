@@ -1,17 +1,19 @@
 <?php
+require_once __DIR__ . '/config.php'; // loads .env
+
 return [
     'smtp_host' => 'smtp.gmail.com',
     'smtp_port' => 587,
     'smtp_secure' => 'tls', 
     'smtp_auth' => true,
     
-    'smtp_username' => 'IndianWonderer.ac@gmail.com', 
-    'smtp_password' => 'zkrv bswh pchp aljp', //enter your smtp password 
+    'smtp_username' => getenv('SMTP_USERNAME') ?: '', 
+    'smtp_password' => getenv('SMTP_PASSWORD') ?: '', //enter your smtp password 
     
 
-    'from_email' => 'IndianWonderer.ac@gmail.com', 
-    'from_name' => 'Indian Wonderer',
-    'reply_to' => 'IndianWonderer.ac@gmail.com',
+    'from_email' => getenv('FROM_EMAIL') ?: '', 
+    'from_name' => getenv('FROM_NAME') ?: '',
+    'reply_to' => getenv('REPLY_TO') ?: '',
 
     'charset' => 'UTF-8',
     'timeout' => 30,

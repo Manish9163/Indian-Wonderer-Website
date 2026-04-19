@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/config.php'; // loads .env
 
 class AdminConfig {
     
@@ -6,22 +7,28 @@ class AdminConfig {
     const DEBUG_MODE = false;
     const LOG_LEVEL = 'info'; 
     
-    const JWT_SECRET = 'your_production_jwt_secret_key_here'; // Change this in production
+    // JWT_SECRET loaded from .env
+    public static function getJWTSecret() {
+        return Config::getEnv('ADMIN_JWT_SECRET', Config::getEnv('JWT_SECRET', 'CHANGE_ME'));
+    }
     const JWT_EXPIRY = 3600; // 1 hour
     const REFRESH_TOKEN_EXPIRY = 2592000; // 30 days
     const RATE_LIMIT_ATTEMPTS = 10;
     const RATE_LIMIT_WINDOW = 900; // 15 minutes
     const SESSION_TIMEOUT = 3600; // 1 hour
     
-    const DB_HOST = 'localhost';
-    const DB_NAME = 'indian_wonderer_base';
-    const DB_USER = 'root';
-    const DB_PASS = '';
-    const DB_CHARSET = 'utf8mb4';
+    // DB credentials loaded from .env via Config
+    public static function getDBHost()    { return Config::getDBHost(); }
+    public static function getDBName()    { return Config::getDBName(); }
+    public static function getDBUser()    { return Config::getDBUser(); }
+    public static function getDBPass()    { return Config::getDBPass(); }
+    public static function getDBCharset() { return Config::getDBCharset(); }
     
     const ADMIN_EMAIL = 'admin@indianwonderer.com';
     const SUPER_ADMIN_ROLE = 'admin';
-    const DEFAULT_ADMIN_PASSWORD = 'Admin@123';
+    public static function getDefaultAdminPassword() {
+        return Config::getEnv('DEFAULT_ADMIN_PASSWORD', 'Admin@123');
+    }
     
     // Application settings
     const APP_NAME = 'Indian Wonderer Admin';
@@ -35,11 +42,12 @@ class AdminConfig {
     const UPLOAD_PATH = '/uploads/';
     
     // Email settings (configure for production)
-    const SMTP_HOST = 'smtp.gmail.com';
-    const SMTP_PORT = 587;
-    const SMTP_USERNAME = 'your_email@gmail.com';
-    const SMTP_PASSWORD = 'your_app_password';
-    const SMTP_ENCRYPTION = 'tls';
+    // SMTP loaded from .env
+    public static function getSmtpHost()       { return Config::getSmtpHost(); }
+    public static function getSmtpPort()       { return Config::getSmtpPort(); }
+    public static function getSmtpUsername()    { return Config::getSmtpUsername(); }
+    public static function getSmtpPassword()    { return Config::getSmtpPassword(); }
+    public static function getSmtpEncryption()  { return Config::getEnv('SMTP_ENCRYPTION', 'tls'); }
     
     // Notification settings
     const ENABLE_EMAIL_NOTIFICATIONS = true;
@@ -165,11 +173,11 @@ class AdminConfig {
      */
     public static function getDatabaseConfig() {
         return [
-            'host' => self::DB_HOST,
-            'dbname' => self::DB_NAME,
-            'username' => self::DB_USER,
-            'password' => self::DB_PASS,
-            'charset' => self::DB_CHARSET,
+            'host' => self::getDBHost(),
+            'dbname' => self::getDBName(),
+            'username' => self::getDBUser(),
+            'password' => self::getDBPass(),
+            'charset' => self::getDBCharset(),
             'options' => [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -183,11 +191,11 @@ class AdminConfig {
      */
     public static function getEmailConfig() {
         return [
-            'host' => self::SMTP_HOST,
-            'port' => self::SMTP_PORT,
-            'username' => self::SMTP_USERNAME,
-            'password' => self::SMTP_PASSWORD,
-            'encryption' => self::SMTP_ENCRYPTION
+            'host' => self::getSmtpHost(),
+            'port' => self::getSmtpPort(),
+            'username' => self::getSmtpUsername(),
+            'password' => self::getSmtpPassword(),
+            'encryption' => self::getSmtpEncryption()
         ];
     }
     
@@ -212,7 +220,7 @@ class AdminConfig {
         $errors = [];
         
         // Check required settings
-        if (self::JWT_SECRET === 'your_production_jwt_secret_key_here') {
+        if (self::getJWTSecret() === 'CHANGE_ME') {
             $errors[] = 'JWT secret key must be changed for production';
         }
         

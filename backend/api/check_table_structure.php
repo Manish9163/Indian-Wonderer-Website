@@ -1,8 +1,10 @@
 <?php
-$host = 'localhost';
-$dbname = 'indian_wonderer_base';
-$username = 'root';
-$password = '';
+require_once __DIR__ . '/../config/config.php';
+
+$host     = Config::getDBHost();
+$dbname   = Config::getDBName();
+$username = Config::getDBUser();
+$password = Config::getDBPass();
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);

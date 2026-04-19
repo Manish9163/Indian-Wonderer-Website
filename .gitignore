@@ -16,6 +16,9 @@ main_admin_panel/.angular/
 .env.local
 .env.production
 .env.development
+.env.development.local
+.env.test.local
+.env.production.local
 
 # IDE - Editors
 .vscode/
@@ -25,6 +28,11 @@ main_admin_panel/.angular/
 *~
 *.sublime-project
 *.sublime-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
 # OS
 .DS_Store
