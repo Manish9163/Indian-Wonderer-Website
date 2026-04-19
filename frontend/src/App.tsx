@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import BookingModal from "./components/BookingModal";
 import ExploreTours from "./components/ExploreTours";
 import Footer from "./components/FooterComponent";
@@ -18,6 +18,7 @@ import AgentApplication from "./components/AgentApplication";
 import Wallet from "./components/Wallet";
 import TourItineraryPage from "./components/TourItineraryPage";
 import TravelBookingEnhanced from "./components/TravelBookingEnhanced";
+import AboutUs from "./components/AboutUs";
 import { ToastContainer, useToast } from "./components/Toast";
 
 import { Tour, transformTourData } from "./types/data";
@@ -30,7 +31,7 @@ const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userDetails, setUserDetails] = useState(null);
   const [authInitialized, setAuthInitialized] = useState(false);
-  
+
   const [darkMode, setDarkMode] = useState(false);
   const [activeTab, setActiveTab] = useState('explore');
   const [selectedTour, setSelectedTour] = useState<Tour | null>(null);
@@ -51,7 +52,7 @@ const App = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [expandedItinerary, setExpandedItinerary] = useState<string | null>(null);
-  const [tours, setTours] = useState<Tour[]>([]); 
+  const [tours, setTours] = useState<Tour[]>([]);
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -63,7 +64,7 @@ const App = () => {
       try {
         setLoading(true);
         setApiError(null);
-        
+
         const response = await apiService.getTours();
         if (response.success && response.data && response.data.tours) {
           const transformedTours = response.data.tours.map(transformTourData);
@@ -88,7 +89,7 @@ const App = () => {
   useEffect(() => {
     const token = localStorage.getItem('authToken');
     const userProfile = localStorage.getItem('userData');
-    
+
     if (token && userProfile) {
       try {
         const parsedUser = JSON.parse(userProfile);
@@ -100,7 +101,7 @@ const App = () => {
         localStorage.removeItem('userData');
       }
     }
-    
+
     setAuthInitialized(true);
   }, []);
 
@@ -111,7 +112,7 @@ const App = () => {
         console.log('⏳ Auth not initialized yet, skipping bookings fetch');
         return;
       }
-      
+
       if (!isAuthenticated || !userDetails) {
         console.log('❌ User not authenticated, clearing itineraries');
         setMyItineraries([]);
@@ -122,11 +123,11 @@ const App = () => {
       try {
         const response = await apiService.getBookings();
         console.log('📦 Bookings API response:', response);
-        
+
         if (response.success && response.data && response.data.bookings) {
           console.log(`✅ Found ${response.data.bookings.length} bookings for user`);
           console.log('📋 Raw bookings data:', response.data.bookings);
-          
+
           const transformedItineraries = response.data.bookings.map((booking: any) => {
             let travelerDetails = booking.traveler_details;
             if (typeof travelerDetails === 'string') {
@@ -148,7 +149,7 @@ const App = () => {
               category: booking.category,
               description: booking.description,
               image: booking.image_url,
-              itinerary: booking.itinerary || [] 
+              itinerary: booking.itinerary || []
             };
 
             console.log(`🔄 Transforming booking #${booking.id}:`, { booking, tourData, travelerDetails });
@@ -156,28 +157,28 @@ const App = () => {
             return {
               id: booking.id,
               tourId: booking.tour_id,
-              tour: transformTourData(tourData), 
+              tour: transformTourData(tourData),
               bookingData: {
-                name: `${booking.first_name} ${booking.last_name}`, 
+                name: `${booking.first_name} ${booking.last_name}`,
                 firstName: booking.first_name,
                 lastName: booking.last_name,
                 email: booking.email,
-                phone: phone, 
-                travelers: booking.number_of_travelers || 1, 
-                date: booking.travel_date, 
-                requirements: booking.special_requirements, 
-                
+                phone: phone,
+                travelers: booking.number_of_travelers || 1,
+                date: booking.travel_date,
+                requirements: booking.special_requirements,
+
                 booking_reference: booking.booking_reference,
                 number_of_travelers: booking.number_of_travelers,
                 total_amount: booking.total_amount,
                 booking_date: booking.booking_date,
                 travel_date: booking.travel_date,
                 special_requirements: booking.special_requirements,
-                traveler_details: travelerDetails, 
+                traveler_details: travelerDetails,
                 customer_name: `${booking.first_name} ${booking.last_name}`,
                 customer_email: booking.email
               },
-              guide_info: booking.guide_info, 
+              guide_info: booking.guide_info,
               selectedAgent: booking.guide_info ? {
                 id: booking.guide_info.id || 0,
                 name: booking.guide_info.name || 'Not Assigned',
@@ -199,7 +200,7 @@ const App = () => {
               bookedAt: booking.created_at,
               paymentData: booking.payment_status ? {
                 paymentId: booking.booking_reference || booking.id,
-                method: 'card', 
+                method: 'card',
                 amount: booking.total_amount,
                 currency: 'INR',
                 status: booking.payment_status,
@@ -220,16 +221,16 @@ const App = () => {
               } : undefined
             };
           });
-          
+
           console.log('✨ Transformed itineraries:', transformedItineraries);
-          
+
           const uniqueItineraries = transformedItineraries.filter((itinerary: any, index: number, self: any[]) => {
             const bookingRef = itinerary.bookingData?.booking_reference || itinerary.id;
-            return index === self.findIndex((t: any) => 
+            return index === self.findIndex((t: any) =>
               (t.bookingData?.booking_reference || t.id) === bookingRef
             );
           });
-          
+
           console.log('🎯 All unique itineraries (including cancelled):', uniqueItineraries);
           setMyItineraries(uniqueItineraries);
         } else {
@@ -322,12 +323,12 @@ const App = () => {
   const handleConfirmBooking = (bookingData: BookingData) => {
     console.log('📝 Booking data confirmed:', bookingData);
     setCurrentBookingData(bookingData);
-    
+
     localStorage.setItem('pendingBookingData', JSON.stringify(bookingData));
     if (selectedTour) {
       localStorage.setItem('pendingTourData', JSON.stringify(selectedTour));
     }
-    
+
     setShowBookingModal(false);
     setShowAgentSelector(true);
   };
@@ -340,7 +341,7 @@ const App = () => {
 
   const handleCloseAgentSelector = () => {
     setShowAgentSelector(false);
-    setShowBookingModal(true); 
+    setShowBookingModal(true);
   };
 
   const handleShowProfile = () => {
@@ -355,7 +356,7 @@ const App = () => {
       avatarSvg: profileData.avatarSvg || (userDetails as any)?.avatarSvg,
       profilePhoto: profileData.profilePhoto || (userDetails as any)?.profilePhoto
     };
-    
+
     setUserDetails(updatedUserDetails);
     localStorage.setItem('userData', JSON.stringify(updatedUserDetails));
   };
@@ -367,10 +368,10 @@ const App = () => {
   const handlePaymentSuccess = async (paymentData: PaymentData) => {
     try {
       const userId = (userDetails as any)?.id;
-      
+
       let bookingData = currentBookingData;
       let tourData = selectedTour;
-      
+
       if (!bookingData) {
         const stored = localStorage.getItem('pendingBookingData');
         if (stored) {
@@ -378,7 +379,7 @@ const App = () => {
           console.log('🔄 Recovered booking data from localStorage');
         }
       }
-      
+
       if (!tourData) {
         const stored = localStorage.getItem('pendingTourData');
         if (stored) {
@@ -386,7 +387,7 @@ const App = () => {
           console.log('🔄 Recovered tour data from localStorage');
         }
       }
-      
+
       // Debug logging
       console.log('🔍 Payment Success - Checking data:', {
         hasUserId: !!userId,
@@ -430,10 +431,10 @@ const App = () => {
         number_of_travelers: bookingData.travelers || 1,
         total_amount: tourData.price * (bookingData.travelers || 1),
         special_requirements: bookingData.requirements || null,
-        status: 'confirmed', 
+        status: 'confirmed',
         payment_status: 'paid',
-        payment_method: paymentData?.method || 'credit_card', 
-        guide_id: selectedAgent?.id || null 
+        payment_method: paymentData?.method || 'credit_card',
+        guide_id: selectedAgent?.id || null
       };
 
       console.log('📤 Creating booking in backend:', bookingPayload);
@@ -443,7 +444,7 @@ const App = () => {
 
       if (response.success) {
         console.log('✅ Booking created in backend:', response.data);
-        
+
         if (selectedAgent && response.data.id) {
           try {
             const assignResponse = await apiService.post('guides.php?action=assign', {
@@ -458,38 +459,38 @@ const App = () => {
         }
 
         const newItinerary: Itinerary = {
-          id: response.data.id || Date.now(), 
+          id: response.data.id || Date.now(),
           tourId: tourData.id,
           tour: tourData,
           bookingData: bookingData,
           status: 'confirmed',
           bookedAt: new Date().toLocaleDateString(),
           paymentData: paymentData,
-          selectedAgent: selectedAgent 
+          selectedAgent: selectedAgent
         };
-        
+
         setMyItineraries([...myItineraries, newItinerary]);
         setCurrentItinerary(newItinerary);
         setShowPaymentModal(false);
-        
+
         showSuccess(
-          'Booking Confirmed! 🎉', 
+          'Booking Confirmed! 🎉',
           `Your tour has been booked successfully. Reference: ${response.data.booking_reference || response.data.id}`
         );
-        
+
         setShowPlaylist(true);
         setPlaylistDestination(getPlaylistDestination(tourData));
-        
+
         setTimeout(() => {
           setShowReceiptModal(true);
         }, 500);
-        
+
         setSelectedTour(null);
         setCurrentBookingData(null);
         setSelectedAgent(null);
         localStorage.removeItem('pendingBookingData');
         localStorage.removeItem('pendingTourData');
-        
+
         setTimeout(() => {
           setActiveTab('itineraries');
         }, 3000);
@@ -535,13 +536,13 @@ const App = () => {
   const handleAuthSuccess = (userData: any) => {
     setUserDetails(userData);
     setIsAuthenticated(true);
-    
+
     if (userData.token) {
       localStorage.setItem('authToken', userData.token);
       apiService.setAuthToken(userData.token);
     }
     localStorage.setItem('userData', JSON.stringify(userData));
-    
+
     const userName = userData.name || userData.first_name || 'there';
     showSuccess('Welcome Back! 👋', `Great to see you again, ${userName}!`);
   };
@@ -559,12 +560,12 @@ const App = () => {
     setCurrentBookingData(null);
     setCurrentItinerary(null);
     setSelectedAgent(null);
-    
+
     localStorage.removeItem('authToken');
     localStorage.removeItem('userData');
-    localStorage.removeItem('myItineraries'); 
+    localStorage.removeItem('myItineraries');
     apiService.setAuthToken(null);
-    
+
     localStorage.setItem('justLoggedOut', 'true');
   };
 
@@ -594,19 +595,19 @@ const App = () => {
       'kolkata': 'kolkata',
       'varanasi': 'varanasi',
       'mumbai': 'mumbai',
-      'delhi': 'mumbai', 
-      'manali': 'shimla', 
+      'delhi': 'mumbai',
+      'manali': 'shimla',
       'darjeeling': 'shimla',
     };
 
     const searchText = (tour.destination || tour.location || tour.title || '').toLowerCase();
-    
+
     for (const [key, value] of Object.entries(DESTINATION_MAP)) {
       if (searchText.includes(key)) {
         return value;
       }
     }
-    
+
     return 'goa';
   };
 
@@ -624,14 +625,14 @@ const App = () => {
   if (!isAuthenticated) {
     return (
       <div>
-        <UserAuth 
-          onAuthSuccess={handleAuthSuccess} 
+        <UserAuth
+          onAuthSuccess={handleAuthSuccess}
           showToast={{ showSuccess, showError, showWarning, showInfo }}
         />
-        <ToastContainer 
-          toasts={toasts} 
-          onRemove={removeToast} 
-          darkMode={false} 
+        <ToastContainer
+          toasts={toasts}
+          onRemove={removeToast}
+          darkMode={false}
         />
       </div>
     );
@@ -639,7 +640,7 @@ const App = () => {
 
   return (
     <div className={`min-h-screen transition-all duration-300 ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
-      <Header 
+      <Header
         darkMode={darkMode}
         setDarkMode={setDarkMode}
         activeTab={activeTab}
@@ -663,6 +664,10 @@ const App = () => {
           loading={loading}
           apiError={apiError}
         />
+      )}
+
+      {activeTab === 'legacy' && (
+        <AboutUs />
       )}
 
       {activeTab === 'booking' && (
@@ -700,7 +705,7 @@ const App = () => {
         <TravelBookingEnhanced />
       )}
 
-      <Footer darkMode={darkMode} />
+      <Footer darkMode={darkMode} setActiveTab={setActiveTab} />
 
       <MobileNavigation
         darkMode={darkMode}
@@ -808,10 +813,10 @@ const App = () => {
       <ChatBotAI darkMode={darkMode} />
 
       {/* Toast Notifications */}
-      <ToastContainer 
-        toasts={toasts} 
-        onRemove={removeToast} 
-        darkMode={darkMode} 
+      <ToastContainer
+        toasts={toasts}
+        onRemove={removeToast}
+        darkMode={darkMode}
       />
 
     </div>

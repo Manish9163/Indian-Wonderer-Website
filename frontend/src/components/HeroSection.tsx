@@ -17,7 +17,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({ darkMode, searchQuery, setSea
   const [currentIndex, setCurrentIndex] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [loadedVideos, setLoadedVideos] = useState(0);
-  const [mouse, setMouse] = useState({ x: 0, y: 0 });
 
   const totalVideos = 6;
   const nextVideoRef = useRef<HTMLVideoElement>(null);
@@ -89,14 +88,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ darkMode, searchQuery, setSea
   
   const currentContent = getVideoContent(currentIndex);
 
-  // mouse tracking 
-  useEffect(() => {
-    const handleMove = (e: MouseEvent) => {
-      setMouse({ x: e.clientX, y: e.clientY });
-    };
-    window.addEventListener('mousemove', handleMove);
-    return () => window.removeEventListener('mousemove', handleMove);
-  }, []);
+
 
   // Subtitle
   useEffect(() => {
@@ -174,55 +166,74 @@ const HeroSection: React.FC<HeroSectionProps> = ({ darkMode, searchQuery, setSea
     };
   }, []);
 
-  // cursor glow
+  // cursor glow & parallax
   useGSAP(
     () => {
       if (typeof window === 'undefined') return;
 
-      const centerX = window.innerWidth / 2;
-      const centerY = window.innerHeight / 2;
-      const relX = mouse.x - centerX;
-      const relY = mouse.y - centerY;
+      const handleGlobalMouseMove = (e: MouseEvent) => {
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        const relX = e.clientX - centerX;
+        const relY = e.clientY - centerY;
 
-      gsap.to('.layer-bg', {
-        x: relX * 0.005,
-        y: relY * 0.005,
-        duration: 0.8,
-        ease: 'expo.out'
-      });
-      gsap.to('.layer-mid', {
-        x: relX * 0.01,
-        y: relY * 0.01,
-        duration: 0.8,
-        ease: 'expo.out'
-      });
-      gsap.to('.layer-fg', {
-        x: relX * 0.015,
-        y: relY * 0.015,
-        duration: 0.8,
-        ease: 'expo.out'
-      });
-
-      if (titleRef.current) {
-        gsap.to(titleRef.current, {
+        gsap.to('.layer-bg', {
+          x: relX * 0.005,
+          y: relY * 0.005,
+          duration: 0.8,
+          ease: 'expo.out'
+        });
+        gsap.to('.layer-mid', {
           x: relX * 0.01,
           y: relY * 0.01,
           duration: 0.8,
-          ease: 'power3.inOut'
+          ease: 'expo.out'
         });
-      }
+        gsap.to('.layer-fg', {
+          x: relX * 0.015,
+          y: relY * 0.015,
+          duration: 0.8,
+          ease: 'expo.out'
+        });
 
-      if (heroContentRef.current) {
-        gsap.to(heroContentRef.current, {
-          rotateY: relX * 0.02,
-          rotateX: -relY * 0.02,
-          transformPerspective: 800,
-          transformOrigin: 'center center',
+        if (titleRef.current) {
+          gsap.to(titleRef.current, {
+            x: relX * 0.01,
+            y: relY * 0.01,
+            duration: 0.8,
+            ease: 'power3.inOut'
+          });
+        }
+
+        if (heroContentRef.current) {
+          gsap.to(heroContentRef.current, {
+            rotateY: relX * 0.02,
+            rotateX: -relY * 0.02,
+            transformPerspective: 800,
+            transformOrigin: 'center center',
+            duration: 0.8,
+            ease: 'power1.inOut'
+          });
+        }
+
+        gsap.to('.cursor-glow', {
+          x: e.clientX - 200,
+          y: e.clientY - 200,
+          duration: 0.4,
+          ease: 'power1.inOut'
+        });
+
+        gsap.to('#mini-video-container', {
+          x: relX * 0.02,
+          y: relY * 0.02,
           duration: 0.8,
           ease: 'power1.inOut'
         });
-      }
+      };
 
+      window.addEventListener('mousemove', handleGlobalMouseMove);
+
+      // standalone particle animation
       gsap.to('.floating-particles', {
         y: '+=40',
         x: '+=20',
@@ -233,21 +244,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({ darkMode, searchQuery, setSea
         yoyo: true
       });
 
-      gsap.to('.cursor-glow', {
-        x: mouse.x - 200,
-        y: mouse.y - 200,
-        duration: 0.4,
-        ease: 'power1.inOut'
-      });
-
-      gsap.to('#mini-video-container', {
-        x: relX * 0.02,
-        y: relY * 0.02,
-        duration: 0.8,
-        ease: 'power1.inOut'
-      });
+      return () => {
+        window.removeEventListener('mousemove', handleGlobalMouseMove);
+      };
     },
-    { scope: containerRef, dependencies: [mouse] }
+    { scope: containerRef, dependencies: [] }
   );
 
   // mini video preview 

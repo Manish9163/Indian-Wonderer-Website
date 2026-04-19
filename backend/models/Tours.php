@@ -118,10 +118,10 @@ class Tours {
         $tours = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         foreach ($tours as &$tour) {
-            $tour['gallery'] = json_decode($tour['gallery'], true) ?: [];
-            $tour['features'] = json_decode($tour['features'], true) ?: [];
-            $tour['inclusions'] = json_decode($tour['inclusions'], true) ?: [];
-            $tour['exclusions'] = json_decode($tour['exclusions'], true) ?: [];
+            $tour['gallery'] = !empty($tour['gallery']) ? json_decode($tour['gallery'], true) : [];
+            $tour['features'] = !empty($tour['features']) ? json_decode($tour['features'], true) : [];
+            $tour['inclusions'] = !empty($tour['inclusions']) ? json_decode($tour['inclusions'], true) : [];
+            $tour['exclusions'] = !empty($tour['exclusions']) ? json_decode($tour['exclusions'], true) : [];
             $tour['avg_rating'] = round($tour['avg_rating'], 1);
         }
         
@@ -146,10 +146,10 @@ class Tours {
         if ($stmt->rowCount() > 0) {
             $tour = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            $tour['gallery'] = json_decode($tour['gallery'], true) ?: [];
-            $tour['features'] = json_decode($tour['features'], true) ?: [];
-            $tour['inclusions'] = json_decode($tour['inclusions'], true) ?: [];
-            $tour['exclusions'] = json_decode($tour['exclusions'], true) ?: [];
+            $tour['gallery'] = !empty($tour['gallery']) ? json_decode($tour['gallery'], true) : [];
+            $tour['features'] = !empty($tour['features']) ? json_decode($tour['features'], true) : [];
+            $tour['inclusions'] = !empty($tour['inclusions']) ? json_decode($tour['inclusions'], true) : [];
+            $tour['exclusions'] = !empty($tour['exclusions']) ? json_decode($tour['exclusions'], true) : [];
             $tour['avg_rating'] = round($tour['avg_rating'], 1);
             
             return $tour;
@@ -212,8 +212,8 @@ class Tours {
         $tours = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         foreach ($tours as &$tour) {
-            $tour['gallery'] = json_decode($tour['gallery'], true) ?: [];
-            $tour['features'] = json_decode($tour['features'], true) ?: [];
+            $tour['gallery'] = !empty($tour['gallery']) ? json_decode($tour['gallery'], true) : [];
+            $tour['features'] = !empty($tour['features']) ? json_decode($tour['features'], true) : [];
             $tour['avg_rating'] = round($tour['avg_rating'], 1);
         }
         
@@ -261,8 +261,8 @@ class Tours {
         $tours = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         foreach ($tours as &$tour) {
-            $tour['gallery'] = json_decode($tour['gallery'], true) ?: [];
-            $tour['features'] = json_decode($tour['features'], true) ?: [];
+            $tour['gallery'] = !empty($tour['gallery']) ? json_decode($tour['gallery'], true) : [];
+            $tour['features'] = !empty($tour['features']) ? json_decode($tour['features'], true) : [];
             $tour['avg_rating'] = round($tour['avg_rating'], 1);
         }
         

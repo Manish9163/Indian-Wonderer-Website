@@ -124,10 +124,42 @@ const ExploreTours: React.FC<ExploreToursProps> = ({
         </div>
 
         {loading && (
-          <div className="text-center py-16">
-            <Loader size={64} className="mx-auto text-blue-500 mb-4 animate-spin" />
-            <h3 className="text-xl font-semibold mb-2">Loading Tours...</h3>
-            <p className="text-gray-600 dark:text-gray-400">Please wait while we fetch the latest tours</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className={`rounded-3xl shadow-xl overflow-hidden backdrop-blur-sm border ${darkMode ? 'bg-gray-900/90 border-gray-700/50' : 'bg-gray-200 border-gray-200/50'}`}>
+                {/* Image Placeholder */}
+                <div className={`w-full h-48 animate-pulse ${darkMode ? 'bg-gray-800' : 'bg-gray-300'}`}></div>
+                
+                <div className="p-5">
+                  {/* Title Placeholder */}
+                  <div className={`h-6 w-3/4 rounded-md mb-3 animate-pulse ${darkMode ? 'bg-gray-800' : 'bg-gray-300'}`}></div>
+                  
+                  {/* Location Placeholder */}
+                  <div className={`h-4 w-1/2 rounded-md mb-4 animate-pulse ${darkMode ? 'bg-gray-800' : 'bg-gray-300'}`}></div>
+                  
+                  {/* Rating/Reviews Placeholder */}
+                  <div className="flex justify-between items-center mb-4">
+                    <div className={`h-4 w-1/3 rounded-md animate-pulse ${darkMode ? 'bg-gray-800' : 'bg-gray-300'}`}></div>
+                    <div className={`h-4 w-1/4 rounded-md animate-pulse ${darkMode ? 'bg-gray-800' : 'bg-gray-300'}`}></div>
+                  </div>
+                  
+                  {/* Highlights Placeholder */}
+                  <div className="space-y-2 mb-4">
+                    <div className={`h-8 w-full rounded-lg animate-pulse ${darkMode ? 'bg-gray-800' : 'bg-gray-300'}`}></div>
+                    <div className={`h-8 w-5/6 rounded-lg animate-pulse ${darkMode ? 'bg-gray-800' : 'bg-gray-300'}`}></div>
+                  </div>
+                  
+                  {/* Buttons Placeholder */}
+                  <div className="space-y-2">
+                    <div className={`h-12 w-full rounded-xl animate-pulse ${darkMode ? 'bg-gray-800' : 'bg-gray-300'}`}></div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className={`h-10 rounded-lg animate-pulse ${darkMode ? 'bg-gray-800' : 'bg-gray-300'}`}></div>
+                      <div className={`h-10 rounded-lg animate-pulse ${darkMode ? 'bg-gray-800' : 'bg-gray-300'}`}></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 

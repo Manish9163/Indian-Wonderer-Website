@@ -3,9 +3,10 @@ import { Phone, Mail, MapPin, Globe, Heart, Star, Instagram, Facebook, Twitter, 
 
 interface FooterProps {
   darkMode: boolean;
+  setActiveTab?: (tab: string) => void;
 }
 
-const Footer: React.FC<FooterProps> = ({ darkMode }) => {
+const Footer: React.FC<FooterProps> = ({ darkMode, setActiveTab }) => {
   return (
     <footer className={`relative ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} border-t ${darkMode ? 'border-gray-700/50' : 'border-gray-200'} mt-20 overflow-hidden`}>
       <div className="absolute inset-0 opacity-5">
@@ -81,6 +82,12 @@ const Footer: React.FC<FooterProps> = ({ darkMode }) => {
                 <li key={link}>
                   <a 
                     href="#" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (link === 'About Us' && setActiveTab) {
+                        setActiveTab('legacy');
+                      }
+                    }}
                     className={`flex items-center space-x-2 group ${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-all duration-300`}
                   >
                     <Sparkles size={14} className="text-yellow-500 group-hover:animate-pulse" />

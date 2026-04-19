@@ -1,0 +1,44 @@
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+}
+
+.hero-gradient {
+    background: linear-gradient(to bottom, rgba(19, 19, 19, 0.4), rgba(19, 19, 19, 1));
+}
+
+.glass-panel {
+    backdrop-filter: blur(24px);
+    background: rgba(53, 53, 52, 0.3);
+    border: 1px solid rgba(153, 144, 124, 0.1);
+}
+
+.text-glow-subtle {
+    text-shadow: 0 0 15px rgba(201, 174, 93, 0.2);
+}
+
+.video-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 0;
+}
+
+.video-container video {
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    object-fit: cover;
+    filter: brightness(0.7) contrast(1.1);
+}
+
+.about-page-wrapper {
+    min-height: max(884px, 100dvh);
+}

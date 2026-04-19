@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from "react";
-import { Eye, EyeOff, Mail, Lock, ArrowRight, X, Sun, Moon } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, ArrowRight, X, Sun, Moon, Github, Chrome, Globe, Sparkles, UserPlus, LogIn, Award } from "lucide-react";
 import ReactCountryFlag from 'react-country-flag';
 import * as avatars from '@dicebear/avatars';
 import * as style from '@dicebear/avatars-avataaars-sprites';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 
 const API_BASE_URL = 'http://localhost/fu/backend/api';
 
@@ -19,6 +21,8 @@ interface UserAuthProps {
 const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
   const [step, setStep] = useState<'auth' | 'otp'>('auth');
   const [mode, setMode] = useState<'login' | 'signup'>('login');
+
+  // State from original component
   const [signupData, setSignupData] = useState({
     firstName: '',
     lastName: '',
@@ -33,7 +37,7 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
     photo: null,
     terms: false
   });
-  const [signupErrors, setSignupErrors] = useState<{[key: string]: string}>({});
+  const [signupErrors, setSignupErrors] = useState<{ [key: string]: string }>({});
   const [signupStep, setSignupStep] = useState(0);
   const [avatarSeed, setAvatarSeed] = useState('traveler');
   const [showAvatarSelector, setShowAvatarSelector] = useState(false);
@@ -46,9 +50,16 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
     password: '',
     otp: ''
   });
-  const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [shake, setShake] = useState(false);
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(true);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const loginBgRef = useRef<HTMLImageElement>(null);
+  const signupBgRef = useRef<HTMLImageElement>(null);
+  const formPanelRef = useRef<HTMLDivElement>(null);
+  const loginTextRef = useRef<HTMLDivElement>(null);
+  const signupTextRef = useRef<HTMLDivElement>(null);
 
   const motivationalQuotes = [
     "Adventure awaits!",
@@ -58,112 +69,65 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
     "Let your dreams set sail!"
   ];
 
-  const avatarOptions = [
-    { name: 'Explorer', seed: 'explorer' },
-    { name: 'Adventurer', seed: 'adventurer' },
-    { name: 'Traveler', seed: 'traveler' },
-    { name: 'Wanderer', seed: 'wanderer' },
-    { name: 'Nomad', seed: 'nomad' },
-    { name: 'Tourist', seed: 'tourist' },
-    { name: 'Backpacker', seed: 'backpacker' },
-    { name: 'Pilgrim', seed: 'pilgrim' },
-    { name: 'Voyager', seed: 'voyager' },
-    { name: 'Navigator', seed: 'navigator' },
-    
-    { name: 'Mountain', seed: 'mountain' },
-    { name: 'Ocean', seed: 'ocean' },
-    { name: 'Forest', seed: 'forest' },
-    { name: 'Desert', seed: 'desert' },
-    { name: 'Valley', seed: 'valley' },
-    { name: 'Sunrise', seed: 'sunrise' },
-    { name: 'Sunset', seed: 'sunset' },
-    { name: 'River', seed: 'river' },
-    { name: 'Lake', seed: 'lake' },
-    { name: 'Waterfall', seed: 'waterfall' },
-    { name: 'Canyon', seed: 'canyon' },
-    { name: 'Beach', seed: 'beach' },
-    { name: 'Island', seed: 'island' },
-    { name: 'Jungle', seed: 'jungle' },
-    { name: 'Rainforest', seed: 'rainforest' },
-    
-    { name: 'Journey', seed: 'journey' },
-    { name: 'Discovery', seed: 'discovery' },
-    { name: 'Adventure', seed: 'adventure' },
-    { name: 'Quest', seed: 'quest' },
-    { name: 'Expedition', seed: 'expedition' },
-    { name: 'Safari', seed: 'safari' },
-    { name: 'Trek', seed: 'trek' },
-    { name: 'Cruise', seed: 'cruise' },
-    { name: 'Roadtrip', seed: 'roadtrip' },
-    
-    { name: 'Eagle', seed: 'eagle' },
-    { name: 'Tiger', seed: 'tiger' },
-    { name: 'Lion', seed: 'lion' },
-    { name: 'Elephant', seed: 'elephant' },
-    { name: 'Dolphin', seed: 'dolphin' },
-    { name: 'Panda', seed: 'panda' },
-    { name: 'Wolf', seed: 'wolf' },
-    { name: 'Bear', seed: 'bear' },
-    { name: 'Fox', seed: 'fox' },
-    { name: 'Deer', seed: 'deer' },
-    
-    { name: 'Taj Mahal', seed: 'tajmahal' },
-    { name: 'Rajasthan', seed: 'rajasthan' },
-    { name: 'Kerala', seed: 'kerala' },
-    { name: 'Goa', seed: 'goa' },
-    { name: 'Himalayas', seed: 'himalayas' },
-    { name: 'Mumbai', seed: 'mumbai' },
-    { name: 'Delhi', seed: 'delhi' },
-    { name: 'Jaipur', seed: 'jaipur' },
-    { name: 'Varanasi', seed: 'varanasi' },
-    { name: 'Kashmir', seed: 'kashmir' },
-    
-    { name: 'Spring', seed: 'spring' },
-    { name: 'Summer', seed: 'summer' },
-    { name: 'Autumn', seed: 'autumn' },
-    { name: 'Winter', seed: 'winter' },
-    { name: 'Monsoon', seed: 'monsoon' },
-    { name: 'Rainbow', seed: 'rainbow' },
-    { name: 'Thunder', seed: 'thunder' },
-    { name: 'Breeze', seed: 'breeze' },
-    
-    { name: 'Hiking', seed: 'hiking' },
-    { name: 'Camping', seed: 'camping' },
-    { name: 'Swimming', seed: 'swimming' },
-    { name: 'Skiing', seed: 'skiing' },
-    { name: 'Surfing', seed: 'surfing' },
-    { name: 'Climbing', seed: 'climbing' },
-    { name: 'Diving', seed: 'diving' },
-    { name: 'Kayaking', seed: 'kayaking' },
-    
-    { name: 'Star', seed: 'star' },
-    { name: 'Moon', seed: 'moon' },
-    { name: 'Sky', seed: 'sky' },
-    { name: 'Cloud', seed: 'cloud' },
-    { name: 'Aurora', seed: 'aurora' },
-    { name: 'Comet', seed: 'comet' },
-    
-    { name: 'Phoenix', seed: 'phoenix' },
-    { name: 'Dragon', seed: 'dragon' },
-    { name: 'Unicorn', seed: 'unicorn' },
-    { name: 'Pegasus', seed: 'pegasus' },
-    { name: 'Griffin', seed: 'griffin' },
-    
-    { name: 'Amber', seed: 'amber' },
-    { name: 'Azure', seed: 'azure' },
-    { name: 'Crimson', seed: 'crimson' },
-    { name: 'Emerald', seed: 'emerald' },
-    { name: 'Golden', seed: 'golden' },
-    { name: 'Indigo', seed: 'indigo' },
-    { name: 'Violet', seed: 'violet' },
-    { name: 'Coral', seed: 'coral' }
-  ];
+  // GSAP Animations Core
+  useGSAP(() => {
+    // Background Ken Burns Effect (Continuous)
+    gsap.to([loginBgRef.current, signupBgRef.current], {
+      scale: 1.15,
+      duration: 20,
+      repeat: -1,
+      yoyo: true,
+      ease: "power1.inOut"
+    });
 
-  // Google Auth handler (replace with your OAuth logic)
-  const handleGoogleAuth = () => {
-    // TODO: Integrate Google OAuth here
-    window.open('https://accounts.google.com/o/oauth2/v2/auth', '_blank');
+    // Initial Entrance
+    gsap.set(formPanelRef.current, { left: mode === 'login' ? '50%' : '0%' });
+    gsap.fromTo(formPanelRef.current,
+      { opacity: 0, xPercent: mode === 'login' ? 50 : -50 },
+      { opacity: 1, xPercent: 0, duration: 1.5, ease: "expo.out", delay: 0.5 }
+    );
+  }, { scope: containerRef });
+
+  // Mode Switching Animation Logic
+  const handleModeChange = (newMode: 'login' | 'signup') => {
+    if (newMode === mode) return;
+
+    const tl = gsap.timeline({
+      onStart: () => setIsLoading(true),
+      onComplete: () => setIsLoading(false)
+    });
+
+    // 1. Move the panel and images
+    const isLogin = newMode === 'login';
+
+    tl.to(formPanelRef.current, {
+      left: isLogin ? '50%' : '0%',
+      duration: 1.2,
+      ease: "expo.inOut"
+    });
+
+    tl.to([loginTextRef.current, signupTextRef.current], {
+      left: isLogin ? '0%' : '50%',
+      duration: 1.2,
+      ease: "expo.inOut"
+    }, 0);
+
+    // 2. Crossfade Backgrounds
+    if (isLogin) {
+      tl.to(signupBgRef.current, { opacity: 0, duration: 1.2, ease: "power2.inOut" }, 0);
+      tl.to(loginBgRef.current, { opacity: 1, duration: 1.2, ease: "power2.inOut" }, 0);
+    } else {
+      tl.to(loginBgRef.current, { opacity: 0, duration: 1.2, ease: "power2.inOut" }, 0);
+      tl.to(signupBgRef.current, { opacity: 1, duration: 1.2, ease: "power2.inOut" }, 0);
+    }
+
+    // Update state mid-animation
+    setMode(newMode);
+    setSignupStep(0);
   };
+
+  // Original UI Handlers
+  const handleGoogleAuth = () => window.open('https://accounts.google.com/o/oauth2/v2/auth', '_blank');
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -171,68 +135,39 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
         setShowAvatarSelector(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    const justLoggedOut = localStorage.getItem('justLoggedOut');
-    if (justLoggedOut === 'true' && showToast) {
-      showToast.showInfo('Logged Out', 'You have been logged out successfully. See you soon!');
-      localStorage.removeItem('justLoggedOut');
-    }
-  }, [showToast]);
-
-  const handleModeChange = (newMode: 'login' | 'signup') => {
-    if (newMode !== mode) {
-      setMode(newMode);
-      setSignupStep(0); 
-    }
-  };
-
   const validateSignup = () => {
-    const errors: {[key: string]: string} = {};
-    if (!signupData.firstName) errors.firstName = 'First name required';
-    if (!signupData.lastName) errors.lastName = 'Last name required';
-    if (!validateEmail(signupData.email)) errors.email = 'Valid email required';
-    if (!validatePhone(signupData.phone)) errors.phone = 'Valid 10-digit phone required';
-    if (!validatePassword(signupData.password)) errors.password = 'Password must be 8-15 characters, include uppercase, lowercase, number, and symbol.';
-    if (signupData.password !== signupData.confirmPassword) errors.confirmPassword = 'Passwords do not match';
-    if (!signupData.dob) errors.dob = 'Date of birth required';
-    if (!signupData.gender) errors.gender = 'Gender required';
-    if (!signupData.address) errors.address = 'Address required';
-    if (!signupData.country) errors.country = 'Country required';
-    if (!signupData.terms) errors.terms = 'You must accept terms';
+    const errors: { [key: string]: string } = {};
+    if (!signupData.firstName) errors.firstName = 'Required';
+    if (!signupData.lastName) errors.lastName = 'Required';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signupData.email)) errors.email = 'Invalid';
+    if (!/^\d{10}$/.test(signupData.phone)) errors.phone = '10 digits';
+    if (signupData.password.length < 8) errors.password = 'Min 8 chars';
+    if (signupData.password !== signupData.confirmPassword) errors.confirmPassword = 'Mismatch';
+    if (!signupData.dob) errors.dob = 'Required';
+    if (!signupData.gender) errors.gender = 'Required';
+    if (!signupData.terms) errors.terms = 'Required';
     return errors;
   };
 
-  const handleSignupChange = (field: string, value: any) => {
-    setSignupData((prev) => ({ ...prev, [field]: value }));
-  };
+  const handleSignupChange = (field: string, value: any) => setSignupData((prev) => ({ ...prev, [field]: value }));
 
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errors = validateSignup();
     setSignupErrors(errors);
-    if (Object.keys(errors).length > 0) {
-      triggerShake();
-      return;
-    }
-    
+    if (Object.keys(errors).length > 0) { triggerShake(); return; }
     setIsLoading(true);
-    
     try {
       const response = await fetch(`${API_BASE_URL}/auth.php?action=register`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          username: signupData.email.split('@')[0], 
+          username: signupData.email.split('@')[0],
           first_name: signupData.firstName,
           last_name: signupData.lastName,
           email: signupData.email,
@@ -240,84 +175,25 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
           password: signupData.password
         })
       });
-
       const data = await response.json();
-      
       if (data.success) {
-        const userData = {
-          id: data.data.user?.id || data.data.id,
-          username: data.data.user?.username || data.data.username,
-          firstName: data.data.user?.first_name || data.data.first_name || signupData.firstName,
-          lastName: data.data.user?.last_name || data.data.last_name || signupData.lastName,
-          email: data.data.user?.email || data.data.email || signupData.email,
-          phone: data.data.user?.phone || data.data.phone || signupData.phone,
-          role: data.data.user?.role || data.data.role || 'customer',
-          emailVerified: data.data.user?.emailVerified || data.data.emailVerified || false,
-          avatarSvg: getAvatarSvg(avatarSeed),
-          token: data.data.token
-        };
-        
+        const userData = { ...data.data.user, avatarSvg: avatars.createAvatar(style, { seed: avatarSeed }), token: data.data.token };
         localStorage.setItem('authToken', data.data.token);
         localStorage.setItem('userData', JSON.stringify(userData));
-        
-        setIsLoading(false);
         onAuthSuccess(userData);
       } else {
-        setSignupErrors({ email: data.message || 'Registration failed' });
+        setSignupErrors({ email: data.message || 'Error' });
         triggerShake();
-        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Signup error:', error);
-      setSignupErrors({ email: 'Registration failed. Please try again.' });
-      triggerShake();
-      setIsLoading(false);
-    }
+    } catch (err) { triggerShake(); } finally { setIsLoading(false); }
   };
 
-  const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const validatePhone = (phone: string) => /^\d{10}$/.test(phone);
-  const validatePassword = (password: string) => {
-    return (
-      password.length >= 8 &&
-      password.length <= 15 &&
-      /[A-Z]/.test(password) &&
-      /[a-z]/.test(password) &&
-      /[0-9]/.test(password) &&
-      /[^A-Za-z0-9]/.test(password)
-    );
-  };
-  const validateOTP = (otp: string) => /^\d{6}$/.test(otp);
-
-  const triggerShake = () => {
-    setShake(true);
-    setTimeout(() => setShake(false), 500);
-  };
-
-  const getAvatarSvg = (seed: string) => avatars.createAvatar(style, { seed });
-  const passwordStrength = (pwd: string) => {
-    let score = 0;
-    if (pwd.length >= 8) score++;
-    if (/[A-Z]/.test(pwd)) score++;
-    if (/[a-z]/.test(pwd)) score++;
-    if (/[0-9]/.test(pwd)) score++;
-    if (/[^A-Za-z0-9]/.test(pwd)) score++;
-    return score;
-  };
-  const strengthEmoji = ['😢', '😐', '🙂', '😃', '🤩', '🔐'];
+  const triggerShake = () => { setShake(true); setTimeout(() => setShake(false), 500); };
 
   const handleInputChange = (field: string, value: string) => {
-    if (field === "identifier") {
-      if (/^\d*$/.test(value) && value.length <= 10) {
-        setFormData((prev) => ({ ...prev, identifier: value }));
-      } else if (!/^\d+$/.test(value)) {
-        setFormData((prev) => ({ ...prev, identifier: value }));
-      }
-    } else if (field === "otp") {
-      const numericValue = value.replace(/\D/g, "");
-      if (numericValue.length <= 6) {
-        setFormData((prev) => ({ ...prev, otp: numericValue }));
-      }
+    if (field === "otp") {
+      const numericValue = value.replace(/\D/g, "").slice(0, 6);
+      setFormData((prev) => ({ ...prev, otp: numericValue }));
     } else {
       setFormData((prev) => ({ ...prev, [field]: value }));
     }
@@ -325,637 +201,202 @@ const UserAuth: React.FC<UserAuthProps> = ({ onAuthSuccess, showToast }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    let errorObj: {[key: string]: string} = {};
-    
     const isAdminLogin = formData.identifier === 'admin@indianwonderer.com' || formData.identifier === 'admin';
-    
-    if (!formData.identifier) {
-      errorObj.identifier = "Email or phone is required";
-    } else if (!isAdminLogin && !validateEmail(formData.identifier) && !validatePhone(formData.identifier)) {
-      errorObj.identifier = "Enter a valid email or 10-digit phone";
-    }
-    if (!formData.password) {
-      errorObj.password = "Password is required";
-    }
-        
-    setErrors(errorObj);
-    if (Object.keys(errorObj).length > 0) {
-      triggerShake();
-      return;
-    }
-    
+    if (!formData.identifier || !formData.password) { triggerShake(); return; }
     setIsLoading(true);
-    
     try {
-      
-      const isEmailLogin = validateEmail(formData.identifier);
-      
       if (isAdminLogin) {
-        console.log('👑 Attempting admin login...', {
-          identifier: formData.identifier,
-          isEmailLogin,
-          endpoint: `${API_BASE_URL}/admin_login.php`
+        const formDataBody = new URLSearchParams();
+        formDataBody.append(formData.identifier.includes('@') ? 'email' : 'username', formData.identifier);
+        formDataBody.append('password', formData.password);
+        const response = await fetch(`${API_BASE_URL}/admin_login.php`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formDataBody
         });
-        
-        const adminRequestBody = isEmailLogin 
-          ? {
-              email: formData.identifier,
-              password: formData.password
-            }
-          : {
-              username: formData.identifier,
-              password: formData.password
-            };
-        
-        
-        let response;
-        try {
-          const formDataBody = new URLSearchParams();
-          if (isEmailLogin) {
-            formDataBody.append('email', formData.identifier);
-            formDataBody.append('password', formData.password);
-          } else {
-            formDataBody.append('username', formData.identifier);
-            formDataBody.append('password', formData.password);
-          }
-          
-          console.log('📤 Admin login form data:', formDataBody.toString());
-          
-          response = await fetch(`${API_BASE_URL}/admin_login.php`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: formDataBody
-          });
-          
-          console.log('📡 Admin API Response received successfully:', {
-            status: response.status,
-            statusText: response.statusText,
-            ok: response.ok,
-            url: response.url
-          });
-        } catch (fetchError) {
-          console.error('🚨 Fetch error occurred:', fetchError);
-          throw new Error(`fetch failed: ${fetchError instanceof Error ? fetchError.message : 'Unknown error'}`);
-        }
-
         const data = await response.json();
-        console.log('📋 Admin login response data:', data);
-        
         if (data.success) {
-          console.log('✅ Admin login successful, redirecting to admin panel');
           localStorage.setItem('adminAuthenticated', 'true');
           localStorage.setItem('adminData', JSON.stringify(data.data));
-          
-          console.log('🚀 Redirecting to: http://localhost:4200/dashboard');
           window.location.href = 'http://localhost:4200/dashboard';
           return;
-        } else if (response.status === 200) {
-          console.log('❌ Admin login failed:', data.message);
-          setErrors({ password: data.message || 'Invalid admin credentials' });
-          triggerShake();
-          setIsLoading(false);
-          return;
         }
       }
-      
-      console.log('🚀 Attempting regular user login...', {
-        endpoint: `${API_BASE_URL}/auth.php?action=login`,
-        email: formData.identifier
-      });
-      
-      const response = await fetch(`${API_BASE_URL}/auth.php?action=login`, {
+      const resp = await fetch(`${API_BASE_URL}/auth.php?action=login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          email: formData.identifier,
-          password: formData.password
-        })
+        body: JSON.stringify({ email: formData.identifier, password: formData.password })
       });
-
-      console.log('📡 API Response received:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok
-      });
-
-      const data = await response.json();
-      console.log('📋 Response data:', data);
-      
+      const data = await resp.json();
       if (data.success) {
-        console.log('✅ Login successful, storing authentication data');
-        
-        const userData = {
-          id: data.data.user?.id || data.data.id,
-          username: data.data.user?.username || data.data.username,
-          firstName: data.data.user?.first_name || data.data.first_name,
-          lastName: data.data.user?.last_name || data.data.last_name,
-          email: data.data.user?.email || data.data.email,
-          phone: data.data.user?.phone || data.data.phone,
-          role: data.data.user?.role || data.data.role,
-          emailVerified: data.data.user?.email_verified || data.data.email_verified || false,
-          avatarSvg: getAvatarSvg(data.data.user?.username || data.data.username || avatarSeed),
-          token: data.data.token
-        };
-        
+        const userData = { ...data.data.user, avatarSvg: avatars.createAvatar(style, { seed: avatarSeed }), token: data.data.token };
         localStorage.setItem('authToken', data.data.token);
         localStorage.setItem('userData', JSON.stringify(userData));
-        
-        console.log('🎉 Calling onAuthSuccess with user data');
-        setIsLoading(false);
         onAuthSuccess(userData);
       } else {
-        console.log('❌ Login failed:', data.message);
-        setErrors({ password: data.message || 'Invalid credentials' });
+        setErrors({ password: data.message || 'Failed' });
         triggerShake();
-        setIsLoading(false);
       }
-      
-    } catch (error) {
-      console.error('💥 Login error:', error);
-      
-      let errorMessage = 'Login failed. Please try again.';
-      if (error instanceof Error) {
-        console.error('💥 Error details:', {
-          message: error.message,
-          name: error.name,
-          stack: error.stack
-        });
-        
-        if (error.message.includes('fetch')) {
-          errorMessage = 'Cannot connect to server. Please check if the backend is running.';
-        } else if (error.message.includes('CORS')) {
-          errorMessage = 'Cross-origin request blocked. Please check server configuration.';
-        }
-      }
-      
-      setErrors({ password: errorMessage });
-      triggerShake();
-      setIsLoading(false);
-    }
+    } catch (err) { triggerShake(); } finally { setIsLoading(false); }
   };
 
   const handleOtpSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateOTP(formData.otp)) {
-      setErrors({ otp: "Enter a valid 6-digit OTP" });
-      triggerShake();
-      return;
-    }
+    if (formData.otp.length < 6) { triggerShake(); return; }
     setIsLoading(true);
     setTimeout(() => {
-      setIsLoading(false);
-      onAuthSuccess({
-        id: Math.random().toString(36).substr(2, 9),
-        identifier: formData.identifier,
-        avatar: avatarSeed,
-        avatarSvg: getAvatarSvg(avatarSeed),
-        authLevel: "VERIFIED"
-      });
-    }, 1200);
+      onAuthSuccess({ id: 'u_' + Date.now(), identifier: formData.identifier, avatarSvg: avatars.createAvatar(style, { seed: avatarSeed }) });
+    }, 1000);
   };
 
-  const theme = dark
-    ? {
-        bg: "bg-gradient-to-br from-gray-950 via-gray-900 to-black animate-gradient-x",
-        card: "bg-gray-900/90 border border-gray-800 shadow-2xl shadow-purple-900/40 backdrop-blur-2xl text-gray-100",
-        input: "bg-gray-800/60 border border-gray-700 text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-purple-800",
-        icon: "text-yellow-400",
-        btn: "bg-gradient-to-r from-purple-800 via-indigo-800 to-gray-900 text-white shadow-lg hover:from-purple-900 hover:to-gray-900",
-        btn2: "bg-gradient-to-r from-indigo-800 via-purple-800 to-gray-900 text-white shadow-lg hover:from-indigo-900 hover:to-gray-900",
-        border: "border-purple-900",
-        glass: "backdrop-blur-2xl",
-        toggle: "bg-gray-900 border-gray-800 text-yellow-400 hover:bg-gray-800"
-      }
-    : {
-        bg: "bg-gradient-to-br from-orange-300 via-white to-green-300 animate-gradient-x",
-        card: "bg-white/90 border border-orange-200 shadow-2xl shadow-green-200/40 backdrop-blur-3xl text-gray-900 ring-2 ring-orange-100",
-        input: "bg-white/80 border border-green-200 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-green-300",
-        icon: "text-blue-500",
-  btn: "bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 text-white shadow-xl hover:from-blue-600 hover:to-blue-700",
-  btn2: "bg-gradient-to-r from-green-500 via-green-400 to-green-600 text-white shadow-xl hover:from-green-600 hover:to-green-700",
-        border: "border-orange-200",
-        glass: "backdrop-blur-3xl",
-        toggle: "bg-white border-green-200 text-green-500 hover:bg-green-50"
-      };
-
   return (
-    <div className={`min-h-screen flex items-center justify-center ${theme.bg}`}>
-      <div className="fixed top-6 right-6 z-50">
-        <button
-          onClick={() => setDark((d) => !d)}
-          className={`p-3 rounded-full border transition-all duration-300 shadow-lg ${theme.toggle}`}
+    <div ref={containerRef} className="min-h-screen w-full relative overflow-hidden bg-[#0A0A0A] dark">
+      {/* Dynamic Image Layers (Full Screen Background) */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <div className="absolute inset-0 bg-black/50 z-10" />
+
+        {/* Login Background (Palace) */}
+        <img
+          ref={loginBgRef}
+          src="https://images.unsplash.com/photo-1524492412937-b28074a5d7da?q=80&w=2071&auto=format&fit=crop"
+          alt="Palace Login"
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${mode === 'login' ? 'opacity-100' : 'opacity-0'}`}
+        />
+
+        {/* Signup Background (Mountain Monastery) */}
+        <img
+          ref={signupBgRef}
+          src="https://images.unsplash.com/photo-1582510003544-4d00b7f74220?q=80&w=2070&auto=format&fit=crop"
+          alt="Monastery Signup"
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${mode === 'signup' ? 'opacity-100' : 'opacity-0'}`}
+        />
+      </div>
+
+      {/* Main Content Layout Container */}
+      <div className="relative z-20 w-full h-screen overflow-hidden">
+
+        {/* Side A: Cinematic Text Overlay Area */}
+        <div
+          ref={loginTextRef}
+          className={`hidden lg:flex absolute top-0 left-0 w-1/2 h-full flex-col justify-end p-20 text-white pointer-events-none transition-opacity duration-700 ${mode === 'login' ? 'opacity-100' : 'opacity-0'}`}
         >
-          {dark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-        </button>
-      </div>
-      <div className={`w-full max-w-md p-0 rounded-3xl shadow-2xl ${theme.card} ${theme.glass} ${theme.border} transition-all duration-500 ${shake ? "animate-shake" : ""} ${mode === 'login' ? 'animate-flip-to-login' : 'animate-flip-to-signup'}`}> 
-        <div className="relative w-full flex flex-col items-center justify-center pt-10 pb-6 px-8">
-          <div className="flex justify-center items-center mt-6 mb-1">
-            <img src="/WhatsApp.jpg" alt="WhatsApp" className="w-16 h-16 rounded-xl shadow-lg object-cover" />
-          </div>
-          <h1 className="text-3xl font-black tracking-tight mb-2 mt-10 animate-fadeIn" style={{letterSpacing: "-1px", color: dark ? undefined : "#FF9933"}}>Indian Wonderer</h1>
-          <div className="text-center mb-4 animate-fadeIn">
-            <span className="inline-block text-lg font-semibold bg-gradient-to-r from-orange-500 via-green-500 to-blue-600 bg-clip-text text-transparent drop-shadow-lg">
-              Unlock your journey. Experience India like never before!
-            </span>
-          </div>
+          <label className="text-primary tracking-[0.4em] text-xs uppercase mb-4 block font-bold opacity-80">Imperial Wonderer</label>
+          <h1 className="text-7xl font-serif leading-tight mb-6">Return to <br /><span className="italic text-primary">Grace</span></h1>
+          <p className="text-lg opacity-60 font-light leading-relaxed max-w-md">Your curated journey remains as you left it. Re-enter the legacy of the Silk Road.</p>
         </div>
-        <div className="px-8 pb-10">
-          <div className="text-center mb-8">
-            {step !== "auth" && (
-              <h2 className="text-2xl font-bold mt-2 mb-2 animate-fadeIn">OTP Verification</h2>
-            )}
-            {step !== "auth" && (
-              <p className="opacity-80 animate-fadeIn">{`Enter the 6-digit OTP sent to ${formData.identifier}`}</p>
-            )}
-          </div>
-          {step === "auth" ? (
-            <>
-              <div className="flex justify-center mb-6">
-                <button
-                  className={`px-6 py-2 rounded-full font-bold text-base mr-2 transition-all duration-300 ${mode === 'login' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-                  onClick={() => handleModeChange('login')}
-                  type="button"
-                >Login</button>
-                <button
-                  className={`px-6 py-2 rounded-full font-bold text-base transition-all duration-300 ${mode === 'signup' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-                  onClick={() => handleModeChange('signup')}
-                  type="button"
-                >Sign Up</button>
+
+        <div
+          ref={signupTextRef}
+          className={`hidden lg:flex absolute top-0 left-1/2 w-1/2 h-full flex-col justify-end p-20 text-white pointer-events-none transition-opacity duration-700 ${mode === 'signup' ? 'opacity-100' : 'opacity-0'}`}
+        >
+          <label className="text-primary tracking-[0.4em] text-xs uppercase mb-4 block font-bold opacity-80">Ascend with Us</label>
+          <h1 className="text-7xl font-serif leading-tight mb-6">Forge a <br /><span className="italic text-primary">New Legacy</span></h1>
+          <p className="text-lg opacity-60 font-light leading-relaxed max-w-md">Begin your initiation into the sanctuary of world-class travel. Explorers start here.</p>
+        </div>
+
+        {/* Side B: Auth Panel (The Active Slider) */}
+        <div
+          ref={formPanelRef}
+          className="absolute top-0 w-full lg:w-1/2 h-full flex items-center justify-center p-4 lg:p-12 z-30"
+        >
+          <div className={`w-full max-w-[480px] p-8 lg:p-12 rounded-[2.5rem] border border-white/10 ${mode === 'login' ? 'bg-black/40 shadow-primary/10' : 'bg-[#0f172a]/40 shadow-blue-500/10'} backdrop-blur-3xl shadow-2xl ${shake ? "animate-shake" : ""}`}>
+            {/* Header */}
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-primary/10 mb-6 group transition-all duration-500 hover:scale-110">
+                <Award className="w-10 h-10 text-primary animate-pulse" />
               </div>
-              <div>
-              {mode === 'login' ? (
-                <>
-                  <form onSubmit={handleSubmit} className="space-y-6 animate-slideIn">
-                    <div className="relative">
-                      <Mail className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${theme.icon} w-5 h-5`} />
-                      <input
-                        type="text"
-                        value={formData.identifier}
-                        onChange={(e) => handleInputChange("identifier", e.target.value)}
-                        className={`w-full pl-10 pr-4 py-4 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 ${theme.input} ${errors.identifier ? "border-red-400 bg-red-50" : ""}`}
-                        placeholder="Email or Phone Number"
-                        maxLength={40}
-                      />
-                      {errors.identifier && (
-                        <p className="text-red-500 text-sm mt-1 flex items-center animate-shake">
-                          <X className="w-4 h-4 mr-1" />
-                          {errors.identifier}
-                        </p>
-                      )}
+              <h2 className="text-4xl font-serif text-white mb-2">
+                {step === 'otp' ? 'Verification' : mode === 'login' ? 'Welcome Back' : 'Initiation'}
+              </h2>
+              <p className="text-white/40 font-light tracking-wide text-xs uppercase tracking-[0.2em]">
+                {mode === 'login' ? 'Pathfinder Access' : 'Explorer Registration'}
+              </p>
+            </div>
+
+            {step === 'auth' ? (
+              <div className="animate-fadeIn">
+                {mode === 'login' ? (
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase tracking-widest text-primary font-bold ml-2">Identify Yourself</label>
+                      <div className="relative group">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-primary transition-colors" />
+                        <input type="text" value={formData.identifier} onChange={(e) => handleInputChange("identifier", e.target.value)} placeholder="Email or Phone" className="w-full bg-white/[0.03] border border-white/10 rounded-xl pl-12 pr-4 py-4 text-white focus:outline-none focus:border-primary/50 focus:bg-white/[0.05] transition-all" />
+                      </div>
                     </div>
-                    <div className="relative">
-                      <Lock className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${theme.icon} w-5 h-5`} />
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        value={formData.password}
-                        onChange={(e) => handleInputChange("password", e.target.value)}
-                        className={`w-full pl-10 pr-12 py-4 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 ${theme.input} ${errors.password ? "border-red-400 bg-red-50" : ""}`}
-                        placeholder="Password"
-                        maxLength={30}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((v) => !v)}
-                        className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${theme.icon} hover:text-purple-600 transition-colors duration-300`}
-                      >
-                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                      {errors.password && (
-                        <p className="text-red-500 text-sm mt-1 flex items-center animate-shake">
-                          <X className="w-4 h-4 mr-1" />
-                          {errors.password}
-                        </p>
-                      )}
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center"><label className="text-[10px] uppercase tracking-widest text-primary font-bold ml-2">Key</label><button type="button" className="text-[10px] text-white/20 hover:text-white uppercase transition-colors">Forgotten?</button></div>
+                      <div className="relative group">
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-primary transition-colors" />
+                        <input type={showPassword ? "text" : "password"} value={formData.password} onChange={(e) => handleInputChange("password", e.target.value)} placeholder="••••••••" className="w-full bg-white/[0.03] border border-white/10 rounded-xl pl-12 pr-12 py-4 text-white focus:outline-none focus:border-primary/50 transition-all" />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 hover:text-white">{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button>
+                      </div>
                     </div>
-                    
-                    
-                    <button
-                      type="submit"
-                      disabled={isLoading}
-                      className={`w-full py-4 rounded-xl font-bold text-lg ${theme.btn} shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
-                    >
-                      {isLoading ? (
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      ) : (
-                        <>
-                          Continue
-                          <ArrowRight className="w-5 h-5" />
-                        </>
-                      )}
+                    <button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-primary to-[#B8860B] text-black font-bold py-5 rounded-xl flex items-center justify-center gap-3 active:scale-95 transition-all shadow-xl shadow-primary/10">
+                      {isLoading ? <div className="animate-spin rounded-full h-5 w-5 border-2 border-black/30 border-t-black" /> : <><span>ENTER THE REALM</span> <ArrowRight size={18} /></>}
                     </button>
+                    <div className="pt-4 flex flex-col items-center gap-6">
+                      <div className="w-full h-px bg-white/5 relative"><span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#0A0A0A] px-4 text-[10px] uppercase text-white/20 tracking-widest leading-none">Oracle Sanctuary</span></div>
+                      <button type="button" onClick={handleGoogleAuth} className="w-full flex items-center justify-center gap-3 bg-white/[0.03] border border-white/10 rounded-xl py-4 text-white/60 hover:text-white hover:bg-white/[0.08] transition-all text-sm font-light uppercase tracking-widest"><Chrome className="w-4 h-4" /> Google Secure</button>
+                    </div>
+                    <p className="text-center text-white/30 text-[11px] uppercase tracking-widest pt-4">No initiation? <button type="button" onClick={() => handleModeChange('signup')} className="text-primary font-bold hover:underline">Create an account</button></p>
                   </form>
-                  <div className="flex flex-col items-center justify-center mt-4 animate-fadeIn">
-                    <button
-                      type="button"
-                      className={`w-full max-w-xs py-3 px-4 rounded-xl font-semibold text-base border shadow flex items-center justify-center gap-3 transition-all duration-300 ${
-                        dark 
-                          ? 'bg-gray-700 border-gray-600 text-gray-100 hover:bg-gray-600' 
-                          : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                      }`}
-                      onClick={handleGoogleAuth}
-                    >
-                      <svg width="22" height="22" viewBox="0 0 48 48" className="inline-block">
-                        <g>
-                          <path fill="#4285F4" d="M24 9.5c3.54 0 6.73 1.22 9.24 3.22l6.9-6.9C35.64 2.36 30.13 0 24 0 14.61 0 6.27 5.74 2.44 14.1l8.06 6.27C12.7 13.13 17.89 9.5 24 9.5z"/>
-                          <path fill="#34A853" d="M46.09 24.56c0-1.56-.14-3.06-.39-4.5H24v9.02h12.44c-.54 2.9-2.18 5.36-4.64 7.02l7.18 5.59C43.73 37.36 46.09 31.44 46.09 24.56z"/>
-                          <path fill="#FBBC05" d="M10.5 28.37c-.62-1.86-.98-3.84-.98-5.87s.36-4.01.98-5.87l-8.06-6.27C.86 13.61 0 18.64 0 24s.86 10.39 2.44 14.1l8.06-6.27z"/>
-                          <path fill="#EA4335" d="M24 48c6.13 0 11.64-2.02 15.82-5.5l-7.18-5.59c-2.01 1.35-4.59 2.15-7.64 2.15-6.11 0-11.3-3.63-13.5-8.87l-8.06 6.27C6.27 42.26 14.61 48 24 48z"/>
-                          <path fill="none" d="M0 0h48v48H0z"/>
-                        </g>
-                      </svg>
-                      Continue with Google
-                    </button>
-                    <span className={`mt-2 text-sm font-medium ${dark ? 'text-green-400' : 'text-green-600'}`}>Sign in or sign up instantly with Google</span>
-                  </div>
-                </>
-              ) : (
-                <form onSubmit={handleSignupSubmit} className="space-y-4 animate-slideIn">
-                  <div className="flex items-center mb-6">
-                    {[0,1,2,3].map((stepIdx) => (
-                      <div key={stepIdx} className={`flex-1 h-2 mx-1 rounded-full ${signupStep >= stepIdx ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                    ))}
-                  </div>
-                  <div className="text-center text-sm italic text-blue-500 mb-2 animate-fadeIn">{motivationalQuotes[signupStep]}</div>
-                  {signupStep === 0 && (
-                    <>
-                      <div className="flex gap-2">
-                        <div className="w-1/2">
-                          <label className="block text-sm font-medium mb-1">First Name</label>
-                          <input type="text" value={signupData.firstName} onChange={e => handleSignupChange('firstName', e.target.value)} className={`w-full px-4 py-3 border rounded-xl ${theme.input} ${signupErrors.firstName ? 'border-red-400 bg-red-50' : ''}`} placeholder="Enter first name" />
-                        </div>
-                        <div className="w-1/2">
-                          <label className="block text-sm font-medium mb-1">Last Name</label>
-                          <input type="text" value={signupData.lastName} onChange={e => handleSignupChange('lastName', e.target.value)} className={`w-full px-4 py-3 border rounded-xl ${theme.input} ${signupErrors.lastName ? 'border-red-400 bg-red-50' : ''}`} placeholder="Enter last name" />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Email</label>
-                        <input type="email" value={signupData.email} onChange={e => handleSignupChange('email', e.target.value)} className={`w-full px-4 py-3 border rounded-xl ${theme.input} ${signupErrors.email ? 'border-red-400 bg-red-50' : ''}`} placeholder="Enter your email" />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Phone (10 digits)</label>
-                        <input type="text" value={signupData.phone} onChange={e => handleSignupChange('phone', e.target.value)} className={`w-full px-4 py-3 border rounded-xl ${theme.input} ${signupErrors.phone ? 'border-red-400 bg-red-50' : ''}`} maxLength={10} placeholder="Enter 10-digit phone" />
-                      </div>
-                      <div className="mt-4" ref={avatarSelectorRef}>
-                        <label className="block text-sm font-medium mb-2">Choose Your Avatar</label>
-                        <div className="flex items-center gap-4 mb-3">
-                          <div dangerouslySetInnerHTML={{ __html: getAvatarSvg(avatarSeed) }} className="w-16 h-16 rounded-full border-2 border-orange-400 shadow-lg bg-white" />
-                          <div className="flex-1">
-                            <button 
-                              type="button"
-                              onClick={() => setShowAvatarSelector(!showAvatarSelector)}
-                              className={`w-full px-4 py-3 border rounded-xl transition-all duration-300 ${theme.input} ${showAvatarSelector ? 'border-orange-400 bg-orange-50' : ''} hover:border-orange-300 flex items-center justify-between`}
-                            >
-                              <span className="capitalize">{avatarOptions.find(opt => opt.seed === avatarSeed)?.name || 'Custom'}</span>
-                              <svg className={`w-5 h-5 transition-transform duration-300 ${showAvatarSelector ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-                        
-                        {showAvatarSelector && (
-                          <div className="grid grid-cols-4 gap-3 p-4 border rounded-xl bg-gray-50 dark:bg-gray-800 max-h-48 overflow-y-auto animate-fadeIn">
-                            {avatarOptions.map((option) => (
-                              <button
-                                key={option.seed}
-                                type="button"
-                                onClick={() => {
-                                  setAvatarSeed(option.seed);
-                                  setShowAvatarSelector(false);
-                                }}
-                                className={`flex flex-col items-center p-2 rounded-lg transition-all duration-300 hover:bg-white hover:shadow-md ${
-                                  avatarSeed === option.seed ? 'bg-orange-100 border-2 border-orange-400' : 'bg-white border border-gray-200'
-                                }`}
-                              >
-                                <div dangerouslySetInnerHTML={{ __html: getAvatarSvg(option.seed) }} className="w-12 h-12 rounded-full border shadow-sm bg-white mb-1" />
-                                <span className="text-xs font-medium text-center leading-tight">{option.name}</span>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                        
-                        <div className="mt-2">
-                          <input 
-                            type="text" 
-                            value={avatarSeed} 
-                            onChange={e => setAvatarSeed(e.target.value)} 
-                            className={`w-full px-3 py-2 text-sm border rounded-lg ${theme.input}`} 
-                            placeholder="Or type custom avatar name..." 
-                          />
-                          <span className={`text-xs ${dark ? 'text-gray-400' : 'text-gray-500'} mt-1 block`}>💡 Try words like "superhero", "ninja", "scientist", or anything creative!</span>
-                        </div>
-                      </div>
-                      <div className="flex justify-end mt-4">
-                        <button type="button" className="px-6 py-2 rounded-xl bg-blue-500 text-white font-bold" onClick={() => setSignupStep(1)}>Next</button>
-                      </div>
-                    </>
-                  )}
-                  {signupStep === 1 && (
-                    <>
-                      <div className="flex gap-2">
-                        <div className="w-1/2 relative">
-                          <label className="block text-sm font-medium mb-1">Password</label>
-                          <input
-                            type={showSignupPassword ? "text" : "password"}
-                            value={signupData.password}
-                            onChange={e => handleSignupChange('password', e.target.value)}
-                            className={`w-full px-4 py-3 border rounded-xl ${theme.input} ${signupErrors.password ? 'border-red-400 bg-red-50' : ''}`}
-                            placeholder="Enter password"
-                          />
-                          <button
-                            type="button"
-                            className="absolute right-3 top-9 transform -translate-y-1/2 text-gray-400 hover:text-blue-500"
-                            onClick={() => setShowSignupPassword(v => !v)}
-                          >
-                            {showSignupPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                          </button>
-                          <span className="text-xs text-gray-500">Password must be 8-15 characters, include uppercase, lowercase, number, and symbol.</span>
-                          <div className="mt-2 text-lg">Strength: {strengthEmoji[passwordStrength(signupData.password)]}</div>
-                        </div>
-                        <div className="w-1/2">
-                          <label className="block text-sm font-medium mb-1">Confirm Password</label>
-                          <input type="password" value={signupData.confirmPassword} onChange={e => handleSignupChange('confirmPassword', e.target.value)} className={`w-full px-4 py-3 border rounded-xl ${theme.input} ${signupErrors.confirmPassword ? 'border-red-400 bg-red-50' : ''}`} placeholder="Confirm password" />
-                        </div>
-                      </div>
-                      <div className="flex justify-between mt-4">
-                        <button type="button" className="px-6 py-2 rounded-xl bg-gray-300 text-gray-700 font-bold" onClick={() => setSignupStep(0)}>Back</button>
-                        <button type="button" className="px-6 py-2 rounded-xl bg-blue-500 text-white font-bold" onClick={() => setSignupStep(2)}>Next</button>
-                      </div>
-                    </>
-                  )}
-                  {signupStep === 2 && (
-                    <>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Date of Birth</label>
-                        <input type="date" value={signupData.dob} onChange={e => handleSignupChange('dob', e.target.value)} className={`w-full px-4 py-3 border rounded-xl ${theme.input} ${signupErrors.dob ? 'border-red-400 bg-red-50' : ''}`} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Gender</label>
-                        <div className="flex gap-4">
-                          <button type="button" className={`px-4 py-2 rounded-xl flex items-center gap-2 ${signupData.gender==='male'?'bg-blue-500 text-white':'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'} hover:opacity-80 transition-all`} onClick={()=>handleSignupChange('gender','male')}><span>👨</span>Male</button>
-                          <button type="button" className={`px-4 py-2 rounded-xl flex items-center gap-2 ${signupData.gender==='female'?'bg-pink-500 text-white':'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'} hover:opacity-80 transition-all`} onClick={()=>handleSignupChange('gender','female')}><span>👩</span>Female</button>
-                          <button type="button" className={`px-4 py-2 rounded-xl flex items-center gap-2 ${signupData.gender==='other'?'bg-green-500 text-white':'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'} hover:opacity-80 transition-all`} onClick={()=>handleSignupChange('gender','other')}><span>🧑</span>Other</button>
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Address</label>
-                        <input type="text" value={signupData.address} onChange={e => handleSignupChange('address', e.target.value)} className={`w-full px-4 py-3 border rounded-xl ${theme.input} ${signupErrors.address ? 'border-red-400 bg-red-50' : ''}`} placeholder="Enter your address" />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Country</label>
-                        <div className="flex items-center gap-2">
-                          <input type="text" value={signupData.country} onChange={e => handleSignupChange('country', e.target.value)} className={`w-full px-4 py-3 border rounded-xl ${theme.input} ${signupErrors.country ? 'border-red-400 bg-red-50' : ''}`} placeholder="Enter your country" />
-                          {signupData.country && <ReactCountryFlag countryCode={signupData.country.slice(0,2).toUpperCase()} svg style={{width:'2em',height:'2em'}} />}
-                        </div>
-                      </div>
-                      <div className="flex justify-between mt-4">
-                        <button type="button" className="px-6 py-2 rounded-xl bg-gray-300 text-gray-700 font-bold" onClick={() => setSignupStep(1)}>Back</button>
-                        <button type="button" className="px-6 py-2 rounded-xl bg-blue-500 text-white font-bold" onClick={() => setSignupStep(3)}>Next</button>
-                      </div>
-                    </>
-                  )}
-                  {signupStep === 3 && (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <label className="block text-sm font-medium mb-1">Profile Photo (optional)</label>
-                        <input type="file" accept="image/*" onChange={e => handleSignupChange('photo', e.target.files?.[0] || null)} className="" />
-                      </div>
-                      <div className="flex items-center gap-2 mt-2">
-                        <input type="checkbox" checked={signupData.terms} onChange={e => handleSignupChange('terms', e.target.checked)} />
-                        <span className={`text-sm font-medium ${signupErrors.terms ? 'text-red-500' : dark ? 'text-gray-200' : 'text-gray-700'}`}>I accept the Terms & Conditions</span>
-                      </div>
-                      <div className="text-center mt-4">
-                        <span className="text-lg font-semibold text-green-600">{motivationalQuotes[Math.floor(Math.random()*motivationalQuotes.length)]}</span>
-                      </div>
-                      {Object.values(signupErrors).length > 0 && (
-                        <div className="text-red-500 text-sm mb-2 animate-shake">
-                          {Object.values(signupErrors).map((err, i) => <div key={i}>{err}</div>)}
-                        </div>
-                      )}
-                      <div className="flex justify-between mt-4">
-                        <button type="button" className="px-6 py-2 rounded-xl bg-gray-300 text-gray-700 font-bold" onClick={() => setSignupStep(2)}>Back</button>
-                        <button
-                          type="submit"
-                          disabled={isLoading}
-                          className={`px-6 py-2 rounded-xl bg-green-500 text-white font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
-                        >
-                          {isLoading ? (
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                          ) : (
-                            <>
-                              Sign Up
-                              <ArrowRight className="w-5 h-5" />
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </form>
-              )}
-              </div>
-            </>
-          ) : (
-            <form onSubmit={handleOtpSubmit} className="space-y-6 animate-slideIn">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={formData.otp}
-                  onChange={(e) => handleInputChange("otp", e.target.value)}
-                  className={`w-full px-4 py-4 border rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-300 text-center text-2xl font-mono tracking-widest ${theme.input} ${errors.otp ? "border-red-400 bg-red-50" : ""}`}
-                  placeholder="000000"
-                  maxLength={6}
-                  autoFocus
-                />
-                {errors.otp && (
-                  <p className="text-red-500 text-sm mt-1 flex items-center animate-shake">
-                    <X className="w-4 h-4 mr-1" />
-                    {errors.otp}
-                  </p>
-                )}
-              </div>
-              <button
-                type="submit"
-                disabled={isLoading || formData.otp.length !== 6}
-                className={`w-full py-4 rounded-xl font-bold text-lg ${theme.btn2} shadow-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                {isLoading ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                 ) : (
-                  <>
-                    Verify & Continue
-                    <ArrowRight className="w-5 h-5" />
-                  </>
+                  <form onSubmit={handleSignupSubmit} className="space-y-6">
+                    <div className="flex gap-1 mb-8">
+                      {[0, 1, 2, 3].map(s => <div key={s} className={`h-1 flex-1 rounded-full transition-all duration-700 ${signupStep >= s ? 'bg-primary shadow-[0_0_10px_rgba(242,202,80,0.5)]' : 'bg-white/5'}`} />)}
+                    </div>
+                    <div className="min-h-[220px]">
+                      {signupStep === 0 && <div className="space-y-4 animate-slideUp"><div className="grid grid-cols-2 gap-3"><input placeholder="First Name" value={signupData.firstName} onChange={e => handleSignupChange('firstName', e.target.value)} className="luxury-input w-full" /><input placeholder="Last Name" value={signupData.lastName} onChange={e => handleSignupChange('lastName', e.target.value)} className="luxury-input w-full" /></div><input placeholder="Email" value={signupData.email} onChange={e => handleSignupChange('email', e.target.value)} className="luxury-input w-full" /><input placeholder="Mobile" value={signupData.phone} onChange={e => handleSignupChange('phone', e.target.value)} className="luxury-input w-full" /></div>}
+                      {signupStep === 1 && <div className="space-y-4 animate-slideUp"><input placeholder="Secret Password" type="password" value={signupData.password} onChange={e => handleSignupChange('password', e.target.value)} className="luxury-input w-full" /><input placeholder="Repeat Secret" type="password" value={signupData.confirmPassword} onChange={e => handleSignupChange('confirmPassword', e.target.value)} className="luxury-input w-full" /></div>}
+                      {signupStep === 2 && <div className="space-y-4 animate-slideUp"><label className="text-[10px] uppercase text-white/40 ml-2">Date of Birth</label><input type="date" value={signupData.dob} onChange={e => handleSignupChange('dob', e.target.value)} className="luxury-input w-full" /></div>}
+                      {signupStep === 3 && <div className="text-center animate-slideUp py-6"><p className="text-primary italic font-serif text-lg mb-8">"{motivationalQuotes[signupStep]}"</p><div className="flex items-center gap-3 justify-center"><input type="checkbox" checked={signupData.terms} onChange={e => handleSignupChange('terms', e.target.checked)} className="rounded-full bg-white/10 border-white/20 transition-all checked:bg-primary" /><span className="text-[11px] text-white/30 uppercase tracking-widest">Agree to the covenant</span></div></div>}
+                    </div>
+                    <div className="flex gap-4 pt-6">
+                      {signupStep > 0 && <button type="button" onClick={() => setSignupStep(s => s - 1)} className="flex-1 py-4 text-white/40 uppercase text-[10px] tracking-widest border border-white/10 rounded-xl hover:text-white">Previous</button>}
+                      <button type="button" onClick={() => signupStep < 3 ? setSignupStep(s => s + 1) : handleSignupSubmit(undefined as any)} className="flex-[2] py-4 bg-white/10 text-white rounded-xl uppercase text-[10px] tracking-widest font-bold hover:bg-primary hover:text-black transition-all">
+                        {signupStep < 3 ? 'Next Phase' : 'Ascend Now'}
+                      </button>
+                    </div>
+                    <p className="text-center text-white/30 text-[11px] uppercase tracking-widest pt-4">Already initiated? <button type="button" onClick={() => handleModeChange('login')} className="text-primary font-bold hover:underline">Return to Portal</button></p>
+                  </form>
                 )}
-              </button>
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => setStep("auth")}
-                  className="text-purple-500 hover:text-pink-500 text-sm font-medium transition-colors duration-300"
-                >
-                  ← Back to login
-                </button>
               </div>
-            </form>
-          )}
+            ) : (
+              <form onSubmit={handleOtpSubmit} className="space-y-8 animate-fadeIn text-center">
+                <p className="text-white/40 text-xs font-light tracking-widest italic">Sacred numbers sent to your oracle</p>
+                <input type="text" value={formData.otp} onChange={(e) => handleInputChange("otp", e.target.value)} placeholder="000 000" className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-8 text-white text-center text-5xl font-mono tracking-[0.4em] focus:border-primary/40 focus:bg-primary/5 transition-all" maxLength={6} />
+                <button type="submit" disabled={isLoading || formData.otp.length < 6} className="w-full bg-primary text-black font-extrabold py-5 rounded-xl uppercase tracking-widest text-sm shadow-xl shadow-primary/20">Decrypt Experience</button>
+                <button type="button" onClick={() => setStep('auth')} className="text-white/20 hover:text-white text-[10px] uppercase tracking-widest transition-colors">Wrong identity?</button>
+              </form>
+            )}
+          </div>
         </div>
       </div>
+
       <style>{`
-        @keyframes gradient-x {
-          0%, 100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
+        .luxury-input {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 0.75rem;
+          padding: 1rem;
+          color: white;
+          font-size: 0.875rem;
+          transition: all 0.3s ease;
         }
-        .animate-gradient-x {
-          background-size: 200% 200%;
-          animation: gradient-x 8s ease-in-out infinite;
+        .luxury-input:focus {
+          outline: none;
+          border-color: rgba(242, 202, 80, 0.5);
+          background: rgba(255, 255, 255, 0.05);
         }
-        @keyframes shake {
-          10%, 90% { transform: translateX(-2px); }
-          20%, 80% { transform: translateX(4px); }
-          30%, 50%, 70% { transform: translateX(-8px); }
-          40%, 60% { transform: translateX(8px); }
-        }
-        .animate-shake { animation: shake 0.5s; }
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
-        }
-        .animate-float { animation: float 2.5s ease-in-out infinite; }
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fadeIn { animation: fadeIn 0.7s; }
-        @keyframes slideIn {
-          from { opacity: 0; transform: translateX(40px); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-        .animate-slideIn { animation: slideIn 0.7s; }
-        @keyframes bounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-8px); }
-        }
-        .animate-bounce { animation: bounce 1.2s infinite; }
-        @keyframes cube-spin {
-          0% { transform: rotateY(0deg) scale(1); }
-          50% { transform: rotateY(20deg) scale(1.08); }
-          100% { transform: rotateY(0deg) scale(1); }
-        }
-        .animate-cube-spin { animation: cube-spin 3s ease-in-out infinite; }
-        @keyframes flip {
-          0% { transform: perspective(600px) rotateY(0deg); }
-          50% { transform: perspective(600px) rotateY(-90deg); }
-          100% { transform: perspective(600px) rotateY(0deg); }
-        }
-        .animate-flip { animation: flip 0.3s ease-in-out; }
+        .animate-shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+        .animate-fadeIn { animation: fadeIn 1s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-slideUp { animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.5; }
       `}</style>
     </div>
   );
